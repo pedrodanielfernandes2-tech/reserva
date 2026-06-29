@@ -383,6 +383,35 @@ html, body { height: 100%; }
     text-align:center; font-size:12px; color:var(--ink-soft); padding:18px 0 4px;
   }
 
+  /* ---------- RESERVAS DO DIA / IMPRESSÃO ---------- */
+  .reservas-dia-head{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .print-only-title{ display:none; }
+
+  .tabela-reservas-dia{
+    width:100%; border-collapse:collapse; margin-top:14px;
+  }
+  .tabela-reservas-dia th, .tabela-reservas-dia td{
+    padding:11px 12px; border-bottom:1px solid var(--border); text-align:left; font-size:13.5px;
+  }
+  .tabela-reservas-dia th{
+    font-family:'Fraunces',serif; color:var(--primary-dark); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.5px; background:var(--surface-soft);
+  }
+  .sala-tag{
+    font-weight:800; font-size:12px; padding:4px 10px; border-radius:999px;
+    background:var(--surface-soft); color:var(--ink);
+  }
+
+  @media print{
+    body *{ visibility:hidden; }
+    .print-area, .print-area *{ visibility:visible; }
+    .print-area{ position:absolute; top:0; left:0; width:100%; padding:10px 0; }
+    .print-only-title{ display:block; font-size:20px; margin-bottom:10px; }
+    .no-print{ display:none !important; }
+  }
+
   @media (max-width: 880px){
     .layout{ flex-direction:column; }
     .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; }
