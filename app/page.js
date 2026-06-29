@@ -43,6 +43,13 @@ export default function Page() {
   const [formSala, setFormSala] = useState({ nome: "", tipo: "Sala" });
   const [erroSala, setErroSala] = useState("");
 
+  const [dataRelatorio, setDataRelatorio] = useState(() => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  });
+
   const carregarSalas = useCallback(async () => {
     const res = await fetch("/api/salas");
     const data = await res.json();
@@ -225,6 +232,13 @@ export default function Page() {
   const anoBase = new Date().getFullYear();
   const anosDisponiveis = [anoBase - 1, anoBase, anoBase + 1, anoBase + 2];
 
+  const [anoRel, mesRel, diaRel] = dataRelatorio.split("-").map(Number);
+  const reservasDoDiaTodasSalas = reservas
+    .filter((r) => r.dia === diaRel && r.mes === mesRel - 1 && r.ano === anoRel)
+    .sort((a, b) => a.sala_nome.localeCompare(b.sala_nome) || a.hora_inicio.localeCompare(b.hora_inicio));
+
+  const dataRelatorioFormatada = `${String(diaRel).padStart(2, "0")}/${String(mesRel).padStart(2, "0")}/${anoRel}`;
+
   if (carregando) {
     return <div style={{ padding: 40, fontFamily: "Manrope, sans-serif" }}>Carregando…</div>;
   }
@@ -255,7 +269,7 @@ export default function Page() {
               <span className="ico">📅</span> Calendário
             </button>
             <button className={"nav-btn" + (secao === "reservaInfo" ? " active" : "")} onClick={() => setSecao("reservaInfo")}>
-              <span className="ico">📋</span> Minhas Reservas
+              <span className="ico">🗒️</span> Reservas do Dia
             </button>
             <button className={"nav-btn" + (secao === "salas" ? " active" : "")} onClick={() => setSecao("salas")}>
               <span className="ico">🏛️</span> Cadastro de Salas
@@ -382,15 +396,55 @@ export default function Page() {
 
           {secao === "reservaInfo" && (
             <div className="block">
-              <h3>Como funciona</h3>
-              <p className="block-sub">
-                Clique em um dia no Calendário para abrir o formulário de solicitação. Depois de enviada, sua reserva
-                trava aquele horário — ninguém mais poderá usar a mesma sala no mesmo intervalo até que você mesmo
-                (informando seu nome) ou um administrador a exclua.
-              </p>
-              <p className="block-sub" style={{ marginTop: 10 }}>
-                Para excluir uma reserva, vá até o Calendário, encontre-a na lista de próximas reservas e clique em{" "}
-                <b>Excluir</b>. Será necessário confirmar o nome do solicitante.
+              <div className="reservas-dia-head">
+                <div>
+                  <h3>Reservas do Dia</h3>
+                  <p className="block-sub">Todas as salas e a Nave juntas, numa única lista — útil para imprimir e deixar na secretaria ou na entrada.</p>
+                </div>
+                <button className="btn-primary no-print" style={{ gridColumn: "auto", width: "auto" }} onClick={() => window.print()}>
+                  🖨️ Imprimir
+                </button>
+              </div>
+
+              <div className="form-field no-print" style={{ maxWidth: 220, marginTop: 16 }}>
+                <label>Data</label>
+                <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)} />
+              </div>
+
+              <div className="print-area">
+                <h2 className="print-only-title">Reservas — {dataRelatorioFormatada}</h2>
+                <table className="tabela-reservas-dia">
+                  <thead>
+                    <tr>
+                      <th>Sala / Nave</th>
+                      <th>Horário</th>
+                      <th>Evento</th>
+                      <th>Solicitante</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reservasDoDiaTodasSalas.length === 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: "center", color: "var(--ink-soft)" }}>
+                          Nenhuma reserva para {dataRelatorioFormatada}.
+                        </td>
+                      </tr>
+                    )}
+                    {reservasDoDiaTodasSalas.map((r) => (
+                      <tr key={r.id}>
+                        <td><span className="sala-tag">{r.sala_nome}</span></td>
+                        <td>{r.hora_inicio} – {r.hora_fim}</td>
+                        <td>{r.evento}</td>
+                        <td>{r.nome}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="block-sub no-print" style={{ marginTop: 16 }}>
+                Lembrete: reservas são feitas clicando num dia no <b>Calendário</b>. Para excluir, é preciso confirmar
+                o nome do solicitante (ou estar em Modo Admin).
               </p>
             </div>
           )}
