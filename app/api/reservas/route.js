@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/sql";
 import { ensureSchema } from "@/lib/db";
+import { notificarAdminEmail } from "@/lib/email";
 import crypto from "crypto";
 
 export async function GET(request) {
@@ -45,9 +46,6 @@ export async function POST(request) {
 
   const id = crypto.randomUUID();
 
-  // Inserção condicional em UMA única instrução: o próprio banco garante,
-  // de forma atômica, que duas pessoas não consigam reservar o mesmo
-  // horário/sala ao mesmo tempo (mesmo em requisições simultâneas).
   const rows = await sql`
     INSERT INTO reservas (id, sala_nome, nome, evento, dia, mes, ano, hora_inicio, hora_fim)
     SELECT ${id}, ${sala}, ${nome}, ${evento}, ${dia}, ${mes}, ${ano}, ${horaInicio}, ${horaFim}
@@ -69,6 +67,8 @@ export async function POST(request) {
       { status: 409 }
     );
   }
+
+  await notificarAdminEmail({ sala, nome, evento, dia, mes, ano, horaInicio, horaFim });
 
   return NextResponse.json(rows[0], { status: 201 });
 }
