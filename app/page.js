@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const DIAS_SEMANA_FULL = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
 const VERSICULOS = [
   "O Senhor é o meu pastor; nada me faltará. (Salmos 23:1)",
   "Tudo posso naquele que me fortalece. (Filipenses 4:13)",
@@ -11,44 +12,58 @@ const VERSICULOS = [
   "Porque Deus amou o mundo de tal maneira… (João 3:16)",
   "O Senhor é bom, uma fortaleza no dia da angústia. (Naum 1:7)",
 ];
+const LIMITE_DIAS = 60;
 
 function paraMinutos(hhmm) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*60+m;
+}
+function hoje() {
+  const d = new Date(); d.setHours(0,0,0,0); return d;
+}
+function toDateInput(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 export default function Page() {
-  const hoje = new Date();
+  const agora = new Date();
 
-  const [secao, setSecao] = useState("calendario");
-  const [salas, setSalas] = useState([]);
+  const [secao, setSecao]       = useState("calendario");
+  const [salas, setSalas]       = useState([]);
   const [reservas, setReservas] = useState([]);
-  const [mesAtual, setMesAtual] = useState(hoje.getMonth());
-  const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
+  const [bloqueios, setBloqueios] = useState([]);
+  const [mesAtual, setMesAtual] = useState(agora.getMonth());
+  const [anoAtual, setAnoAtual] = useState(agora.getFullYear());
   const [salaAtiva, setSalaAtiva] = useState(null);
+  const [modoGrade, setModoGrade] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [versiculo, setVersiculo] = useState("");
   const [carregando, setCarregando] = useState(true);
 
-  const [modalReservaAberto, setModalReservaAberto] = useState(false);
+  // Modal reserva
+  const [modalAberto, setModalAberto] = useState(false);
   const [diaSelecionado, setDiaSelecionado] = useState(null);
-  const [formReserva, setFormReserva] = useState({ nome: "", sala: "", evento: "", horaInicio: "", horaFim: "" });
+  const [form, setForm] = useState({ nome:"", sala:"", evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"" });
   const [erroReserva, setErroReserva] = useState("");
-  const [enviandoReserva, setEnviandoReserva] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [sucessoReserva, setSucessoReserva] = useState(null);
 
-  const [modalAdminAberto, setModalAdminAberto] = useState(false);
+  // Modal admin
+  const [modalAdmin, setModalAdmin] = useState(false);
   const [senhaAdmin, setSenhaAdmin] = useState("");
   const [erroAdmin, setErroAdmin] = useState("");
 
-  const [formSala, setFormSala] = useState({ nome: "", tipo: "Sala" });
+  // Cadastro salas
+  const [formSala, setFormSala] = useState({ nome:"", tipo:"Sala" });
   const [erroSala, setErroSala] = useState("");
 
-  const [dataRelatorio, setDataRelatorio] = useState(() => {
-    const d = new Date();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${d.getFullYear()}-${mm}-${dd}`;
-  });
+  // Bloqueios
+  const [formBloqueio, setFormBloqueio] = useState({ sala_nome:"", dia_semana:"0", hora_inicio:"", hora_fim:"", descricao:"" });
+  const [erroBloqueio, setErroBloqueio] = useState("");
+
+  // Relatório
+  const [dataRelatorio, setDataRelatorio] = useState(toDateInput(agora));
+  const [buscaRelatorio, setBuscaRelatorio] = useState("");
 
   const carregarSalas = useCallback(async () => {
     const res = await fetch("/api/salas");
@@ -60,200 +75,169 @@ export default function Page() {
   const carregarReservas = useCallback(async () => {
     const res = await fetch("/api/reservas");
     const data = await res.json();
-    setReservas(data);
+    setReservas(Array.isArray(data) ? data : []);
+  }, []);
+
+  const carregarBloqueios = useCallback(async () => {
+    const res = await fetch("/api/bloqueios");
+    const data = await res.json();
+    setBloqueios(Array.isArray(data) ? data : []);
   }, []);
 
   useEffect(() => {
-    setVersiculo(VERSICULOS[Math.floor(Math.random() * VERSICULOS.length)]);
-
+    setVersiculo(VERSICULOS[Math.floor(Math.random()*VERSICULOS.length)]);
     (async () => {
-      await Promise.all([carregarSalas(), carregarReservas()]);
-      const statusRes = await fetch("/api/admin/status");
-      const status = await statusRes.json();
-      setAdminMode(Boolean(status.admin));
+      await Promise.all([carregarSalas(), carregarReservas(), carregarBloqueios()]);
+      const s = await (await fetch("/api/admin/status")).json();
+      setAdminMode(Boolean(s.admin));
       setCarregando(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mantém a lista de reservas razoavelmente atualizada entre vários usuários
   useEffect(() => {
     const t = setInterval(() => { carregarReservas(); }, 15000);
     return () => clearInterval(t);
   }, [carregarReservas]);
 
-  function abrirModalReserva(dia) {
+  // ---- RESERVA ----
+  function abrirModal(dia) {
+    const dataEscolhida = new Date(anoAtual, mesAtual, dia);
+    const diffDias = Math.round((dataEscolhida - hoje()) / 86400000);
+    if (diffDias > LIMITE_DIAS) {
+      alert(`Só é possível reservar com até ${LIMITE_DIAS} dias de antecedência.`);
+      return;
+    }
     setDiaSelecionado(dia);
     setErroReserva("");
-    setFormReserva({ nome: "", sala: salaAtiva || (salas[0] && salas[0].nome) || "", evento: "", horaInicio: "", horaFim: "" });
-    setModalReservaAberto(true);
+    setSucessoReserva(null);
+    setForm({ nome:"", sala: salaAtiva || (salas[0]?.nome||""), evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"" });
+    setModalAberto(true);
   }
-  function fecharModalReserva() {
-    setModalReservaAberto(false);
-  }
+  function fecharModal() { setModalAberto(false); setSucessoReserva(null); }
 
   async function enviarReserva(e) {
     e.preventDefault();
     setErroReserva("");
-
-    const { nome, sala, evento, horaInicio, horaFim } = formReserva;
+    const { nome, sala, evento, observacao, horaInicio, horaFim, recorrencia, recorrenciaFim } = form;
     if (!nome.trim() || !sala || !evento.trim() || !horaInicio || !horaFim) {
-      setErroReserva("Preencha todos os campos.");
-      return;
+      setErroReserva("Preencha todos os campos obrigatórios."); return;
     }
     if (horaFim <= horaInicio) {
-      setErroReserva("O horário de término precisa ser depois do horário de início.");
-      return;
+      setErroReserva("O término precisa ser depois do início."); return;
     }
-
-    setEnviandoReserva(true);
+    if (recorrencia !== "nenhuma" && !recorrenciaFim) {
+      setErroReserva("Informe a data final da recorrência."); return;
+    }
+    setEnviando(true);
     try {
       const res = await fetch("/api/reservas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: nome.trim(), sala, evento: evento.trim(),
-          dia: diaSelecionado, mes: mesAtual, ano: anoAtual,
-          horaInicio, horaFim,
-        }),
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ nome:nome.trim(), sala, evento:evento.trim(), observacao:observacao.trim(), dia:diaSelecionado, mes:mesAtual, ano:anoAtual, horaInicio, horaFim, recorrencia, recorrenciaFim }),
       });
       const data = await res.json();
-
-      if (!res.ok) {
-        setErroReserva(data.erro || "Não foi possível concluir a reserva.");
-        return;
-      }
-
+      if (!res.ok) { setErroReserva(data.erro || "Não foi possível concluir a reserva."); return; }
       await carregarReservas();
-      fecharModalReserva();
-    } finally {
-      setEnviandoReserva(false);
-    }
+      setSucessoReserva({ ...data, nomeSolicitante: nome.trim(), recorrencia, totalCriadas: data.totalCriadas });
+    } finally { setEnviando(false); }
   }
 
-  async function excluirReserva(reserva) {
-    let nomeConfirmado = null;
+  async function excluirReserva(r) {
+    let nomeConf = null;
     if (!adminMode) {
-      nomeConfirmado = prompt(
-        `Para excluir, digite o nome do solicitante exatamente como foi cadastrado (${reserva.nome}):`
-      );
-      if (nomeConfirmado === null) return;
+      nomeConf = prompt(`Para excluir, confirme o nome do solicitante (${r.nome}):`);
+      if (nomeConf === null) return;
     }
-
-    const res = await fetch(`/api/reservas/${reserva.id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome: nomeConfirmado || "" }),
+    const res = await fetch(`/api/reservas/${r.id}`, {
+      method:"DELETE", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ nome: nomeConf||"" }),
     });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      alert(data.erro || "Não foi possível excluir esta reserva.");
-      return;
-    }
+    if (!res.ok) { const d = await res.json().catch(()=>({})); alert(d.erro||"Não foi possível excluir."); return; }
     await carregarReservas();
   }
 
-  async function enviarLoginAdmin(e) {
-    e.preventDefault();
-    setErroAdmin("");
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ senha: senhaAdmin }),
-    });
-    if (!res.ok) {
-      setErroAdmin("Senha incorreta.");
-      return;
-    }
-    setAdminMode(true);
-    setModalAdminAberto(false);
-    setSenhaAdmin("");
+  // ---- ADMIN ----
+  async function loginAdmin(e) {
+    e.preventDefault(); setErroAdmin("");
+    const res = await fetch("/api/admin/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ senha:senhaAdmin }) });
+    if (!res.ok) { setErroAdmin("Senha incorreta."); return; }
+    setAdminMode(true); setModalAdmin(false); setSenhaAdmin("");
   }
+  async function sairAdmin() { await fetch("/api/admin/logout",{method:"POST"}); setAdminMode(false); }
 
-  async function sairAdmin() {
-    await fetch("/api/admin/logout", { method: "POST" });
-    setAdminMode(false);
-  }
-
+  // ---- SALAS ----
   async function cadastrarSala(e) {
-    e.preventDefault();
-    setErroSala("");
-    if (!formSala.nome.trim()) {
-      setErroSala("Informe um nome para a sala.");
-      return;
-    }
-    const res = await fetch("/api/salas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formSala),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setErroSala(data.erro || "Não foi possível cadastrar a sala.");
-      return;
-    }
-    setFormSala({ nome: "", tipo: "Sala" });
+    e.preventDefault(); setErroSala("");
+    if (!formSala.nome.trim()) { setErroSala("Informe um nome."); return; }
+    const res = await fetch("/api/salas",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(formSala) });
+    const d = await res.json();
+    if (!res.ok) { setErroSala(d.erro||"Erro ao cadastrar."); return; }
+    setFormSala({ nome:"", tipo:"Sala" }); await carregarSalas();
+  }
+  async function excluirSala(s) {
+    if (!confirm("Excluir esta sala? As reservas históricas são mantidas.")) return;
+    await fetch(`/api/salas/${s.id}`,{method:"DELETE"});
+    if (s.nome===salaAtiva) setSalaAtiva(salas.filter(x=>x.id!==s.id)[0]?.nome||null);
     await carregarSalas();
   }
 
-  async function excluirSala(sala) {
-    if (!confirm("Excluir esta sala também manterá o histórico de reservas já feitas para ela, mas ela não aparecerá mais para novas solicitações. Continuar?")) return;
-    const res = await fetch(`/api/salas/${sala.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      alert("Não foi possível excluir esta sala.");
-      return;
+  // ---- BLOQUEIOS ----
+  async function cadastrarBloqueio(e) {
+    e.preventDefault(); setErroBloqueio("");
+    if (!formBloqueio.sala_nome||!formBloqueio.hora_inicio||!formBloqueio.hora_fim) {
+      setErroBloqueio("Preencha todos os campos."); return;
     }
-    if (sala.nome === salaAtiva) {
-      const restantes = salas.filter((s) => s.id !== sala.id);
-      setSalaAtiva(restantes[0] ? restantes[0].nome : null);
-    }
-    await carregarSalas();
+    const res = await fetch("/api/bloqueios",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(formBloqueio) });
+    const d = await res.json();
+    if (!res.ok) { setErroBloqueio(d.erro||"Erro ao criar bloqueio."); return; }
+    setFormBloqueio({ sala_nome:"", dia_semana:"0", hora_inicio:"", hora_fim:"", descricao:"" });
+    await carregarBloqueios();
+  }
+  async function excluirBloqueio(id) {
+    await fetch(`/api/bloqueios/${id}`,{method:"DELETE"});
+    await carregarBloqueios();
   }
 
-  // ---------- Derivados para renderização ----------
+  // ---- DERIVADOS ----
+  const corAtiva = salas.find(s=>s.nome===salaAtiva);
+  const reservasHoje = reservas.filter(r=>r.dia===agora.getDate()&&r.mes===agora.getMonth()&&r.ano===agora.getFullYear()).length;
 
-  const corAtiva = salas.find((s) => s.nome === salaAtiva);
-  const reservasHoje = reservas.filter(
-    (r) => r.dia === hoje.getDate() && r.mes === hoje.getMonth() && r.ano === hoje.getFullYear()
-  ).length;
-
-  const reservasDaSalaAtiva = reservas.filter((r) => r.sala_nome === salaAtiva);
-  const proximas = reservasDaSalaAtiva
-    .filter((r) => new Date(r.ano, r.mes, r.dia) >= new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()))
-    .sort((a, b) => new Date(a.ano, a.mes, a.dia) - new Date(b.ano, b.mes, b.dia) || a.hora_inicio.localeCompare(b.hora_inicio));
-
+  const reservasDaSalaAtiva = reservas.filter(r=>r.sala_nome===salaAtiva);
   const primeiroDia = new Date(anoAtual, mesAtual, 1);
-  const ultimoDiaNum = new Date(anoAtual, mesAtual + 1, 0).getDate();
+  const ultimoDiaNum = new Date(anoAtual, mesAtual+1, 0).getDate();
   const offset = primeiroDia.getDay();
-  const celulasVazias = Array.from({ length: offset });
-  const diasDoMes = Array.from({ length: ultimoDiaNum }, (_, i) => i + 1);
+  const diasDoMes = Array.from({length:ultimoDiaNum},(_,i)=>i+1);
 
-  const anoBase = new Date().getFullYear();
-  const anosDisponiveis = [anoBase - 1, anoBase, anoBase + 1, anoBase + 2];
+  const proximas = reservasDaSalaAtiva
+    .filter(r=>new Date(r.ano,r.mes,r.dia)>=hoje())
+    .sort((a,b)=>new Date(a.ano,a.mes,a.dia)-new Date(b.ano,b.mes,b.dia)||a.hora_inicio.localeCompare(b.hora_inicio));
 
-  const [anoRel, mesRel, diaRel] = dataRelatorio.split("-").map(Number);
-  const reservasDoDiaTodasSalas = reservas
-    .filter((r) => r.dia === diaRel && r.mes === mesRel - 1 && r.ano === anoRel)
-    .sort((a, b) => a.sala_nome.localeCompare(b.sala_nome) || a.hora_inicio.localeCompare(b.hora_inicio));
+  const [anoRel,mesRel,diaRel] = dataRelatorio.split("-").map(Number);
+  const dataRelFmt = `${String(diaRel).padStart(2,"0")}/${String(mesRel).padStart(2,"0")}/${anoRel}`;
+  const reservasDoDia = reservas
+    .filter(r=>r.dia===diaRel&&r.mes===mesRel-1&&r.ano===anoRel)
+    .filter(r=> {
+      if (!buscaRelatorio.trim()) return true;
+      const q = buscaRelatorio.toLowerCase();
+      return r.nome.toLowerCase().includes(q)||r.evento.toLowerCase().includes(q)||r.sala_nome.toLowerCase().includes(q);
+    })
+    .sort((a,b)=>a.sala_nome.localeCompare(b.sala_nome)||a.hora_inicio.localeCompare(b.hora_inicio));
 
-  const dataRelatorioFormatada = `${String(diaRel).padStart(2, "0")}/${String(mesRel).padStart(2, "0")}/${anoRel}`;
+  const anoBase = agora.getFullYear();
+  const anos = [anoBase-1,anoBase,anoBase+1,anoBase+2];
 
-  if (carregando) {
-    return <div style={{ padding: 40, fontFamily: "Manrope, sans-serif" }}>Carregando…</div>;
-  }
+  // Limite de antecedência visual
+  const limiteData = new Date(hoje()); limiteData.setDate(limiteData.getDate()+LIMITE_DIAS);
+
+  if (carregando) return <div style={{padding:40,fontFamily:"Manrope,sans-serif"}}>Carregando…</div>;
 
   return (
     <>
       <header>
         <div className="logo-area">
-          <div className="logo-frame">
-            <img src="/logo.jpg" alt="Logo Assembleia de Deus Louveira" />
-          </div>
-          <div className="logo-text">
-            Assembleia de Deus Louveira
-            <small>Comunicação &amp; Mídia</small>
-          </div>
+          <div className="logo-frame"><img src="/logo.jpg" alt="Logo Assembleia de Deus Louveira"/></div>
+          <div className="logo-text">Assembleia de Deus Louveira<small>Comunicação &amp; Mídia</small></div>
         </div>
         <div className="header-title">
           <h1>Reserva de Salas &amp; Nave</h1>
@@ -265,29 +249,22 @@ export default function Page() {
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="sidebar-eyebrow">Menu</div>
-            <button className={"nav-btn" + (secao === "calendario" ? " active" : "")} onClick={() => setSecao("calendario")}>
-              <span className="ico">📅</span> Calendário
-            </button>
-            <button className={"nav-btn" + (secao === "reservaInfo" ? " active" : "")} onClick={() => setSecao("reservaInfo")}>
-              <span className="ico">🗒️</span> Reservas do Dia
-            </button>
-            <button className={"nav-btn" + (secao === "salas" ? " active" : "")} onClick={() => setSecao("salas")}>
-              <span className="ico">🏛️</span> Cadastro de Salas
-            </button>
-
+            {[
+              ["calendario","📅","Calendário"],
+              ["reservaInfo","🗒️","Reservas do Dia"],
+              ["salas","🏛️","Cadastro de Salas"],
+            ].map(([id,ico,label])=>(
+              <button key={id} className={"nav-btn"+(secao===id?" active":"")} onClick={()=>setSecao(id)}>
+                <span className="ico">{ico}</span> {label}
+              </button>
+            ))}
             <div className="admin-box">
-              {adminMode ? (
-                <div className="admin-pill">
-                  🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button>
-                </div>
-              ) : (
-                <button className="btn-ghost-admin" onClick={() => setModalAdminAberto(true)}>
-                  🔒 Entrar como Admin
-                </button>
-              )}
+              {adminMode
+                ? <div className="admin-pill">🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button></div>
+                : <button className="btn-ghost-admin" onClick={()=>setModalAdmin(true)}>🔒 Entrar como Admin</button>
+              }
             </div>
           </div>
-
           <div className="versiculo-box">
             <strong>Versículo do Dia</strong>
             <span>{versiculo}</span>
@@ -296,97 +273,136 @@ export default function Page() {
 
         <main className="content">
           <div className="cards">
-            <div className="card">
-              <div className="label">Reservas Hoje</div>
-              <div className="value">{reservasHoje}</div>
-            </div>
-            <div className="card">
-              <div className="label">Total de Salas</div>
-              <div className="value">{salas.length}</div>
-            </div>
-            <div className="card">
-              <div className="label">Visualizando</div>
-              <div className="value small">{salaAtiva || "Nenhuma"}</div>
-            </div>
+            <div className="card"><div className="label">Reservas Hoje</div><div className="value">{reservasHoje}</div></div>
+            <div className="card"><div className="label">Total de Salas</div><div className="value">{salas.length}</div></div>
+            <div className="card"><div className="label">Visualizando</div><div className="value small">{modoGrade?"Todas":salaAtiva||"—"}</div></div>
           </div>
 
-          {secao === "calendario" && (
+          {/* ===== CALENDÁRIO ===== */}
+          {secao==="calendario" && (
             <div className="block">
-              <h3>Calendário de Reservas</h3>
-              <p className="block-sub">Clique em um dia livre para solicitar a Sala ou a Nave.</p>
-
-              <div className="room-tabs">
-                {salas.map((s) => (
-                  <button
-                    key={s.id}
-                    className={"room-tab" + (s.nome === salaAtiva ? " active" : "")}
-                    style={{ "--tab-color": s.cor }}
-                    onClick={() => setSalaAtiva(s.nome)}
-                  >
-                    <span className="dot" style={{ background: s.cor }} /> {s.nome}
-                  </button>
-                ))}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <h3>Calendário de Reservas</h3>
+                  <p className="block-sub">Clique em um dia para solicitar a Sala ou a Nave.</p>
+                </div>
+                <button
+                  className={"room-tab"+(modoGrade?" active":"")}
+                  style={{"--tab-color":"var(--primary)"}}
+                  onClick={()=>setModoGrade(g=>!g)}
+                >
+                  {modoGrade?"📅 Por sala":"🗂️ Ver todas"}
+                </button>
               </div>
+
+              {!modoGrade && (
+                <div className="room-tabs">
+                  {salas.map(s=>(
+                    <button key={s.id} className={"room-tab"+(s.nome===salaAtiva?" active":"")} style={{"--tab-color":s.cor}} onClick={()=>setSalaAtiva(s.nome)}>
+                      <span className="dot" style={{background:s.cor}}/> {s.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="cal-controls">
-                <select value={mesAtual} onChange={(e) => setMesAtual(parseInt(e.target.value, 10))}>
-                  {MESES.map((m, i) => (
-                    <option key={m} value={i}>{m}</option>
-                  ))}
+                <select value={mesAtual} onChange={e=>setMesAtual(parseInt(e.target.value,10))}>
+                  {MESES.map((m,i)=><option key={m} value={i}>{m}</option>)}
                 </select>
-                <select value={anoAtual} onChange={(e) => setAnoAtual(parseInt(e.target.value, 10))}>
-                  {anosDisponiveis.map((a) => (
-                    <option key={a} value={a}>{a}</option>
-                  ))}
+                <select value={anoAtual} onChange={e=>setAnoAtual(parseInt(e.target.value,10))}>
+                  {anos.map(a=><option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
 
-              <div className="calendar">
-                {DIAS_SEMANA.map((d) => (
-                  <div key={d} className="weekday">{d}</div>
-                ))}
+              {/* Modo grade: uma coluna por sala */}
+              {modoGrade ? (
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",minWidth:salas.length*120+80}}>
+                    <thead>
+                      <tr>
+                        <th style={{padding:"8px 6px",fontWeight:800,fontSize:12,color:"var(--ink-soft)",textAlign:"left",width:44}}>Dia</th>
+                        {salas.map(s=>(
+                          <th key={s.id} style={{padding:"8px 6px",fontSize:12,fontWeight:800,color:s.cor,textAlign:"center",minWidth:120}}>
+                            {s.nome}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {diasDoMes.map(dia=>{
+                        const dataD = new Date(anoAtual,mesAtual,dia);
+                        const ehHoje = dia===agora.getDate()&&mesAtual===agora.getMonth()&&anoAtual===agora.getFullYear();
+                        const passado = dataD < hoje();
+                        const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS;
+                        return (
+                          <tr key={dia} style={{borderBottom:"1px solid var(--border)",opacity:passado?0.4:1}}>
+                            <td style={{padding:"6px 4px",fontWeight:ehHoje?800:500,color:ehHoje?"var(--primary)":"var(--ink)",fontSize:13}}>
+                              {String(dia).padStart(2,"0")}<br/><span style={{fontSize:10,color:"var(--ink-soft)"}}>{DIAS_SEMANA[dataD.getDay()]}</span>
+                            </td>
+                            {salas.map(s=>{
+                              const resv = reservas.filter(r=>r.sala_nome===s.nome&&r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual)
+                                .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                              return (
+                                <td key={s.id} style={{padding:"4px 4px",textAlign:"center",verticalAlign:"top"}}
+                                  onClick={()=>!passado&&!acimaDolimite&&(setSalaAtiva(s.nome),abrirModal(dia))}
+                                >
+                                  {resv.length>0 ? resv.map(r=>(
+                                    <div key={r.id} style={{background:s.cor,color:"#fff",borderRadius:6,padding:"3px 5px",fontSize:10,fontWeight:700,marginBottom:2,cursor:"default"}}>
+                                      {r.hora_inicio}-{r.hora_fim}
+                                    </div>
+                                  )) : (
+                                    !passado&&!acimaDolimite&&<div style={{color:"var(--ink-soft)",fontSize:10,cursor:"pointer"}}>+ reservar</div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                /* Modo normal: calendário mensal por sala */
+                <div className="calendar">
+                  {DIAS_SEMANA.map(d=><div key={d} className="weekday">{d}</div>)}
+                  {Array.from({length:offset}).map((_,i)=><div key={"v"+i} className="day empty"/>)}
+                  {diasDoMes.map(dia=>{
+                    const dataD = new Date(anoAtual,mesAtual,dia);
+                    const ehHoje = dia===agora.getDate()&&mesAtual===agora.getMonth()&&anoAtual===agora.getFullYear();
+                    const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS;
+                    const resv = reservas.filter(r=>r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual&&r.sala_nome===salaAtiva)
+                      .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                    return (
+                      <div key={dia} className={"day"+(ehHoje?" today":"")+(acimaDolimite?" fora-limite":"")}
+                        onClick={()=>!acimaDolimite&&abrirModal(dia)}
+                        title={acimaDolimite?`Reservas só até ${LIMITE_DIAS} dias no futuro`:""}
+                      >
+                        <div className="day-number">{dia}</div>
+                        {resv.map(r=>(
+                          <div key={r.id} className="reserva-item" style={{background:corAtiva?corAtiva.cor:"var(--primary)"}}>
+                            {r.hora_inicio}-{r.hora_fim} · {r.evento}{r.recorrente?" 🔁":""}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                {celulasVazias.map((_, i) => (
-                  <div key={"vazio-" + i} className="day empty" />
-                ))}
-
-                {diasDoMes.map((dia) => {
-                  const ehHoje = dia === hoje.getDate() && mesAtual === hoje.getMonth() && anoAtual === hoje.getFullYear();
-                  const reservasDoDia = reservas
-                    .filter((r) => r.dia === dia && r.mes === mesAtual && r.ano === anoAtual && r.sala_nome === salaAtiva)
-                    .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
-
-                  return (
-                    <div key={dia} className={"day" + (ehHoje ? " today" : "")} onClick={() => abrirModalReserva(dia)}>
-                      <div className="day-number">{dia}</div>
-                      {reservasDoDia.map((r) => (
-                        <div key={r.id} className="reserva-item" style={{ background: corAtiva ? corAtiva.cor : "var(--primary)" }}>
-                          {r.hora_inicio}-{r.hora_fim} · {r.evento}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <h3 style={{ marginTop: 26, fontSize: 16 }}>Próximas reservas — {salaAtiva || "—"}</h3>
+              <h3 style={{marginTop:26,fontSize:16}}>Próximas reservas — {salaAtiva||"—"}</h3>
               <ul className="lista-reservas">
-                {proximas.length === 0 && (
-                  <div className="empty-state">
-                    Nenhuma reserva futura para {salaAtiva || "esta sala"}. O calendário está livre.
-                  </div>
-                )}
-                {proximas.map((r) => {
-                  const dataFmt = String(r.dia).padStart(2, "0") + "/" + String(r.mes + 1).padStart(2, "0") + "/" + r.ano;
+                {proximas.length===0&&<div className="empty-state">Nenhuma reserva futura para {salaAtiva}. Calendário livre.</div>}
+                {proximas.map(r=>{
+                  const dFmt = `${String(r.dia).padStart(2,"0")}/${String(r.mes+1).padStart(2,"0")}/${r.ano}`;
                   return (
                     <li key={r.id}>
                       <div className="res-info">
-                        <b>{r.evento}</b>
-                        <span>{dataFmt} · {r.hora_inicio} às {r.hora_fim} · Solicitado por {r.nome}</span>
+                        <b>{r.evento}{r.recorrente?" 🔁":""}</b>
+                        <span>{dFmt} · {r.hora_inicio} às {r.hora_fim} · {r.nome}</span>
+                        {r.observacao&&<span style={{fontStyle:"italic",color:"var(--ink-soft)"}}>📝 {r.observacao}</span>}
                       </div>
-                      <div className="res-actions">
-                        <button onClick={() => excluirReserva(r)}>Excluir</button>
-                      </div>
+                      <div className="res-actions"><button onClick={()=>excluirReserva(r)}>Excluir</button></div>
                     </li>
                   );
                 })}
@@ -394,81 +410,69 @@ export default function Page() {
             </div>
           )}
 
-          {secao === "reservaInfo" && (
+          {/* ===== RESERVAS DO DIA ===== */}
+          {secao==="reservaInfo"&&(
             <div className="block">
               <div className="reservas-dia-head">
                 <div>
                   <h3>Reservas do Dia</h3>
-                  <p className="block-sub">Todas as salas e a Nave juntas, numa única lista — útil para imprimir e deixar na secretaria ou na entrada.</p>
+                  <p className="block-sub">Todas as salas juntas — útil para imprimir e deixar na secretaria.</p>
                 </div>
-                <button className="btn-primary no-print" style={{ gridColumn: "auto", width: "auto" }} onClick={() => window.print()}>
-                  🖨️ Imprimir
-                </button>
+                <button className="btn-primary no-print" style={{gridColumn:"auto",width:"auto"}} onClick={()=>window.print()}>🖨️ Imprimir</button>
               </div>
 
-              <div className="form-field no-print" style={{ maxWidth: 220, marginTop: 16 }}>
-                <label>Data</label>
-                <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)} />
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",margin:"16px 0",alignItems:"flex-end"}} className="no-print">
+                <div className="form-field" style={{maxWidth:200,margin:0}}>
+                  <label>Data</label>
+                  <input type="date" value={dataRelatorio} onChange={e=>setDataRelatorio(e.target.value)}/>
+                </div>
+                <div className="form-field" style={{flex:1,minWidth:180,margin:0}}>
+                  <label>Buscar (nome, evento ou sala)</label>
+                  <input type="text" placeholder="Ex: João, Coral, Nave…" value={buscaRelatorio} onChange={e=>setBuscaRelatorio(e.target.value)}/>
+                </div>
               </div>
 
               <div className="print-area">
-                <h2 className="print-only-title">Reservas — {dataRelatorioFormatada}</h2>
+                <h2 className="print-only-title">Reservas — {dataRelFmt}</h2>
                 <table className="tabela-reservas-dia">
                   <thead>
-                    <tr>
-                      <th>Sala / Nave</th>
-                      <th>Horário</th>
-                      <th>Evento</th>
-                      <th>Solicitante</th>
-                    </tr>
+                    <tr><th>Sala / Nave</th><th>Horário</th><th>Evento</th><th>Solicitante</th></tr>
                   </thead>
                   <tbody>
-                    {reservasDoDiaTodasSalas.length === 0 && (
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: "center", color: "var(--ink-soft)" }}>
-                          Nenhuma reserva para {dataRelatorioFormatada}.
-                        </td>
-                      </tr>
+                    {reservasDoDia.length===0&&(
+                      <tr><td colSpan={4} style={{textAlign:"center",color:"var(--ink-soft)"}}>
+                        {buscaRelatorio?"Nenhum resultado para a busca.":"Nenhuma reserva para "+dataRelFmt+"."}
+                      </td></tr>
                     )}
-                    {reservasDoDiaTodasSalas.map((r) => (
+                    {reservasDoDia.map(r=>(
                       <tr key={r.id}>
-                        <td><span className="sala-tag">{r.sala_nome}</span></td>
+                        <td><span className="sala-tag" style={{background:salas.find(s=>s.nome===r.sala_nome)?.cor||"#999",color:"#fff"}}>{r.sala_nome}</span></td>
                         <td>{r.hora_inicio} – {r.hora_fim}</td>
-                        <td>{r.evento}</td>
+                        <td>{r.evento}{r.recorrente?" 🔁":""}{r.observacao&&<><br/><small style={{color:"var(--ink-soft)"}}>📝 {r.observacao}</small></>}</td>
                         <td>{r.nome}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-
-              <p className="block-sub no-print" style={{ marginTop: 16 }}>
-                Lembrete: reservas são feitas clicando num dia no <b>Calendário</b>. Para excluir, é preciso confirmar
-                o nome do solicitante (ou estar em Modo Admin).
-              </p>
             </div>
           )}
 
-          {secao === "salas" && (
+          {/* ===== CADASTRO DE SALAS ===== */}
+          {secao==="salas"&&(
             <div className="block">
               <h3>Cadastro de Salas e Nave</h3>
-              <p className="block-sub">Área restrita — apenas administradores podem cadastrar ou remover ambientes.</p>
+              <p className="block-sub">Área restrita — apenas administradores.</p>
 
               {adminMode ? (
                 <>
-                  <form className="form-grid" style={{ marginTop: 18 }} onSubmit={cadastrarSala}>
-                    {erroSala && <div className="form-error" style={{ display: "block" }}>{erroSala}</div>}
-                    <div className="form-field">
-                      <label>Nome</label>
-                      <input
-                        type="text" required placeholder="Ex: Sala 3"
-                        value={formSala.nome}
-                        onChange={(e) => setFormSala((f) => ({ ...f, nome: e.target.value }))}
-                      />
+                  <form className="form-grid" style={{marginTop:18}} onSubmit={cadastrarSala}>
+                    {erroSala&&<div className="form-error" style={{display:"block"}}>{erroSala}</div>}
+                    <div className="form-field"><label>Nome</label>
+                      <input type="text" required placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
                     </div>
-                    <div className="form-field">
-                      <label>Tipo</label>
-                      <select value={formSala.tipo} onChange={(e) => setFormSala((f) => ({ ...f, tipo: e.target.value }))}>
+                    <div className="form-field"><label>Tipo</label>
+                      <select value={formSala.tipo} onChange={e=>setFormSala(f=>({...f,tipo:e.target.value}))}>
                         <option value="Sala">Sala</option>
                         <option value="Nave">Nave</option>
                       </select>
@@ -477,16 +481,54 @@ export default function Page() {
                   </form>
 
                   <div className="sala-chip-list">
-                    {salas.map((s) => (
+                    {salas.map(s=>(
                       <div className="sala-chip" key={s.id}>
-                        <span className="swatch" style={{ background: s.cor }} />
+                        <span className="swatch" style={{background:s.cor}}/>
+                        <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
+                        <button className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bloqueios fixos */}
+                  <h3 style={{marginTop:32,fontSize:17}}>🚫 Horários Bloqueados Fixos</h3>
+                  <p className="block-sub">Cultos e eventos regulares que nunca podem ser reservados por cima.</p>
+
+                  <form className="form-grid" style={{marginTop:14}} onSubmit={cadastrarBloqueio}>
+                    {erroBloqueio&&<div className="form-error" style={{display:"block"}}>{erroBloqueio}</div>}
+                    <div className="form-field"><label>Sala / Nave</label>
+                      <select value={formBloqueio.sala_nome} onChange={e=>setFormBloqueio(f=>({...f,sala_nome:e.target.value}))}>
+                        <option value="">Selecione…</option>
+                        {salas.map(s=><option key={s.id} value={s.nome}>{s.nome}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-field"><label>Dia da semana</label>
+                      <select value={formBloqueio.dia_semana} onChange={e=>setFormBloqueio(f=>({...f,dia_semana:e.target.value}))}>
+                        {DIAS_SEMANA_FULL.map((d,i)=><option key={i} value={i}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-field"><label>Início</label>
+                      <input type="time" value={formBloqueio.hora_inicio} onChange={e=>setFormBloqueio(f=>({...f,hora_inicio:e.target.value}))}/>
+                    </div>
+                    <div className="form-field"><label>Término</label>
+                      <input type="time" value={formBloqueio.hora_fim} onChange={e=>setFormBloqueio(f=>({...f,hora_fim:e.target.value}))}/>
+                    </div>
+                    <div className="form-field full"><label>Descrição (ex: Culto dominical)</label>
+                      <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
+                    </div>
+                    <button className="btn-primary">Adicionar Bloqueio</button>
+                  </form>
+
+                  <div className="sala-chip-list" style={{marginTop:16}}>
+                    {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado cadastrado.</div>}
+                    {bloqueios.map(b=>(
+                      <div className="sala-chip" key={b.id}>
+                        <span className="swatch" style={{background:"#D6483A"}}/>
                         <div className="info">
-                          <b>{s.nome}</b>
-                          <span>{s.tipo}</span>
+                          <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
+                          <span>{b.descricao||"Sem descrição"}</span>
                         </div>
-                        <button className="btn-danger" style={{ padding: "8px 12px", fontSize: 12 }} onClick={() => excluirSala(s)}>
-                          Excluir
-                        </button>
+                        <button className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
                       </div>
                     ))}
                   </div>
@@ -495,7 +537,7 @@ export default function Page() {
                 <div className="locked-box">
                   <span className="ico">🔒</span>
                   <h4>Acesso restrito</h4>
-                  <p>Entre como administrador para cadastrar ou remover salas e a Nave.</p>
+                  <p>Entre como administrador para gerenciar salas e bloqueios.</p>
                 </div>
               )}
             </div>
@@ -505,91 +547,99 @@ export default function Page() {
 
       <footer className="app-footer">Assembleia de Deus Louveira · Sistema de Reserva de Ambientes</footer>
 
-      {/* MODAL RESERVA */}
-      <div className={"overlay" + (modalReservaAberto ? " show" : "")}>
+      {/* ===== MODAL RESERVA ===== */}
+      <div className={"overlay"+(modalAberto?" show":"")}>
         <div className="modal">
-          <div className="modal-head">
-            <h3>Nova Solicitação</h3>
-            <button onClick={fecharModalReserva}>✕</button>
-          </div>
-          {diaSelecionado && (
-            <span className="date-badge">
-              {String(diaSelecionado).padStart(2, "0")}/{String(mesAtual + 1).padStart(2, "0")}/{anoAtual}
-            </span>
+          {!sucessoReserva ? (
+            <>
+              <div className="modal-head">
+                <h3>Nova Solicitação</h3>
+                <button onClick={fecharModal}>✕</button>
+              </div>
+              {diaSelecionado&&(
+                <span className="date-badge">
+                  {String(diaSelecionado).padStart(2,"0")}/{String(mesAtual+1).padStart(2,"0")}/{anoAtual}
+                </span>
+              )}
+              <form className="form-grid" onSubmit={enviarReserva}>
+                {erroReserva&&<div className="form-error" style={{display:"block"}}>{erroReserva}</div>}
+
+                <div className="form-field full"><label>Solicitante *</label>
+                  <input type="text" required placeholder="Seu nome completo" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/>
+                </div>
+                <div className="form-field"><label>Data</label>
+                  <input type="text" disabled value={`${String(diaSelecionado).padStart(2,"0")}/${String(mesAtual+1).padStart(2,"0")}/${anoAtual}`}/>
+                </div>
+                <div className="form-field"><label>Sala / Nave *</label>
+                  <select value={form.sala} onChange={e=>setForm(f=>({...f,sala:e.target.value}))}>
+                    {salas.map(s=><option key={s.id} value={s.nome}>{s.nome} ({s.tipo})</option>)}
+                  </select>
+                </div>
+                <div className="form-field full"><label>Evento *</label>
+                  <input type="text" required placeholder="Ex: Ensaio do coral" value={form.evento} onChange={e=>setForm(f=>({...f,evento:e.target.value}))}/>
+                </div>
+                <div className="form-field"><label>Início *</label>
+                  <input type="time" required value={form.horaInicio} onChange={e=>setForm(f=>({...f,horaInicio:e.target.value}))}/>
+                </div>
+                <div className="form-field"><label>Término *</label>
+                  <input type="time" required value={form.horaFim} onChange={e=>setForm(f=>({...f,horaFim:e.target.value}))}/>
+                </div>
+                <div className="form-field full"><label>Observação (opcional)</label>
+                  <input type="text" placeholder="Ex: Precisamos de 30 cadeiras" value={form.observacao} onChange={e=>setForm(f=>({...f,observacao:e.target.value}))}/>
+                </div>
+                <div className="form-field"><label>Recorrência</label>
+                  <select value={form.recorrencia} onChange={e=>setForm(f=>({...f,recorrencia:e.target.value}))}>
+                    <option value="nenhuma">Sem recorrência</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="quinzenal">Quinzenal</option>
+                    <option value="mensal">Mensal</option>
+                  </select>
+                </div>
+                {form.recorrencia!=="nenhuma"&&(
+                  <div className="form-field"><label>Repetir até *</label>
+                    <input type="date"
+                      min={toDateInput(new Date(anoAtual,mesAtual,diaSelecionado||1))}
+                      max={toDateInput(new Date(agora.getFullYear()+2,11,31))}
+                      value={form.recorrenciaFim}
+                      onChange={e=>setForm(f=>({...f,recorrenciaFim:e.target.value}))}
+                    />
+                  </div>
+                )}
+                <button className="btn-primary" disabled={enviando}>{enviando?"Enviando…":"Enviar Solicitação"}</button>
+              </form>
+            </>
+          ) : (
+            /* Tela de confirmação de sucesso */
+            <div style={{textAlign:"center",padding:"10px 0 4px"}}>
+              <div style={{fontSize:48,marginBottom:12}}>✅</div>
+              <h3 style={{color:"var(--primary-dark)",marginBottom:6}}>Reserva confirmada!</h3>
+              {sucessoReserva.totalCriadas>1 && (
+                <p style={{color:"var(--primary)",fontWeight:700,fontSize:14,margin:"0 0 8px"}}>
+                  🔁 {sucessoReserva.totalCriadas} datas criadas ({sucessoReserva.recorrencia})
+                </p>
+              )}
+              <div style={{background:"var(--surface-soft)",borderRadius:12,padding:"14px 16px",margin:"12px 0",textAlign:"left",fontSize:13.5,lineHeight:1.7}}>
+                <b>Sala:</b> {sucessoReserva.sala_nome}<br/>
+                <b>Evento:</b> {sucessoReserva.evento}<br/>
+                <b>Horário:</b> {sucessoReserva.hora_inicio} – {sucessoReserva.hora_fim}<br/>
+                <b>Solicitante:</b> {sucessoReserva.nomeSolicitante}<br/>
+                {sucessoReserva.observacao&&<><b>Obs:</b> {sucessoReserva.observacao}<br/></>}
+              </div>
+              <p style={{fontSize:12,color:"var(--ink-soft)"}}>Guarde essas informações — você precisará do nome para excluir a reserva se necessário.</p>
+              <button className="btn-primary" style={{marginTop:10}} onClick={fecharModal}>Fechar</button>
+            </div>
           )}
-
-          <form className="form-grid" onSubmit={enviarReserva}>
-            {erroReserva && <div className="form-error" style={{ display: "block" }}>{erroReserva}</div>}
-
-            <div className="form-field full">
-              <label>Solicitante</label>
-              <input
-                type="text" required placeholder="Seu nome completo"
-                value={formReserva.nome}
-                onChange={(e) => setFormReserva((f) => ({ ...f, nome: e.target.value }))}
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Data da solicitação</label>
-              <input type="text" disabled value={hoje.toLocaleDateString("pt-BR")} />
-            </div>
-
-            <div className="form-field">
-              <label>Sala / Nave</label>
-              <select value={formReserva.sala} onChange={(e) => setFormReserva((f) => ({ ...f, sala: e.target.value }))}>
-                {salas.map((s) => (
-                  <option key={s.id} value={s.nome}>{s.nome} ({s.tipo})</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-field full">
-              <label>Evento</label>
-              <input
-                type="text" required placeholder="Ex: Ensaio do coral"
-                value={formReserva.evento}
-                onChange={(e) => setFormReserva((f) => ({ ...f, evento: e.target.value }))}
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Início</label>
-              <input
-                type="time" required
-                value={formReserva.horaInicio}
-                onChange={(e) => setFormReserva((f) => ({ ...f, horaInicio: e.target.value }))}
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Término</label>
-              <input
-                type="time" required
-                value={formReserva.horaFim}
-                onChange={(e) => setFormReserva((f) => ({ ...f, horaFim: e.target.value }))}
-              />
-            </div>
-
-            <button className="btn-primary" disabled={enviandoReserva}>
-              {enviandoReserva ? "Enviando…" : "Enviar Solicitação"}
-            </button>
-          </form>
         </div>
       </div>
 
-      {/* MODAL ADMIN */}
-      <div className={"overlay" + (modalAdminAberto ? " show" : "")}>
-        <div className="modal" style={{ maxWidth: 380 }}>
-          <div className="modal-head">
-            <h3>Acesso Admin</h3>
-            <button onClick={() => setModalAdminAberto(false)}>✕</button>
-          </div>
-          <form className="form-grid" style={{ marginTop: 10 }} onSubmit={enviarLoginAdmin}>
-            {erroAdmin && <div className="form-error" style={{ display: "block" }}>{erroAdmin}</div>}
-            <div className="form-field full">
-              <label>Senha de administrador</label>
-              <input type="password" required value={senhaAdmin} onChange={(e) => setSenhaAdmin(e.target.value)} />
+      {/* ===== MODAL ADMIN ===== */}
+      <div className={"overlay"+(modalAdmin?" show":"")}>
+        <div className="modal" style={{maxWidth:380}}>
+          <div className="modal-head"><h3>Acesso Admin</h3><button onClick={()=>setModalAdmin(false)}>✕</button></div>
+          <form className="form-grid" style={{marginTop:10}} onSubmit={loginAdmin}>
+            {erroAdmin&&<div className="form-error" style={{display:"block"}}>{erroAdmin}</div>}
+            <div className="form-field full"><label>Senha de administrador</label>
+              <input type="password" required value={senhaAdmin} onChange={e=>setSenhaAdmin(e.target.value)}/>
             </div>
             <button className="btn-primary">Entrar</button>
           </form>
