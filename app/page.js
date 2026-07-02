@@ -342,10 +342,16 @@ export default function Page() {
                             {salas.map(s=>{
                               const resv = reservas.filter(r=>r.sala_nome===s.nome&&r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual)
                                 .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                              const bloqDia = bloqueios.filter(b=>b.sala_nome===s.nome&&b.dia_semana===dataD.getDay());
                               return (
                                 <td key={s.id} style={{padding:"4px 4px",textAlign:"center",verticalAlign:"top"}}
                                   onClick={()=>!passado&&!acimaDolimite&&(setSalaAtiva(s.nome),abrirModal(dia))}
                                 >
+                                  {bloqDia.map(b=>(
+                                    <div key={b.id} style={{background:"#D6483A",color:"#fff",borderRadius:6,padding:"3px 5px",fontSize:9,fontWeight:700,marginBottom:2,cursor:"default",opacity:0.85}}>
+                                      🚫 {b.hora_inicio}-{b.hora_fim}
+                                    </div>
+                                  ))}
                                   {resv.length>0 ? resv.map(r=>(
                                     <div key={r.id} style={{background:s.cor,color:"#fff",borderRadius:6,padding:"3px 5px",fontSize:10,fontWeight:700,marginBottom:2,cursor:"default"}}>
                                       {r.hora_inicio}-{r.hora_fim}
@@ -373,12 +379,18 @@ export default function Page() {
                     const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS;
                     const resv = reservas.filter(r=>r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual&&r.sala_nome===salaAtiva)
                       .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                    const bloqDia = bloqueios.filter(b=>b.sala_nome===salaAtiva&&b.dia_semana===dataD.getDay());
                     return (
                       <div key={dia} className={"day"+(ehHoje?" today":"")+(acimaDolimite?" fora-limite":"")}
                         onClick={()=>!acimaDolimite&&abrirModal(dia)}
                         title={acimaDolimite?`Reservas só até ${LIMITE_DIAS} dias no futuro`:""}
                       >
                         <div className="day-number">{dia}</div>
+                        {bloqDia.map(b=>(
+                          <div key={b.id} className="reserva-item" style={{background:"#D6483A",opacity:0.85,fontSize:"9.5px"}}>
+                            🚫 {b.hora_inicio}-{b.hora_fim} {b.descricao?`· ${b.descricao}`:""}
+                          </div>
+                        ))}
                         {resv.map(r=>(
                           <div key={r.id} className="reserva-item" style={{background:corAtiva?corAtiva.cor:"var(--primary)"}}>
                             {r.hora_inicio}-{r.hora_fim} · {r.evento}{r.recorrente?" 🔁":""}
