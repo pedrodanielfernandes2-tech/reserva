@@ -43,7 +43,7 @@ export default function Page() {
   // Modal reserva
   const [modalAberto, setModalAberto] = useState(false);
   const [diaSelecionado, setDiaSelecionado] = useState(null);
-  const [form, setForm] = useState({ nome:"", sala:"", evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"" });
+  const [form, setForm] = useState({ nome:"", sala:"", evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"", precisaSom:false, precisaProjecao:false });
   const [erroReserva, setErroReserva] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [sucessoReserva, setSucessoReserva] = useState(null);
@@ -132,7 +132,7 @@ export default function Page() {
     setDiaSelecionado(dia);
     setErroReserva("");
     setSucessoReserva(null);
-    setForm({ nome:"", sala: salaAtiva || (salas[0]?.nome||""), evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"" });
+    setForm({ nome:"", sala: salaAtiva || (salas[0]?.nome||""), evento:"", observacao:"", horaInicio:"", horaFim:"", recorrencia:"nenhuma", recorrenciaFim:"", precisaSom:false, precisaProjecao:false });
     setModalAberto(true);
   }
   function fecharModal() { setModalAberto(false); setSucessoReserva(null); }
@@ -155,7 +155,7 @@ export default function Page() {
       const res = await fetch("/api/reservas", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ nome:nome.trim(), sala, evento:evento.trim(), observacao:observacao.trim(), dia:diaSelecionado, mes:mesAtual, ano:anoAtual, horaInicio, horaFim, recorrencia, recorrenciaFim }),
+        body: JSON.stringify({ nome:nome.trim(), sala, evento:evento.trim(), observacao:observacao.trim(), dia:diaSelecionado, mes:mesAtual, ano:anoAtual, horaInicio, horaFim, recorrencia, recorrenciaFim, precisaSom: form.precisaSom, precisaProjecao: form.precisaProjecao }),
       });
       const data = await res.json();
       if (!res.ok) { setErroReserva(data.erro || "Não foi possível concluir a reserva."); return; }
@@ -272,7 +272,6 @@ export default function Page() {
             {[
               ["calendario","📅","Calendário"],
               ["reservaInfo","🗒️","Reservas do Dia"],
-              ["salas","🏛️","Cadastro de Salas"],
               ["config","⚙️","Configurações"],
             ].map(([id,ico,label])=>(
               <button key={id} className={"nav-btn"+(secao===id?" active":"")} onClick={()=>setSecao(id)}>
@@ -434,6 +433,11 @@ export default function Page() {
                         <b>{r.evento}{r.recorrente?" 🔁":""}</b>
                         <span>{dFmt} · {r.hora_inicio} às {r.hora_fim} · {r.nome}</span>
                         {r.observacao&&<span style={{fontStyle:"italic",color:"var(--ink-soft)"}}>📝 {r.observacao}</span>}
+                        {(r.precisa_som||r.precisa_projecao)&&(
+                          <span style={{color:"var(--primary-dark)",fontSize:12,fontWeight:600}}>
+                            {r.precisa_som?"🎤 Som":""}{r.precisa_som&&r.precisa_projecao?" · ":""}{r.precisa_projecao?"📽️ Projeção":""}
+                          </span>
+                        )}
                       </div>
                       <div className="res-actions"><button onClick={()=>excluirReserva(r)}>Excluir</button></div>
                     </li>
@@ -491,90 +495,6 @@ export default function Page() {
             </div>
           )}
 
-          {/* ===== CADASTRO DE SALAS ===== */}
-          {secao==="salas"&&(
-            <div className="block">
-              <h3>Cadastro de Salas e Nave</h3>
-              <p className="block-sub">Área restrita — apenas administradores.</p>
-
-              {adminMode ? (
-                <>
-                  <form className="form-grid" style={{marginTop:18}} onSubmit={cadastrarSala}>
-                    {erroSala&&<div className="form-error" style={{display:"block"}}>{erroSala}</div>}
-                    <div className="form-field"><label>Nome</label>
-                      <input type="text" required placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
-                    </div>
-                    <div className="form-field"><label>Tipo</label>
-                      <select value={formSala.tipo} onChange={e=>setFormSala(f=>({...f,tipo:e.target.value}))}>
-                        <option value="Sala">Sala</option>
-                        <option value="Nave">Nave</option>
-                      </select>
-                    </div>
-                    <button className="btn-primary">Cadastrar Ambiente</button>
-                  </form>
-
-                  <div className="sala-chip-list">
-                    {salas.map(s=>(
-                      <div className="sala-chip" key={s.id}>
-                        <span className="swatch" style={{background:s.cor}}/>
-                        <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
-                        <button className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Bloqueios fixos */}
-                  <h3 style={{marginTop:32,fontSize:17}}>🚫 Horários Bloqueados Fixos</h3>
-                  <p className="block-sub">Cultos e eventos regulares que nunca podem ser reservados por cima.</p>
-
-                  <form className="form-grid" style={{marginTop:14}} onSubmit={cadastrarBloqueio}>
-                    {erroBloqueio&&<div className="form-error" style={{display:"block"}}>{erroBloqueio}</div>}
-                    <div className="form-field"><label>Sala / Nave</label>
-                      <select value={formBloqueio.sala_nome} onChange={e=>setFormBloqueio(f=>({...f,sala_nome:e.target.value}))}>
-                        <option value="">Selecione…</option>
-                        {salas.map(s=><option key={s.id} value={s.nome}>{s.nome}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-field"><label>Dia da semana</label>
-                      <select value={formBloqueio.dia_semana} onChange={e=>setFormBloqueio(f=>({...f,dia_semana:e.target.value}))}>
-                        {DIAS_SEMANA_FULL.map((d,i)=><option key={i} value={i}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-field"><label>Início</label>
-                      <input type="time" value={formBloqueio.hora_inicio} onChange={e=>setFormBloqueio(f=>({...f,hora_inicio:e.target.value}))}/>
-                    </div>
-                    <div className="form-field"><label>Término</label>
-                      <input type="time" value={formBloqueio.hora_fim} onChange={e=>setFormBloqueio(f=>({...f,hora_fim:e.target.value}))}/>
-                    </div>
-                    <div className="form-field full"><label>Descrição (ex: Culto dominical)</label>
-                      <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
-                    </div>
-                    <button className="btn-primary">Adicionar Bloqueio</button>
-                  </form>
-
-                  <div className="sala-chip-list" style={{marginTop:16}}>
-                    {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado cadastrado.</div>}
-                    {bloqueios.map(b=>(
-                      <div className="sala-chip" key={b.id}>
-                        <span className="swatch" style={{background:"#D6483A"}}/>
-                        <div className="info">
-                          <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
-                          <span>{b.descricao||"Sem descrição"}</span>
-                        </div>
-                        <button className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="locked-box">
-                  <span className="ico">🔒</span>
-                  <h4>Acesso restrito</h4>
-                  <p>Entre como administrador para gerenciar salas e bloqueios.</p>
-                </div>
-              )}
-            </div>
-          )}
         </main>
       </div>
 
@@ -649,6 +569,86 @@ export default function Page() {
             <button className="btn-primary" style={{width:"100%"}} disabled={salvandoConfig}>
               {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
             </button>
+
+            {/* Salas e Bloqueios dentro das Configurações */}
+            <div className="config-section-title" style={{marginTop:24}}>🏛️ Salas e Nave</div>
+
+            <form onSubmit={cadastrarSala} style={{marginBottom:12}}>
+              {erroSala&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroSala}</div>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                <div className="form-field" style={{margin:0}}>
+                  <label>Nome</label>
+                  <input type="text" required placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
+                </div>
+                <div className="form-field" style={{margin:0}}>
+                  <label>Tipo</label>
+                  <select value={formSala.tipo} onChange={e=>setFormSala(f=>({...f,tipo:e.target.value}))}>
+                    <option value="Sala">Sala</option>
+                    <option value="Nave">Nave</option>
+                  </select>
+                </div>
+              </div>
+              <button className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}>+ Cadastrar Ambiente</button>
+            </form>
+
+            <div className="sala-chip-list" style={{marginBottom:20}}>
+              {salas.map(s=>(
+                <div className="sala-chip" key={s.id}>
+                  <span className="swatch" style={{background:s.cor}}/>
+                  <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
+                  <button className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirSala(s)}>Excluir</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="config-section-title">🚫 Horários Bloqueados</div>
+            <form onSubmit={cadastrarBloqueio} style={{marginBottom:12}}>
+              {erroBloqueio&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroBloqueio}</div>}
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:8}}>
+                <div className="form-field" style={{margin:0}}>
+                  <label>Sala / Nave</label>
+                  <select value={formBloqueio.sala_nome} onChange={e=>setFormBloqueio(f=>({...f,sala_nome:e.target.value}))}>
+                    <option value="">Selecione…</option>
+                    {salas.map(s=><option key={s.id} value={s.nome}>{s.nome}</option>)}
+                  </select>
+                </div>
+                <div className="form-field" style={{margin:0}}>
+                  <label>Dia da semana</label>
+                  <select value={formBloqueio.dia_semana} onChange={e=>setFormBloqueio(f=>({...f,dia_semana:e.target.value}))}>
+                    {DIAS_SEMANA_FULL.map((d,i)=><option key={i} value={i}>{d}</option>)}
+                  </select>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div className="form-field" style={{margin:0}}>
+                    <label>Início</label>
+                    <input type="time" value={formBloqueio.hora_inicio} onChange={e=>setFormBloqueio(f=>({...f,hora_inicio:e.target.value}))}/>
+                  </div>
+                  <div className="form-field" style={{margin:0}}>
+                    <label>Término</label>
+                    <input type="time" value={formBloqueio.hora_fim} onChange={e=>setFormBloqueio(f=>({...f,hora_fim:e.target.value}))}/>
+                  </div>
+                </div>
+                <div className="form-field" style={{margin:0}}>
+                  <label>Descrição</label>
+                  <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
+                </div>
+              </div>
+              <button className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}>+ Adicionar Bloqueio</button>
+            </form>
+
+            <div className="sala-chip-list">
+              {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado.</div>}
+              {bloqueios.map(b=>(
+                <div className="sala-chip" key={b.id}>
+                  <span className="swatch" style={{background:"#D6483A"}}/>
+                  <div className="info">
+                    <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
+                    <span>{b.descricao||"Sem descrição"}</span>
+                  </div>
+                  <button className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
+                </div>
+              ))}
+            </div>
           </form>
         )}
       </div>
@@ -695,6 +695,25 @@ export default function Page() {
                 <div className="form-field full"><label>Observação (opcional)</label>
                   <input type="text" placeholder="Ex: Precisamos de 30 cadeiras" value={form.observacao} onChange={e=>setForm(f=>({...f,observacao:e.target.value}))}/>
                 </div>
+
+                {/* Checkboxes de recursos — só para a Nave */}
+                {salas.find(s=>s.nome===form.sala)?.tipo==="Nave" && (
+                  <div className="form-field full">
+                    <label>Irei precisar de:</label>
+                    <div style={{display:"flex",gap:20,marginTop:6,flexWrap:"wrap"}}>
+                      <label style={{display:"flex",alignItems:"center",gap:8,fontWeight:600,fontSize:14,cursor:"pointer"}}>
+                        <input type="checkbox" checked={form.precisaSom} onChange={e=>setForm(f=>({...f,precisaSom:e.target.checked}))}
+                          style={{width:18,height:18,accentColor:"var(--primary)",cursor:"pointer"}}/>
+                        🎤 Som
+                      </label>
+                      <label style={{display:"flex",alignItems:"center",gap:8,fontWeight:600,fontSize:14,cursor:"pointer"}}>
+                        <input type="checkbox" checked={form.precisaProjecao} onChange={e=>setForm(f=>({...f,precisaProjecao:e.target.checked}))}
+                          style={{width:18,height:18,accentColor:"var(--primary)",cursor:"pointer"}}/>
+                        📽️ Projeção (Telão)
+                      </label>
+                    </div>
+                  </div>
+                )}
                 <div className="form-field"><label>Recorrência</label>
                   <select value={form.recorrencia} onChange={e=>setForm(f=>({...f,recorrencia:e.target.value}))}>
                     <option value="nenhuma">Sem recorrência</option>
@@ -732,6 +751,8 @@ export default function Page() {
                 <b>Horário:</b> {sucessoReserva.hora_inicio} – {sucessoReserva.hora_fim}<br/>
                 <b>Solicitante:</b> {sucessoReserva.nomeSolicitante}<br/>
                 {sucessoReserva.observacao&&<><b>Obs:</b> {sucessoReserva.observacao}<br/></>}
+                {(sucessoReserva.precisa_som||sucessoReserva.precisaSom)&&<><b>Recursos:</b> 🎤 Som{(sucessoReserva.precisa_projecao||sucessoReserva.precisaProjecao)?" · 📽️ Projeção":""}<br/></>}
+                {!(sucessoReserva.precisa_som||sucessoReserva.precisaSom)&&(sucessoReserva.precisa_projecao||sucessoReserva.precisaProjecao)&&<><b>Recursos:</b> 📽️ Projeção (Telão)<br/></>}
               </div>
               <p style={{fontSize:12,color:"var(--ink-soft)"}}>Guarde essas informações — você precisará do nome para excluir a reserva se necessário.</p>
               <button className="btn-primary" style={{marginTop:10}} onClick={fecharModal}>Fechar</button>
