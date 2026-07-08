@@ -55,6 +55,8 @@ export async function POST(request) {
   const horaFim        = body.horaFim;
   const recorrencia    = body.recorrencia || "nenhuma";
   const recorrenciaFim = body.recorrenciaFim || "";
+  const precisaSom     = Boolean(body.precisaSom);
+  const precisaProjecao = Boolean(body.precisaProjecao);
 
   if (!sala || !nome || !evento || !horaInicio || !horaFim || isNaN(dia)) {
     return NextResponse.json({ erro: "Preencha todos os campos obrigatórios." }, { status: 400 });
@@ -66,13 +68,17 @@ export async function POST(request) {
     return NextResponse.json({ erro: "Informe a data final da recorrência." }, { status: 400 });
   }
 
+  const { getConfig } = await import("@/lib/db");
+  const cfg = await getConfig().catch(()=>({}));
+  const LIMITE = parseInt(cfg.limite_dias || "60", 10);
+
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const dataReserva = new Date(ano, mes, dia);
   const diffDias = Math.round((dataReserva - hoje) / 86400000);
-  if (diffDias > LIMITE_ANTECEDENCIA_DIAS) {
+  if (diffDias > LIMITE) {
     return NextResponse.json(
-      { erro: `Reservas podem ser feitas com no máximo ${LIMITE_ANTECEDENCIA_DIAS} dias de antecedência.` },
+      { erro: `Reservas podem ser feitas com no máximo ${LIMITE} dias de antecedência.` },
       { status: 400 }
     );
   }
@@ -125,12 +131,12 @@ export async function POST(request) {
     const id = crypto.randomUUID();
     ids.push(id);
     await sql`
-      INSERT INTO reservas (id, sala_nome, nome, evento, observacao, dia, mes, ano, hora_inicio, hora_fim, recorrente, recorrencia, recorrencia_fim)
-      VALUES (${id}, ${sala}, ${nome}, ${evento}, ${observacao}, ${d.dia}, ${d.mes}, ${d.ano}, ${horaInicio}, ${horaFim}, ${recorrencia !== "nenhuma"}, ${recorrencia}, ${recorrenciaFim});
+      INSERT INTO reservas (id, sala_nome, nome, evento, observacao, dia, mes, ano, hora_inicio, hora_fim, recorrente, recorrencia, recorrencia_fim, precisa_som, precisa_projecao)
+      VALUES (${id}, ${sala}, ${nome}, ${evento}, ${observacao}, ${d.dia}, ${d.mes}, ${d.ano}, ${horaInicio}, ${horaFim}, ${recorrencia !== "nenhuma"}, ${recorrencia}, ${recorrenciaFim}, ${precisaSom}, ${precisaProjecao});
     `;
   }
 
-  await notificarAdminEmail({ sala, nome, evento, observacao, dia, mes, ano, horaInicio, horaFim, recorrencia, totalDatas: datas.length });
+  await notificarAdminEmail({ sala, nome, evento, observacao, dia, mes, ano, horaInicio, horaFim, recorrencia, totalDatas: datas.length, precisaSom, precisaProjecao });
 
   const primeiras = await sql`SELECT * FROM reservas WHERE id = ${ids[0]};`;
   return NextResponse.json({ ...primeiras[0], totalCriadas: datas.length }, { status: 201 });
