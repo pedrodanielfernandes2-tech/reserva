@@ -57,8 +57,18 @@ export default function Page() {
   const [formSala, setFormSala] = useState({ nome:"", tipo:"Sala" });
   const [erroSala, setErroSala] = useState("");
 
-  // Bloqueios
-  const [formBloqueio, setFormBloqueio] = useState({ sala_nome:"", dia_semana:"0", hora_inicio:"", hora_fim:"", descricao:"" });
+  // Configurações
+  const [config, setConfig] = useState({ email_from:"", email_admin:"", limite_dias:"60", email_mensagem:"" });
+  const [salvandoConfig, setSalvandoConfig] = useState(false);
+  const [sucessoConfig, setSucessoConfig] = useState(false);
+
+  const carregarConfig = useCallback(async () => {
+    try {
+      const res = await fetch("/api/config");
+      const data = await res.json();
+      setConfig(data);
+    } catch(e) { console.error("Erro ao carregar config:", e); }
+  }, []);
   const [erroBloqueio, setErroBloqueio] = useState("");
 
   // Relatório
@@ -66,31 +76,42 @@ export default function Page() {
   const [buscaRelatorio, setBuscaRelatorio] = useState("");
 
   const carregarSalas = useCallback(async () => {
-    const res = await fetch("/api/salas");
-    const data = await res.json();
-    setSalas(data);
-    if (!salaAtiva && data.length > 0) setSalaAtiva(data[0].nome);
+    try {
+      const res = await fetch("/api/salas");
+      const data = await res.json();
+      setSalas(Array.isArray(data) ? data : []);
+      if (!salaAtiva && Array.isArray(data) && data.length > 0) setSalaAtiva(data[0].nome);
+    } catch(e) { console.error("Erro ao carregar salas:", e); }
   }, [salaAtiva]);
 
   const carregarReservas = useCallback(async () => {
-    const res = await fetch("/api/reservas");
-    const data = await res.json();
-    setReservas(Array.isArray(data) ? data : []);
+    try {
+      const res = await fetch("/api/reservas");
+      const data = await res.json();
+      setReservas(Array.isArray(data) ? data : []);
+    } catch(e) { console.error("Erro ao carregar reservas:", e); }
   }, []);
 
   const carregarBloqueios = useCallback(async () => {
-    const res = await fetch("/api/bloqueios");
-    const data = await res.json();
-    setBloqueios(Array.isArray(data) ? data : []);
+    try {
+      const res = await fetch("/api/bloqueios");
+      const data = await res.json();
+      setBloqueios(Array.isArray(data) ? data : []);
+    } catch(e) { console.error("Erro ao carregar bloqueios:", e); }
   }, []);
 
   useEffect(() => {
     setVersiculo(VERSICULOS[Math.floor(Math.random()*VERSICULOS.length)]);
     (async () => {
-      await Promise.all([carregarSalas(), carregarReservas(), carregarBloqueios()]);
-      const s = await (await fetch("/api/admin/status")).json();
-      setAdminMode(Boolean(s.admin));
-      setCarregando(false);
+      try {
+        await Promise.all([carregarSalas(), carregarReservas(), carregarBloqueios(), carregarConfig()]);
+        const s = await (await fetch("/api/admin/status")).json();
+        setAdminMode(Boolean(s.admin));
+      } catch(e) {
+        console.error("Erro ao carregar dados:", e);
+      } finally {
+        setCarregando(false);
+      }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -104,8 +125,8 @@ export default function Page() {
   function abrirModal(dia) {
     const dataEscolhida = new Date(anoAtual, mesAtual, dia);
     const diffDias = Math.round((dataEscolhida - hoje()) / 86400000);
-    if (diffDias > LIMITE_DIAS) {
-      alert(`Só é possível reservar com até ${LIMITE_DIAS} dias de antecedência.`);
+    if (diffDias > LIMITE_DIAS_EFETIVO) {
+      alert(`Só é possível reservar com até ${LIMITE_DIAS_EFETIVO} dias de antecedência.`);
       return;
     }
     setDiaSelecionado(dia);
@@ -227,8 +248,7 @@ export default function Page() {
   const anoBase = agora.getFullYear();
   const anos = [anoBase-1,anoBase,anoBase+1,anoBase+2];
 
-  // Limite de antecedência visual
-  const limiteData = new Date(hoje()); limiteData.setDate(limiteData.getDate()+LIMITE_DIAS);
+  const LIMITE_DIAS_EFETIVO = parseInt(config.limite_dias || "60", 10);
 
   if (carregando) return <div style={{padding:40,fontFamily:"Manrope,sans-serif"}}>Carregando…</div>;
 
@@ -253,6 +273,7 @@ export default function Page() {
               ["calendario","📅","Calendário"],
               ["reservaInfo","🗒️","Reservas do Dia"],
               ["salas","🏛️","Cadastro de Salas"],
+              ["config","⚙️","Configurações"],
             ].map(([id,ico,label])=>(
               <button key={id} className={"nav-btn"+(secao===id?" active":"")} onClick={()=>setSecao(id)}>
                 <span className="ico">{ico}</span> {label}
@@ -333,7 +354,7 @@ export default function Page() {
                         const dataD = new Date(anoAtual,mesAtual,dia);
                         const ehHoje = dia===agora.getDate()&&mesAtual===agora.getMonth()&&anoAtual===agora.getFullYear();
                         const passado = dataD < hoje();
-                        const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS;
+                        const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS_EFETIVO;
                         return (
                           <tr key={dia} style={{borderBottom:"1px solid var(--border)",opacity:passado?0.4:1}}>
                             <td style={{padding:"6px 4px",fontWeight:ehHoje?800:500,color:ehHoje?"var(--primary)":"var(--ink)",fontSize:13}}>
@@ -376,14 +397,14 @@ export default function Page() {
                   {diasDoMes.map(dia=>{
                     const dataD = new Date(anoAtual,mesAtual,dia);
                     const ehHoje = dia===agora.getDate()&&mesAtual===agora.getMonth()&&anoAtual===agora.getFullYear();
-                    const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS;
+                    const acimaDolimite = Math.round((dataD-hoje())/86400000) > LIMITE_DIAS_EFETIVO;
                     const resv = reservas.filter(r=>r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual&&r.sala_nome===salaAtiva)
                       .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
                     const bloqDia = bloqueios.filter(b=>b.sala_nome===salaAtiva&&b.dia_semana===dataD.getDay());
                     return (
                       <div key={dia} className={"day"+(ehHoje?" today":"")+(acimaDolimite?" fora-limite":"")}
                         onClick={()=>!acimaDolimite&&abrirModal(dia)}
-                        title={acimaDolimite?`Reservas só até ${LIMITE_DIAS} dias no futuro`:""}
+                        title={acimaDolimite?`Reservas só até ${LIMITE_DIAS_EFETIVO} dias no futuro`:""}
                       >
                         <div className="day-number">{dia}</div>
                         {bloqDia.map(b=>(
@@ -559,7 +580,86 @@ export default function Page() {
 
       <footer className="app-footer">Assembleia de Deus Louveira · Sistema de Reserva de Ambientes</footer>
 
-      {/* ===== MODAL RESERVA ===== */}
+          {/* ===== CONFIGURAÇÕES ===== */}
+          {secao==="config"&&(
+            <div className="block">
+              <h3>⚙️ Configurações</h3>
+              <p className="block-sub">Ajuste as configurações do sistema. Apenas administradores podem salvar.</p>
+
+              {!adminMode && (
+                <div className="locked-box">
+                  <span className="ico">🔒</span>
+                  <h4>Acesso restrito</h4>
+                  <p>Entre como administrador para alterar as configurações.</p>
+                </div>
+              )}
+
+              {adminMode && (
+                <form className="form-grid" style={{marginTop:20}} onSubmit={async e=>{
+                  e.preventDefault();
+                  setSalvandoConfig(true);
+                  setSucessoConfig(false);
+                  try {
+                    const res = await fetch("/api/config",{
+                      method:"POST",
+                      headers:{"Content-Type":"application/json"},
+                      body: JSON.stringify(config),
+                    });
+                    if (res.ok) { setSucessoConfig(true); setTimeout(()=>setSucessoConfig(false),3000); }
+                  } finally { setSalvandoConfig(false); }
+                }}>
+
+                  {sucessoConfig&&(
+                    <div style={{gridColumn:"1/-1",background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"10px 14px",fontWeight:700,fontSize:13}}>
+                      ✅ Configurações salvas com sucesso!
+                    </div>
+                  )}
+
+                  <h4 style={{gridColumn:"1/-1",margin:"4px 0 0",fontFamily:"Fraunces,serif",color:"var(--primary-dark)"}}>📧 E-mail</h4>
+
+                  <div className="form-field full">
+                    <label>Remetente (EMAIL_FROM)</label>
+                    <input type="email" placeholder="onboarding@resend.dev"
+                      value={config.email_from||""}
+                      onChange={e=>setConfig(c=>({...c,email_from:e.target.value}))}/>
+                    <small style={{color:"var(--ink-soft)",fontSize:11}}>No plano gratuito do Resend use onboarding@resend.dev. Com domínio próprio verificado, use qualquer endereço.</small>
+                  </div>
+
+                  <div className="form-field full">
+                    <label>Destinatários (EMAIL_ADMIN)</label>
+                    <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
+                      value={config.email_admin||""}
+                      onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
+                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe múltiplos e-mails por vírgula.</small>
+                  </div>
+
+                  <div className="form-field full">
+                    <label>Mensagem personalizada no e-mail de aviso</label>
+                    <input type="text" placeholder="Ex: Para dúvidas, fale com a secretaria pelo WhatsApp."
+                      value={config.email_mensagem||""}
+                      onChange={e=>setConfig(c=>({...c,email_mensagem:e.target.value}))}/>
+                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Aparece no rodapé do e-mail enviado aos administradores.</small>
+                  </div>
+
+                  <h4 style={{gridColumn:"1/-1",margin:"8px 0 0",fontFamily:"Fraunces,serif",color:"var(--primary-dark)"}}>⏱️ Reservas</h4>
+
+                  <div className="form-field">
+                    <label>Limite de antecedência (dias)</label>
+                    <input type="number" min="1" max="365" placeholder="60"
+                      value={config.limite_dias||"60"}
+                      onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
+                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar.</small>
+                  </div>
+
+                  <button className="btn-primary" disabled={salvandoConfig}>
+                    {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* ===== MODAL RESERVA ===== */}
       <div className={"overlay"+(modalAberto?" show":"")}>
         <div className="modal">
           {!sucessoReserva ? (
