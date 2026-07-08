@@ -580,84 +580,80 @@ export default function Page() {
 
       <footer className="app-footer">Assembleia de Deus Louveira · Sistema de Reserva de Ambientes</footer>
 
-          {/* ===== CONFIGURAÇÕES ===== */}
-          {secao==="config"&&(
-            <div className="block">
-              <h3>⚙️ Configurações</h3>
-              <p className="block-sub">Ajuste as configurações do sistema. Apenas administradores podem salvar.</p>
+      {/* ===== PAINEL CONFIGURAÇÕES (drawer lateral direito) ===== */}
+      <div className={"config-overlay"+(secao==="config"?" show":"")} onClick={()=>setSecao("calendario")}/>
+      <div className={"config-drawer"+(secao==="config"?" show":"")}>
+        <div className="config-drawer-head">
+          <h3>⚙️ Configurações</h3>
+          <button onClick={()=>setSecao("calendario")}>✕</button>
+        </div>
+        <p className="block-sub" style={{marginBottom:16}}>Apenas administradores podem salvar.</p>
 
-              {!adminMode && (
-                <div className="locked-box">
-                  <span className="ico">🔒</span>
-                  <h4>Acesso restrito</h4>
-                  <p>Entre como administrador para alterar as configurações.</p>
-                </div>
-              )}
+        {!adminMode ? (
+          <div className="locked-box">
+            <span className="ico">🔒</span>
+            <h4>Acesso restrito</h4>
+            <p>Entre como administrador para alterar as configurações.</p>
+          </div>
+        ) : (
+          <form onSubmit={async e=>{
+            e.preventDefault();
+            setSalvandoConfig(true); setSucessoConfig(false);
+            try {
+              const res = await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(config)});
+              if (res.ok) { setSucessoConfig(true); setTimeout(()=>setSucessoConfig(false),3000); }
+            } finally { setSalvandoConfig(false); }
+          }}>
 
-              {adminMode && (
-                <form className="form-grid" style={{marginTop:20}} onSubmit={async e=>{
-                  e.preventDefault();
-                  setSalvandoConfig(true);
-                  setSucessoConfig(false);
-                  try {
-                    const res = await fetch("/api/config",{
-                      method:"POST",
-                      headers:{"Content-Type":"application/json"},
-                      body: JSON.stringify(config),
-                    });
-                    if (res.ok) { setSucessoConfig(true); setTimeout(()=>setSucessoConfig(false),3000); }
-                  } finally { setSalvandoConfig(false); }
-                }}>
+            {sucessoConfig&&(
+              <div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"10px 14px",fontWeight:700,fontSize:13,marginBottom:14}}>
+                ✅ Salvo com sucesso!
+              </div>
+            )}
 
-                  {sucessoConfig&&(
-                    <div style={{gridColumn:"1/-1",background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"10px 14px",fontWeight:700,fontSize:13}}>
-                      ✅ Configurações salvas com sucesso!
-                    </div>
-                  )}
+            <div className="config-section-title">📧 E-mail</div>
 
-                  <h4 style={{gridColumn:"1/-1",margin:"4px 0 0",fontFamily:"Fraunces,serif",color:"var(--primary-dark)"}}>📧 E-mail</h4>
-
-                  <div className="form-field full">
-                    <label>Remetente (EMAIL_FROM)</label>
-                    <input type="email" placeholder="onboarding@resend.dev"
-                      value={config.email_from||""}
-                      onChange={e=>setConfig(c=>({...c,email_from:e.target.value}))}/>
-                    <small style={{color:"var(--ink-soft)",fontSize:11}}>No plano gratuito do Resend use onboarding@resend.dev. Com domínio próprio verificado, use qualquer endereço.</small>
-                  </div>
-
-                  <div className="form-field full">
-                    <label>Destinatários (EMAIL_ADMIN)</label>
-                    <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
-                      value={config.email_admin||""}
-                      onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
-                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe múltiplos e-mails por vírgula.</small>
-                  </div>
-
-                  <div className="form-field full">
-                    <label>Mensagem personalizada no e-mail de aviso</label>
-                    <input type="text" placeholder="Ex: Para dúvidas, fale com a secretaria pelo WhatsApp."
-                      value={config.email_mensagem||""}
-                      onChange={e=>setConfig(c=>({...c,email_mensagem:e.target.value}))}/>
-                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Aparece no rodapé do e-mail enviado aos administradores.</small>
-                  </div>
-
-                  <h4 style={{gridColumn:"1/-1",margin:"8px 0 0",fontFamily:"Fraunces,serif",color:"var(--primary-dark)"}}>⏱️ Reservas</h4>
-
-                  <div className="form-field">
-                    <label>Limite de antecedência (dias)</label>
-                    <input type="number" min="1" max="365" placeholder="60"
-                      value={config.limite_dias||"60"}
-                      onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
-                    <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar.</small>
-                  </div>
-
-                  <button className="btn-primary" disabled={salvandoConfig}>
-                    {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
-                  </button>
-                </form>
-              )}
+            <div className="form-field" style={{marginBottom:12}}>
+              <label>Remetente</label>
+              <input type="text" placeholder="onboarding@resend.dev"
+                value={config.email_from||""}
+                onChange={e=>setConfig(c=>({...c,email_from:e.target.value}))}/>
+              <small style={{color:"var(--ink-soft)",fontSize:11}}>Plano gratuito: use onboarding@resend.dev</small>
             </div>
-          )}
+
+            <div className="form-field" style={{marginBottom:12}}>
+              <label>Destinatários</label>
+              <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
+                value={config.email_admin||""}
+                onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
+              <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe múltiplos por vírgula</small>
+            </div>
+
+            <div className="form-field" style={{marginBottom:16}}>
+              <label>Mensagem no rodapé do e-mail</label>
+              <input type="text" placeholder="Ex: Dúvidas? Fale com a secretaria."
+                value={config.email_mensagem||""}
+                onChange={e=>setConfig(c=>({...c,email_mensagem:e.target.value}))}/>
+            </div>
+
+            <div className="config-section-title">⏱️ Reservas</div>
+
+            <div className="form-field" style={{marginBottom:20}}>
+              <label>Limite de antecedência (dias)</label>
+              <input type="number" min="1" max="365"
+                value={config.limite_dias||"60"}
+                onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
+              <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro permitidos</small>
+            </div>
+
+            <button className="btn-primary" style={{width:"100%"}} disabled={salvandoConfig}>
+              {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
+            </button>
+          </form>
+        )}
+      </div>
+
+          {/* ===== CONFIGURAÇÕES (painel lateral direito) ===== */}
 
           {/* ===== MODAL RESERVA ===== */}
       <div className={"overlay"+(modalAberto?" show":"")}>
