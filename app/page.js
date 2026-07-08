@@ -615,10 +615,10 @@ export default function Page() {
 
             <div className="form-field" style={{marginBottom:12}}>
               <label>Remetente</label>
-              <input type="text" placeholder="onboarding@resend.dev"
-                value={config.email_from||""}
-                onChange={e=>setConfig(c=>({...c,email_from:e.target.value}))}/>
-              <small style={{color:"var(--ink-soft)",fontSize:11}}>Plano gratuito: use onboarding@resend.dev</small>
+              <div style={{padding:"10px 13px",background:"var(--surface-soft)",borderRadius:11,fontSize:13.5,color:"var(--ink-soft)",border:"1.5px solid var(--border)"}}>
+                📨 Conta Gmail configurada na Vercel
+              </div>
+              <small style={{color:"var(--ink-soft)",fontSize:11}}>O remetente é fixo — é o e-mail da variável GMAIL_USER na Vercel.</small>
             </div>
 
             <div className="form-field" style={{marginBottom:12}}>
