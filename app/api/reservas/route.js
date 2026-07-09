@@ -83,12 +83,27 @@ export async function POST(request) {
     );
   }
 
+  // Verificar bloqueios fixos (dia da semana)
   const diaSemana = dataReserva.getDay();
   const bloqueios = await sql`SELECT * FROM bloqueios WHERE sala_nome = ${sala} AND dia_semana = ${diaSemana};`;
   for (const b of bloqueios) {
     if (conflita(horaInicio, horaFim, b.hora_inicio, b.hora_fim)) {
       return NextResponse.json(
         { erro: `Este horário está bloqueado para ${sala} (${b.descricao || "horário reservado"}).` },
+        { status: 409 }
+      );
+    }
+  }
+
+  // Verificar eventos da Sede na data específica (afetam todas as salas)
+  const eventosSede = await sql`
+    SELECT * FROM eventos_igreja
+    WHERE tipo = 'sede' AND dia = ${dia} AND mes = ${mes} AND ano = ${ano};
+  `;
+  for (const ev of eventosSede) {
+    if (conflita(horaInicio, horaFim, ev.hora_inicio, ev.hora_fim)) {
+      return NextResponse.json(
+        { erro: `Este horário conflita com o evento da igreja: "${ev.nome}" (${ev.hora_inicio}–${ev.hora_fim}).` },
         { status: 409 }
       );
     }
