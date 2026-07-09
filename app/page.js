@@ -189,7 +189,8 @@ export default function Page() {
 
   // ---- SALAS ----
   async function cadastrarSala(e) {
-    e.preventDefault(); setErroSala("");
+    if(e && e.preventDefault) e.preventDefault();
+    setErroSala("");
     if (!formSala.nome.trim()) { setErroSala("Informe um nome."); return; }
     const res = await fetch("/api/salas",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(formSala) });
     const d = await res.json();
@@ -205,7 +206,8 @@ export default function Page() {
 
   // ---- BLOQUEIOS ----
   async function cadastrarBloqueio(e) {
-    e.preventDefault(); setErroBloqueio("");
+    if(e && e.preventDefault) e.preventDefault();
+    setErroBloqueio("");
     if (!formBloqueio.sala_nome||!formBloqueio.hora_inicio||!formBloqueio.hora_fim) {
       setErroBloqueio("Preencha todos os campos."); return;
     }
@@ -573,12 +575,12 @@ export default function Page() {
             {/* Salas e Bloqueios dentro das Configurações */}
             <div className="config-section-title" style={{marginTop:24}}>🏛️ Salas e Nave</div>
 
-            <form onSubmit={cadastrarSala} style={{marginBottom:12}}>
+            <div style={{marginBottom:12}}>
               {erroSala&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroSala}</div>}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
                 <div className="form-field" style={{margin:0}}>
                   <label>Nome</label>
-                  <input type="text" required placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
+                  <input type="text" placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
                 </div>
                 <div className="form-field" style={{margin:0}}>
                   <label>Tipo</label>
@@ -588,21 +590,22 @@ export default function Page() {
                   </select>
                 </div>
               </div>
-              <button className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}>+ Cadastrar Ambiente</button>
-            </form>
+              <button type="button" className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}
+                onClick={e=>cadastrarSala(e)}>+ Cadastrar Ambiente</button>
+            </div>
 
             <div className="sala-chip-list" style={{marginBottom:20}}>
               {salas.map(s=>(
                 <div className="sala-chip" key={s.id}>
                   <span className="swatch" style={{background:s.cor}}/>
                   <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
-                  <button className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirSala(s)}>Excluir</button>
+                  <button type="button" className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirSala(s)}>Excluir</button>
                 </div>
               ))}
             </div>
 
             <div className="config-section-title">🚫 Horários Bloqueados</div>
-            <form onSubmit={cadastrarBloqueio} style={{marginBottom:12}}>
+            <div style={{marginBottom:12}}>
               {erroBloqueio&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroBloqueio}</div>}
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:8}}>
                 <div className="form-field" style={{margin:0}}>
@@ -633,8 +636,9 @@ export default function Page() {
                   <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
                 </div>
               </div>
-              <button className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}>+ Adicionar Bloqueio</button>
-            </form>
+              <button type="button" className="btn-primary" style={{width:"100%",padding:10,fontSize:13}}
+                onClick={e=>cadastrarBloqueio(e)}>+ Adicionar Bloqueio</button>
+            </div>
 
             <div className="sala-chip-list">
               {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado.</div>}
@@ -645,7 +649,7 @@ export default function Page() {
                     <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
                     <span>{b.descricao||"Sem descrição"}</span>
                   </div>
-                  <button className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
+                  <button type="button" className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
                 </div>
               ))}
             </div>
@@ -653,9 +657,7 @@ export default function Page() {
         )}
       </div>
 
-          {/* ===== CONFIGURAÇÕES (painel lateral direito) ===== */}
-
-          {/* ===== MODAL RESERVA ===== */}
+      {/* ===== MODAL RESERVA ===== */}
       <div className={"overlay"+(modalAberto?" show":"")}>
         <div className="modal">
           {!sucessoReserva ? (
