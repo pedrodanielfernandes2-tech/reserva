@@ -29,7 +29,6 @@ export default function Page() {
 
   // Navegação
   const [secao, setSecao] = useState("calendario");
-  const [configAberto, setConfigAberto] = useState(false);
 
   // Dados
   const [salas, setSalas] = useState([]);
@@ -277,15 +276,12 @@ export default function Page() {
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="sidebar-eyebrow">Menu</div>
-            {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"]].map(([id,ico,label])=>(
-              <button key={id} className={"nav-btn"+(secao===id&&!configAberto?" active":"")}
-                onClick={()=>{ setSecao(id); setConfigAberto(false); }}>
+            {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"],["config","⚙️","Configurações"]].map(([id,ico,label])=>(
+              <button key={id} className={"nav-btn"+(secao===id?" active":"")}
+                onClick={()=>setSecao(id)}>
                 <span className="ico">{ico}</span> {label}
               </button>
             ))}
-            <button className={"nav-btn"+(configAberto?" active":"")} onClick={()=>setConfigAberto(true)}>
-              <span className="ico">⚙️</span> Configurações
-            </button>
             <div className="admin-box">
               {adminMode
                 ? <div className="admin-pill">🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button></div>
@@ -306,7 +302,7 @@ export default function Page() {
           </div>
 
           {/* CALENDÁRIO */}
-          {secao==="calendario" && !configAberto && (
+          {secao==="calendario" && (
             <div className="block">
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                 <div><h3>Calendário de Reservas</h3><p className="block-sub">Clique em um dia para solicitar.</p></div>
@@ -417,7 +413,7 @@ export default function Page() {
           )}
 
           {/* RESERVAS DO DIA */}
-          {secao==="reservaInfo" && !configAberto && (
+          {secao==="reservaInfo" && (
             <div className="block">
               <div className="reservas-dia-head">
                 <div><h3>Reservas do Dia</h3><p className="block-sub">Todas as salas juntas.</p></div>
@@ -452,141 +448,139 @@ export default function Page() {
               </div>
             </div>
           )}
+          {/* CONFIGURAÇÕES */}
+          {secao==="config" && (
+            <div className="block">
+              <h3>⚙️ Configurações</h3>
+              <p className="block-sub">Apenas administradores podem salvar alterações.</p>
+
+              {!adminMode ? (
+                <div className="locked-box">
+                  <span className="ico">🔒</span>
+                  <h4>Acesso restrito</h4>
+                  <p>Entre como administrador para alterar as configurações.</p>
+                </div>
+              ) : (
+                <div style={{maxWidth:680}}>
+                  {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"12px 16px",fontWeight:700,fontSize:13,marginBottom:18}}>✅ Configurações salvas com sucesso!</div>}
+
+                  {/* E-MAIL */}
+                  <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"20px 0 12px"}}>📧 E-mail</h4>
+                  <div className="form-grid">
+                    <div className="form-field full">
+                      <label>Remetente</label>
+                      <div style={{padding:"11px 13px",background:"var(--surface-soft)",borderRadius:11,fontSize:13.5,color:"var(--ink-soft)",border:"1.5px solid var(--border)"}}>
+                        📨 Conta Gmail configurada na Vercel (GMAIL_USER)
+                      </div>
+                      <small style={{color:"var(--ink-soft)",fontSize:11}}>O remetente é fixo — definido na variável GMAIL_USER da Vercel.</small>
+                    </div>
+                    <div className="form-field full">
+                      <label>Destinatários</label>
+                      <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
+                        value={config.email_admin||""} onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
+                      <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe múltiplos e-mails por vírgula. Os e-mails já cadastrados aparecem automaticamente ao abrir esta tela.</small>
+                    </div>
+                    <div className="form-field full">
+                      <label>Mensagem personalizada no rodapé do e-mail</label>
+                      <input type="text" placeholder="Ex: Dúvidas? Fale com a secretaria pelo WhatsApp."
+                        value={config.email_mensagem||""} onChange={e=>setConfig(c=>({...c,email_mensagem:e.target.value}))}/>
+                    </div>
+                  </div>
+
+                  {/* RESERVAS */}
+                  <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"24px 0 12px"}}>⏱️ Reservas</h4>
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label>Limite de antecedência (dias)</label>
+                      <input type="number" min="1" max="365"
+                        value={config.limite_dias||"60"} onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
+                      <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar.</small>
+                    </div>
+                    <button className="btn-primary" style={{alignSelf:"flex-end"}} disabled={salvandoConfig} onClick={salvarConfig}>
+                      {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
+                    </button>
+                  </div>
+
+                  {/* SALAS */}
+                  <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"24px 0 12px"}}>🏛️ Salas e Nave</h4>
+                  {erroSala&&<div className="form-error" style={{display:"block",marginBottom:10}}>{erroSala}</div>}
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label>Nome</label>
+                      <input type="text" placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
+                    </div>
+                    <div className="form-field">
+                      <label>Tipo</label>
+                      <select value={formSala.tipo} onChange={e=>setFormSala(f=>({...f,tipo:e.target.value}))}>
+                        <option value="Sala">Sala</option>
+                        <option value="Nave">Nave</option>
+                      </select>
+                    </div>
+                    <button type="button" className="btn-primary" onClick={cadastrarSala}>+ Cadastrar Ambiente</button>
+                  </div>
+                  <div className="sala-chip-list" style={{marginTop:14,marginBottom:24}}>
+                    {salas.map(s=>(
+                      <div className="sala-chip" key={s.id}>
+                        <span className="swatch" style={{background:s.cor}}/>
+                        <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
+                        <button type="button" className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* BLOQUEIOS */}
+                  <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 12px"}}>🚫 Horários Bloqueados Fixos</h4>
+                  <p className="block-sub" style={{marginBottom:14}}>Cultos e eventos regulares que nunca podem ser reservados por cima.</p>
+                  {erroBloqueio&&<div className="form-error" style={{display:"block",marginBottom:10}}>{erroBloqueio}</div>}
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label>Sala / Nave</label>
+                      <select value={formBloqueio.sala_nome} onChange={e=>setFormBloqueio(f=>({...f,sala_nome:e.target.value}))}>
+                        <option value="">Selecione…</option>
+                        {salas.map(s=><option key={s.id} value={s.nome}>{s.nome}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-field">
+                      <label>Dia da semana</label>
+                      <select value={formBloqueio.dia_semana} onChange={e=>setFormBloqueio(f=>({...f,dia_semana:e.target.value}))}>
+                        {DIAS_SEMANA_FULL.map((d,i)=><option key={i} value={i}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-field">
+                      <label>Início</label>
+                      <input type="time" value={formBloqueio.hora_inicio} onChange={e=>setFormBloqueio(f=>({...f,hora_inicio:e.target.value}))}/>
+                    </div>
+                    <div className="form-field">
+                      <label>Término</label>
+                      <input type="time" value={formBloqueio.hora_fim} onChange={e=>setFormBloqueio(f=>({...f,hora_fim:e.target.value}))}/>
+                    </div>
+                    <div className="form-field full">
+                      <label>Descrição</label>
+                      <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
+                    </div>
+                    <button type="button" className="btn-primary" onClick={cadastrarBloqueio}>+ Adicionar Bloqueio</button>
+                  </div>
+                  <div className="sala-chip-list" style={{marginTop:14}}>
+                    {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado cadastrado.</div>}
+                    {bloqueios.map(b=>(
+                      <div className="sala-chip" key={b.id}>
+                        <span className="swatch" style={{background:"#D6483A"}}/>
+                        <div className="info">
+                          <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
+                          <span>{b.descricao||"Sem descrição"}</span>
+                        </div>
+                        <button type="button" className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 
       <footer className="app-footer">Assembleia de Deus Louveira · Sistema de Reserva de Ambientes</footer>
-
-      {/* DRAWER CONFIGURAÇÕES */}
-      <div className={"config-overlay"+(configAberto?" show":"")} onClick={()=>setConfigAberto(false)}/>
-      <div className={"config-drawer"+(configAberto?" show":"")}>
-        <div className="config-drawer-head">
-          <h3>⚙️ Configurações</h3>
-          <button onClick={()=>setConfigAberto(false)}>✕</button>
-        </div>
-
-        {!adminMode ? (
-          <div className="locked-box">
-            <span className="ico">🔒</span>
-            <h4>Acesso restrito</h4>
-            <p>Entre como administrador para alterar as configurações.</p>
-          </div>
-        ) : (
-          <div>
-            {/* E-MAIL */}
-            <div className="config-section-title">📧 E-mail</div>
-            {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"10px 14px",fontWeight:700,fontSize:13,marginBottom:12}}>✅ Salvo com sucesso!</div>}
-
-            <div className="form-field" style={{marginBottom:10}}>
-              <label>Remetente</label>
-              <div style={{padding:"10px 13px",background:"var(--surface-soft)",borderRadius:11,fontSize:13,color:"var(--ink-soft)",border:"1.5px solid var(--border)"}}>
-                📨 Conta Gmail configurada na Vercel (GMAIL_USER)
-              </div>
-            </div>
-            <div className="form-field" style={{marginBottom:10}}>
-              <label>Destinatários</label>
-              <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
-                value={config.email_admin||""} onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
-              <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe múltiplos por vírgula</small>
-            </div>
-            <div className="form-field" style={{marginBottom:10}}>
-              <label>Mensagem no rodapé do e-mail</label>
-              <input type="text" placeholder="Ex: Dúvidas? Fale com a secretaria."
-                value={config.email_mensagem||""} onChange={e=>setConfig(c=>({...c,email_mensagem:e.target.value}))}/>
-            </div>
-
-            {/* RESERVAS */}
-            <div className="config-section-title">⏱️ Reservas</div>
-            <div className="form-field" style={{marginBottom:16}}>
-              <label>Limite de antecedência (dias)</label>
-              <input type="number" min="1" max="365"
-                value={config.limite_dias||"60"} onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
-              <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro permitidos</small>
-            </div>
-            <button className="btn-primary" style={{width:"100%",marginBottom:24}} disabled={salvandoConfig} onClick={salvarConfig}>
-              {salvandoConfig?"Salvando…":"💾 Salvar Configurações"}
-            </button>
-
-            {/* SALAS */}
-            <div className="config-section-title">🏛️ Salas e Nave</div>
-            {erroSala&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroSala}</div>}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-              <div className="form-field" style={{margin:0}}>
-                <label>Nome</label>
-                <input type="text" placeholder="Ex: Sala 3" value={formSala.nome} onChange={e=>setFormSala(f=>({...f,nome:e.target.value}))}/>
-              </div>
-              <div className="form-field" style={{margin:0}}>
-                <label>Tipo</label>
-                <select value={formSala.tipo} onChange={e=>setFormSala(f=>({...f,tipo:e.target.value}))}>
-                  <option value="Sala">Sala</option>
-                  <option value="Nave">Nave</option>
-                </select>
-              </div>
-            </div>
-            <button type="button" className="btn-primary" style={{width:"100%",padding:10,fontSize:13,marginBottom:12}} onClick={cadastrarSala}>
-              + Cadastrar Ambiente
-            </button>
-            <div className="sala-chip-list" style={{marginBottom:20}}>
-              {salas.map(s=>(
-                <div className="sala-chip" key={s.id}>
-                  <span className="swatch" style={{background:s.cor}}/>
-                  <div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
-                  <button type="button" className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirSala(s)}>Excluir</button>
-                </div>
-              ))}
-            </div>
-
-            {/* BLOQUEIOS */}
-            <div className="config-section-title">🚫 Horários Bloqueados</div>
-            {erroBloqueio&&<div className="form-error" style={{display:"block",marginBottom:8}}>{erroBloqueio}</div>}
-            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:8}}>
-              <div className="form-field" style={{margin:0}}>
-                <label>Sala / Nave</label>
-                <select value={formBloqueio.sala_nome} onChange={e=>setFormBloqueio(f=>({...f,sala_nome:e.target.value}))}>
-                  <option value="">Selecione…</option>
-                  {salas.map(s=><option key={s.id} value={s.nome}>{s.nome}</option>)}
-                </select>
-              </div>
-              <div className="form-field" style={{margin:0}}>
-                <label>Dia da semana</label>
-                <select value={formBloqueio.dia_semana} onChange={e=>setFormBloqueio(f=>({...f,dia_semana:e.target.value}))}>
-                  {DIAS_SEMANA_FULL.map((d,i)=><option key={i} value={i}>{d}</option>)}
-                </select>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                <div className="form-field" style={{margin:0}}>
-                  <label>Início</label>
-                  <input type="time" value={formBloqueio.hora_inicio} onChange={e=>setFormBloqueio(f=>({...f,hora_inicio:e.target.value}))}/>
-                </div>
-                <div className="form-field" style={{margin:0}}>
-                  <label>Término</label>
-                  <input type="time" value={formBloqueio.hora_fim} onChange={e=>setFormBloqueio(f=>({...f,hora_fim:e.target.value}))}/>
-                </div>
-              </div>
-              <div className="form-field" style={{margin:0}}>
-                <label>Descrição</label>
-                <input type="text" placeholder="Ex: Culto de domingo manhã" value={formBloqueio.descricao} onChange={e=>setFormBloqueio(f=>({...f,descricao:e.target.value}))}/>
-              </div>
-            </div>
-            <button type="button" className="btn-primary" style={{width:"100%",padding:10,fontSize:13,marginBottom:12}} onClick={cadastrarBloqueio}>
-              + Adicionar Bloqueio
-            </button>
-            <div className="sala-chip-list">
-              {bloqueios.length===0&&<div className="empty-state">Nenhum horário bloqueado.</div>}
-              {bloqueios.map(b=>(
-                <div className="sala-chip" key={b.id}>
-                  <span className="swatch" style={{background:"#D6483A"}}/>
-                  <div className="info">
-                    <b>{b.sala_nome} · {DIAS_SEMANA_FULL[b.dia_semana]} {b.hora_inicio}-{b.hora_fim}</b>
-                    <span>{b.descricao||"Sem descrição"}</span>
-                  </div>
-                  <button type="button" className="btn-danger" style={{padding:"6px 10px",fontSize:11}} onClick={()=>excluirBloqueio(b.id)}>Remover</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* MODAL RESERVA */}
       <div className={"overlay"+(modalAberto?" show":"")}>
