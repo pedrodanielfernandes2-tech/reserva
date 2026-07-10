@@ -56,6 +56,7 @@ export async function POST(request) {
   const precisaSom    = Boolean(body.precisaSom);
   const precisaProjecao = Boolean(body.precisaProjecao);
   const precisaFotografia = Boolean(body.precisaFotografia);
+  const precisaTransmissao = Boolean(body.precisaTransmissao);
   const tipoEvento    = body.tipoEvento || "regular";
   const qtdMesas      = parseInt(body.qtdMesas || 0, 10);
   const qtdCadeiras   = parseInt(body.qtdCadeiras || 0, 10);
@@ -129,16 +130,16 @@ export async function POST(request) {
     const id = crypto.randomUUID(); ids.push(id);
     await sql`
       INSERT INTO reservas (id,sala_nome,nome,evento,observacao,dia,mes,ano,hora_inicio,hora_fim,
-        recorrente,recorrencia,recorrencia_fim,precisa_som,precisa_projecao,precisa_fotografia,
+        recorrente,recorrencia,recorrencia_fim,precisa_som,precisa_projecao,precisa_fotografia,precisa_transmissao,
         tipo_evento,qtd_mesas,qtd_cadeiras)
       VALUES (${id},${sala},${nome},${evento},${observacao},${d.dia},${d.mes},${d.ano},
         ${horaInicio},${horaFim},${recorrencia!=="nenhuma"},${recorrencia},${recorrenciaFim},
-        ${precisaSom},${precisaProjecao},${precisaFotografia},${tipoEvento},${qtdMesas},${qtdCadeiras});
+        ${precisaSom},${precisaProjecao},${precisaFotografia},${precisaTransmissao},${tipoEvento},${qtdMesas},${qtdCadeiras});
     `;
   }
 
   await notificarAdminEmail({ sala, nome, evento, observacao, dia, mes, ano, horaInicio, horaFim,
-    recorrencia, totalDatas: datas.length, precisaSom, precisaProjecao, precisaFotografia,
+    recorrencia, totalDatas: datas.length, precisaSom, precisaProjecao, precisaFotografia, precisaTransmissao,
     tipoEvento, qtdMesas, qtdCadeiras });
 
   const primeiras = await sql`SELECT * FROM reservas WHERE id=${ids[0]};`;
