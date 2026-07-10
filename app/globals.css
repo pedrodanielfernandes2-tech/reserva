@@ -262,6 +262,12 @@ html, body { height: 100%; }
     border-radius:6px;
     line-height:1.3;
     box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    /* Truncamento: máximo 2 linhas */
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    word-break:break-word;
   }
 
   /* upcoming list */
@@ -451,61 +457,79 @@ html, body { height: 100%; }
 
   @media (max-width: 880px){
     .layout{ flex-direction:column; }
-    .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; padding:14px 16px; gap:8px; }
-    .sidebar-top{ flex-direction:row; flex-wrap:wrap; gap:6px; }
+    .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; padding:10px 12px; gap:6px; }
+    .sidebar-top{ flex-direction:row; flex-wrap:wrap; gap:5px; }
     .sidebar-eyebrow{ display:none; }
     .versiculo-box{ display:none; }
     .admin-box{ margin-top:0; border-top:none; padding-top:0; }
     .form-grid{ grid-template-columns:1fr; }
-    .content{ padding:14px 12px 40px; }
-    .block{ padding:16px 14px; }
+    .content{ padding:10px 10px 40px; }
+    .block{ padding:14px 12px; margin-top:10px; }
 
-    /* Cards menores no mobile */
-    .cards{ grid-template-columns: repeat(3,1fr); gap:10px; }
-    .card{ padding:12px 10px; }
-    .card .value{ font-size:22px; }
-    .card .value.small{ font-size:14px; }
-
-    /* Calendário: células compactas, sem hover 3D */
-    .calendar{ gap:4px; }
-    .weekday{ font-size:10px; padding-bottom:2px; }
+    /* Calendário mobile: células fixas, texto truncado, sem hover 3D */
+    .calendar{ gap:3px; }
+    .weekday{ font-size:9px; padding-bottom:2px; font-weight:700; }
     .day{
-      min-height:54px;
-      padding:5px 4px;
-      border-radius:10px 10px 6px 6px;
+      min-height:44px;
+      max-height:110px;         /* limita altura máxima da célula */
+      overflow:hidden;           /* não deixa estourar */
+      padding:4px 3px;
+      border-radius:8px 8px 5px 5px;
+      gap:2px;
     }
     .day:hover{ transform:none; box-shadow:none; }
-    .day-number{ font-size:11px; }
-    .reserva-item{ font-size:9px; padding:2px 4px; }
+    .day-number{ font-size:10px; margin-bottom:1px; }
 
-    /* Abas de sala: scroll horizontal, não quebra linha */
+    /* Itens de reserva mobile: só horário, sem nome do evento */
+    .reserva-item{
+      font-size:8.5px;
+      padding:2px 3px;
+      border-radius:4px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Esconder o nome do evento e lixeira no calendário mobile,
+       mostrar só o horário para economizar espaço */
+    .reserva-item .evento-nome{ display:none; }
+    .reserva-item .lixeira-mobile{ display:none; }
+
+    /* Abas de sala: scroll horizontal */
     .room-tabs{
       flex-wrap:nowrap;
       overflow-x:auto;
       -webkit-overflow-scrolling:touch;
       padding-bottom:4px;
       scrollbar-width:none;
+      margin:10px 0 4px;
     }
     .room-tabs::-webkit-scrollbar{ display:none; }
-    .room-tab{ flex-shrink:0; font-size:12px; padding:7px 12px; }
+    .room-tab{ flex-shrink:0; font-size:11px; padding:6px 10px; gap:5px; }
+    .room-tab .dot{ width:7px; height:7px; }
 
-    /* Tabela de Reservas do Dia: scroll horizontal */
+    /* Tabela de Reservas do Dia */
     .print-area{ overflow-x:auto; }
-    .tabela-reservas-dia th, .tabela-reservas-dia td{
-      padding:8px 8px; font-size:12px;
-    }
+    .tabela-reservas-dia th, .tabela-reservas-dia td{ padding:7px 6px; font-size:12px; }
 
     /* Header compacto */
-    header{ padding:12px 14px; }
-    .logo-text{ font-size:13px; }
-    .header-title h1{ font-size:16px; }
-    .header-title p{ font-size:11px; }
+    header{ padding:10px 12px; }
+    .logo-frame{ width:40px; height:40px; border-radius:10px; }
+    .logo-text{ font-size:12px; }
+    .logo-text small{ font-size:10px; }
+    .header-title h1{ font-size:15px; }
+    .header-title p{ font-size:10px; display:none; }
+
+    /* Lista de próximas reservas */
+    .lista-reservas li{ padding:10px 12px; gap:8px; }
+    .res-info b{ font-size:13px; }
+    .res-info span{ font-size:11px; }
   }
 
   @media (max-width: 400px){
-    /* Telas muito pequenas: esconde colunas menos críticas da tabela */
     .tabela-reservas-dia th:last-child,
     .tabela-reservas-dia td:last-child{ display:none; }
+    .header-title{ display:none; } /* em telas muito pequenas esconde o título do header */
   }
 
   @media (prefers-reduced-motion: reduce){
