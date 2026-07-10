@@ -10,7 +10,7 @@ function hoje(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
 function toDateInput(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function pad(n){ return String(n).padStart(2,"0"); }
 
-const FORM_VAZIO={ nome:"",sala:"",evento:"",observacao:"",horaInicio:"",horaFim:"",recorrencia:"nenhuma",recorrenciaFim:"",tipoEvento:"regular",precisaSom:false,precisaProjecao:false,precisaFotografia:false,qtdMesas:0,qtdCadeiras:0 };
+const FORM_VAZIO={ nome:"",sala:"",evento:"",observacao:"",horaInicio:"",horaFim:"",recorrencia:"nenhuma",recorrenciaFim:"",precisaSom:false,precisaProjecao:false,precisaFotografia:false,precisaTransmissao:false,qtdMesas:0,qtdCadeiras:0 };
 
 export default function Page(){
   const agora=new Date();
@@ -109,14 +109,15 @@ export default function Page(){
 
   async function enviarReserva(e){
     e.preventDefault();setErroReserva("");
-    const{nome,sala,evento,observacao,horaInicio,horaFim,recorrencia,recorrenciaFim,tipoEvento,precisaSom,precisaProjecao,precisaFotografia,qtdMesas,qtdCadeiras}=form;
+    const{nome,sala,evento,observacao,horaInicio,horaFim,recorrencia,recorrenciaFim,precisaSom,precisaProjecao,precisaFotografia,precisaTransmissao,qtdMesas,qtdCadeiras}=form;
+    const tipoEvento=sala.toLowerCase().includes("evento externo")?"evento_externo":"regular";
     if(!nome.trim()||!sala||!evento.trim()||!horaInicio||!horaFim){setErroReserva("Preencha todos os campos obrigatórios.");return;}
     if(horaFim<=horaInicio){setErroReserva("O término precisa ser depois do início.");return;}
     if(recorrencia!=="nenhuma"&&!recorrenciaFim){setErroReserva("Informe a data final da recorrência.");return;}
     setEnviando(true);
     try{
       const res=await fetch("/api/reservas",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({nome:nome.trim(),sala,evento:evento.trim(),observacao:observacao.trim(),dia:diaSelecionado,mes:mesAtual,ano:anoAtual,horaInicio,horaFim,recorrencia,recorrenciaFim,tipoEvento,precisaSom,precisaProjecao,precisaFotografia,qtdMesas:parseInt(qtdMesas)||0,qtdCadeiras:parseInt(qtdCadeiras)||0})});
+        body:JSON.stringify({nome:nome.trim(),sala,evento:evento.trim(),observacao:observacao.trim(),dia:diaSelecionado,mes:mesAtual,ano:anoAtual,horaInicio,horaFim,recorrencia,recorrenciaFim,tipoEvento,precisaSom,precisaProjecao,precisaFotografia,precisaTransmissao,qtdMesas:parseInt(qtdMesas)||0,qtdCadeiras:parseInt(qtdCadeiras)||0})});
       const data=await res.json();
       if(!res.ok){setErroReserva(data.erro||"Não foi possível concluir a reserva.");return;}
       await carregarReservas();setSucessoReserva({...data,nomeSolicitante:nome.trim()});
@@ -196,6 +197,7 @@ export default function Page(){
 
   // ---- DERIVADOS ----
   const corAtiva=salas.find(s=>s.nome===salaAtiva);
+  const isEventoExterno=form.sala.toLowerCase().includes("evento externo");
   const proximas=reservas.filter(r=>r.sala_nome===salaAtiva&&new Date(r.ano,r.mes,r.dia)>=hoje())
     .sort((a,b)=>new Date(a.ano,a.mes,a.dia)-new Date(b.ano,b.mes,b.dia)||a.hora_inicio.localeCompare(b.hora_inicio));
   const primeiroDia=new Date(anoAtual,mesAtual,1);
@@ -694,7 +696,7 @@ export default function Page(){
                   <div className="form-field full" style={{background:"var(--surface-soft)",borderRadius:12,padding:"12px 14px"}}>
                     <label style={{marginBottom:8,display:"block"}}>🏛️ Recursos da Nave — Irei precisar de:</label>
                     <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-                      {[["precisaSom","🎤 Som"],["precisaProjecao","📽️ Projeção (Telão)"],["precisaFotografia","📷 Fotografia"]].map(([key,label])=>(
+                      {[["precisaSom","🎤 Som"],["precisaProjecao","📽️ Projeção (Telão)"],["precisaFotografia","📷 Fotografia"],["precisaTransmissao","📡 Transmissão"]].map(([key,label])=>(
                         <label key={key} style={{display:"flex",alignItems:"center",gap:7,fontWeight:600,fontSize:14,cursor:"pointer"}}>
                           <input type="checkbox" checked={Boolean(form[key])} onChange={e=>setForm(f=>({...f,[key]:e.target.checked}))} style={{width:18,height:18,accentColor:"var(--primary)",cursor:"pointer"}}/>
                           {label}
@@ -704,8 +706,8 @@ export default function Page(){
                   </div>
                 )}
 
-                {/* Recursos de Evento Externo */}
-                {form.tipoEvento==="evento_externo"&&(
+                {/* Recursos de Evento Externo — só aparece quando a sala se chama "Evento Externo" */}
+                {isEventoExterno&&(
                   <div className="form-field full" style={{background:"#FFF8F0",borderRadius:12,padding:"12px 14px",border:"1.5px solid #E0A23B"}}>
                     <label style={{marginBottom:8,display:"block"}}>🏢 Recursos do Evento Externo — Irei precisar de:</label>
                     <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:12}}>
@@ -716,7 +718,7 @@ export default function Page(){
                         </label>
                       ))}
                       <label style={{display:"flex",alignItems:"center",gap:7,fontWeight:600,fontSize:14,cursor:"pointer"}}>
-                        <input type="checkbox" checked={form.qtdMesas>0} onChange={e=>setForm(f=>({...f,qtdMesas:e.target.checked?1:0,qtdCadeiras:e.target.checked?(f.qtdCadeiras||1):0}))} style={{width:18,height:18,accentColor:"#E0A23B",cursor:"pointer"}}/>
+                        <input type="checkbox" checked={form.qtdMesas>0} onChange={e=>setForm(f=>({...f,qtdMesas:e.target.checked?1:0,qtdCadeiras:e.target.checked?(f.qtdCadeiras||0):0}))} style={{width:18,height:18,accentColor:"#E0A23B",cursor:"pointer"}}/>
                         🪑 Mesas
                       </label>
                       <label style={{display:"flex",alignItems:"center",gap:7,fontWeight:600,fontSize:14,cursor:"pointer"}}>
@@ -726,21 +728,12 @@ export default function Page(){
                     </div>
                     {form.qtdMesas>0&&(
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8}}>
-                        <div className="form-field" style={{margin:0}}>
-                          <label>Quantidade de Mesas</label>
-                          <input type="number" min="1" value={form.qtdMesas} onChange={e=>setForm(f=>({...f,qtdMesas:parseInt(e.target.value)||0}))}/>
-                        </div>
-                        <div className="form-field" style={{margin:0}}>
-                          <label>Cadeiras p/ Mesa</label>
-                          <input type="number" min="0" value={form.qtdCadeiras} onChange={e=>setForm(f=>({...f,qtdCadeiras:parseInt(e.target.value)||0}))}/>
-                        </div>
+                        <div className="form-field" style={{margin:0}}><label>Quantidade de Mesas</label><input type="number" min="1" value={form.qtdMesas} onChange={e=>setForm(f=>({...f,qtdMesas:parseInt(e.target.value)||0}))}/></div>
+                        <div className="form-field" style={{margin:0}}><label>Cadeiras por Mesa</label><input type="number" min="0" value={form.qtdCadeiras} onChange={e=>setForm(f=>({...f,qtdCadeiras:parseInt(e.target.value)||0}))}/></div>
                       </div>
                     )}
                     {form.qtdCadeiras>0&&form.qtdMesas===0&&(
-                      <div className="form-field" style={{margin:"8px 0 0"}}>
-                        <label>Quantidade de Cadeiras</label>
-                        <input type="number" min="1" value={form.qtdCadeiras} onChange={e=>setForm(f=>({...f,qtdCadeiras:parseInt(e.target.value)||0}))}/>
-                      </div>
+                      <div className="form-field" style={{margin:"8px 0 0"}}><label>Quantidade de Cadeiras</label><input type="number" min="1" value={form.qtdCadeiras} onChange={e=>setForm(f=>({...f,qtdCadeiras:parseInt(e.target.value)||0}))}/></div>
                     )}
                   </div>
                 )}
