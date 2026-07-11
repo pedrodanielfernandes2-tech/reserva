@@ -45,6 +45,26 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body>
+        {/* Barra de navegação unificada */}
+        <nav style={{
+          position:"sticky",top:0,zIndex:9999,
+          display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",
+          background:"linear-gradient(135deg,#075F5C,#0E8E89 60%,#5FCFC4)",
+          padding:"8px 16px",
+          boxShadow:"0 2px 12px rgba(7,95,92,.35)",
+          fontFamily:"Manrope,Inter,sans-serif",
+        }}>
+          <div style={{width:32,height:32,borderRadius:8,overflow:"hidden",marginRight:6,flexShrink:0}}>
+            <img src="/logo.jpg" alt="AD Louveira" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          </div>
+          <span style={{fontSize:13,fontWeight:800,color:"#fff",marginRight:16,opacity:.9,whiteSpace:"nowrap"}}>AD Louveira</span>
+          <a href="/artes.html" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:999,fontSize:13,fontWeight:700,textDecoration:"none",color:"rgba(255,255,255,.75)",whiteSpace:"nowrap"}}>
+            🎨 Solicitação de Artes
+          </a>
+          <a href="/" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:999,fontSize:13,fontWeight:700,textDecoration:"none",color:"#fff",background:"rgba(255,255,255,.2)",boxShadow:"0 1px 4px rgba(0,0,0,.2)",whiteSpace:"nowrap"}}>
+            📅 Reserva de Salas
+          </a>
+        </nav>
         {children}
         {/* Registro do Service Worker */}
         <script dangerouslySetInnerHTML={{ __html: `
