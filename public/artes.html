@@ -487,6 +487,24 @@ select.st-sel{min-width:128px}
 })();
 </script>
 
+
+<style id="iframe-hide">
+/* Quando carregado dentro de iframe: esconde banner/header próprio */
+</style>
+<script>
+if(window.self !== window.top){
+  // Está dentro de iframe — esconde elementos redundantes
+  document.addEventListener('DOMContentLoaded', function(){
+    var style = document.getElementById('iframe-hide');
+    style.textContent = `
+      .banner { display: none !important; }
+      .adl-back { display: none !important; }
+      body { padding-top: 16px !important; padding-bottom: 20px !important; }
+    `;
+  });
+}
+</script>
+
 </head>
 <body>
 
