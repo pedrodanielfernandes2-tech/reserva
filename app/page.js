@@ -290,22 +290,31 @@ export default function Page(){
                 {/* Login / Logout da equipe */}
                 {!artesUser?(
                   <button
-                    style={{background:secaoArtes==="equipe"?"var(--surface-soft)":"none",border:"none",textAlign:"left",
-                      padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes==="equipe"?700:500,fontSize:13,
+                    style={{background:"none",border:"none",textAlign:"left",
+                      padding:"8px 10px",borderRadius:8,fontWeight:500,fontSize:13,
                       cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
-                    onClick={()=>irParaArtes("equipe")}>
+                    onClick={()=>{
+                      setArtesAberto(true);
+                      setSecao(null);
+                      // Garante que o iframe está carregado antes de enviar a mensagem
+                      setTimeout(()=>{
+                        if(iframeRef.current?.contentWindow){
+                          iframeRef.current.contentWindow.postMessage({type:"adl_open_login"},"*");
+                        }
+                      },600);
+                    }}>
                     <span>👤</span> Acesso à Equipe
                   </button>
                 ):(
                   <>
-                    {/* Usuário logado — mostra itens de Gestão */}
-                    <div style={{fontSize:11,color:"var(--ink-soft)",padding:"6px 10px 2px",fontWeight:700,letterSpacing:".5px"}}>
-                      👋 {artesUser.nome.split(" ")[0]} — Gestão
+                    <div style={{fontSize:11,color:"var(--primary-dark)",padding:"6px 10px 2px",fontWeight:800,letterSpacing:".4px",background:"var(--surface-soft)",borderRadius:8,margin:"2px 0"}}>
+                      👋 {artesUser.nome.split(" ")[0]}
                     </div>
                     {[
                       ["g-solic","📋","Solicitações"],
                       ["g-audit","🕓","Auditoria"],
-                      ...(artesUser.isAdmin?[["g-users","👥","Usuários"],["g-email","⚙️","Configuração"]]:[]),
+                      ["g-users","👥","Usuários"],
+                      ["g-email","⚙️","Configuração"],
                     ].map(([id,ico,label])=>(
                       <button key={id}
                         style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
@@ -318,7 +327,10 @@ export default function Page(){
                     <button
                       style={{border:"none",textAlign:"left",padding:"6px 10px",borderRadius:8,fontSize:12,
                         cursor:"pointer",color:"#D6483A",background:"none",display:"flex",alignItems:"center",gap:7}}
-                      onClick={()=>{ if(iframeRef.current?.contentWindow) iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab:"logout"},"/"); }}>
+                      onClick={()=>{
+                        if(iframeRef.current?.contentWindow)
+                          iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab:"logout"},"*");
+                      }}>
                       <span>🚪</span> Sair da Equipe
                     </button>
                   </>
