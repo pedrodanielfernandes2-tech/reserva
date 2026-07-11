@@ -472,62 +472,7 @@ select.st-sel{min-width:128px}
 </style>
 </head>
 <body>
-<!-- ===== BARRA DE NAVEGAÇÃO UNIFICADA AD LOUVEIRA ===== -->
-<style>
-  .adl-nav{
-    position:sticky;top:0;z-index:9999;
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    background:linear-gradient(135deg,#075F5C,#0E8E89 60%,#5FCFC4);
-    padding:8px 16px;
-    box-shadow:0 2px 12px rgba(7,95,92,.35);
-    font-family:'Manrope','Inter',sans-serif;
-  }
-  .adl-nav-logo{
-    width:32px;height:32px;border-radius:8px;overflow:hidden;
-    margin-right:6px;flex-shrink:0;
-  }
-  .adl-nav-logo img{width:100%;height:100%;object-fit:cover;}
-  .adl-nav-title{
-    font-size:13px;font-weight:800;color:#fff;
-    margin-right:16px;white-space:nowrap;opacity:.9;
-    display:none;
-  }
-  @media(min-width:520px){.adl-nav-title{display:block;}}
-  .adl-nav a{
-    display:inline-flex;align-items:center;gap:6px;
-    padding:7px 14px;border-radius:999px;
-    font-size:13px;font-weight:700;text-decoration:none;
-    color:rgba(255,255,255,.75);
-    transition:background .15s,color .15s;
-    white-space:nowrap;
-  }
-  .adl-nav a:hover{background:rgba(255,255,255,.15);color:#fff;}
-  .adl-nav a.adl-ativo{
-    background:rgba(255,255,255,.2);color:#fff;
-    box-shadow:0 1px 4px rgba(0,0,0,.2);
-  }
-  /* Compensar o sticky nav no padding do body */
-  body{ padding-top: 0 !important; }
-</style>
-<nav class="adl-nav">
-  <div class="adl-nav-logo">
-    <img src="/logo.jpg" alt="AD Louveira" onerror="this.style.display='none'"/>
-  </div>
-  <span class="adl-nav-title">AD Louveira</span>
-  <a href="/artes.html" id="adl-link-artes">🎨 Solicitação de Artes</a>
-  <a href="/" id="adl-link-reservas">📅 Reserva de Salas</a>
-</nav>
-<script>
-  (function(){
-    var p = window.location.pathname;
-    if(p.includes('artes')){
-      document.getElementById('adl-link-artes').classList.add('adl-ativo');
-    } else {
-      document.getElementById('adl-link-reservas').classList.add('adl-ativo');
-    }
-  })();
-</script>
-<!-- ===== FIM DA BARRA DE NAVEGAÇÃO ===== -->
+
 
 <div class="wrap" id="main-wrap">
 
@@ -2743,5 +2688,21 @@ async function salvarEdicao(){
 }
 
 </script>
+<!-- ← Botão voltar para Reservas -->
+<style>
+.adl-back{
+  position:fixed;bottom:20px;right:20px;z-index:9999;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 16px;border-radius:999px;
+  background:linear-gradient(135deg,#075F5C,#0E8E89);
+  color:#fff;font-family:'Manrope','Inter',sans-serif;
+  font-size:13px;font-weight:700;text-decoration:none;
+  box-shadow:0 4px 16px rgba(7,95,92,.4);
+  transition:transform .15s,box-shadow .15s;
+}
+.adl-back:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(7,95,92,.5);}
+</style>
+<a href="/" class="adl-back">📅 Reserva de Salas</a>
+
 </body>
 </html>
