@@ -2006,6 +2006,9 @@ function iniciarGestao(){
   document.getElementById('tab-btn-gestao').style.display='inline-flex';
   document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
   document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+  // Notifica o React parent sobre o login
+  var isAdmin = _gPerfil && (_gPerfil.role === 'admin' || _gPerfil.role === 'super');
+  try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
   document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
   if(_gPerfil && _gPerfil.perfil==='admin'){
     document.getElementById('g-nav-users').style.display='inline-block';
@@ -2019,6 +2022,7 @@ function iniciarGestao(){
 async function doLogoutEquipe(){
   await SB.auth.signOut();
   _gUser=null; _gPerfil=null;
+  try{ window.parent.postMessage({type:'adl_logout'}, '*'); }catch(e){}
   document.getElementById('tab-btn-gestao').style.display='none';
   document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
   switchTab('formulario');
@@ -2031,6 +2035,9 @@ SB.auth.getSession().then(function(r){
       document.getElementById('tab-btn-gestao').style.display='inline-flex';
       document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
       document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+  // Notifica o React parent sobre o login
+  var isAdmin = _gPerfil && (_gPerfil.role === 'admin' || _gPerfil.role === 'super');
+  try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
       document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
       if(_gPerfil && _gPerfil.perfil==='admin'){
         document.getElementById('g-nav-users').style.display='inline-block';
@@ -2738,6 +2745,28 @@ async function salvarEdicao(){
 .adl-back:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(7,95,92,.5);}
 </style>
 <a href="/" class="adl-back">📅 Reserva de Salas</a>
+
+
+<script>
+// Recebe comandos de navegação do React parent
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  if(e.data.type === 'adl_goto_logout' || (e.data.type === 'adl_goto' && e.data.tab === 'logout')){
+    if(typeof doLogoutEquipe==='function') doLogoutEquipe();
+    return;
+  }
+  if(e.data.type === 'adl_goto'){
+    var tab = e.data.tab;
+    if(tab === 'formulario') { if(typeof switchTab==='function') switchTab('formulario'); }
+    else if(tab === 'historico') { if(typeof switchTab==='function') switchTab('historico'); if(typeof carregarHistorico==='function') setTimeout(carregarHistorico,300); }
+    else if(tab === 'gestao') { if(typeof switchTab==='function') switchTab('gestao'); }
+    else if(tab === 'g-solic') { if(typeof switchTab==='function') switchTab('gestao'); if(typeof showGestaoPage==='function') setTimeout(function(){ var b=document.querySelector('[onclick*="g-solic"]'); if(b)b.click(); },400); }
+    else if(tab === 'g-audit') { if(typeof switchTab==='function') switchTab('gestao'); if(typeof showGestaoPage==='function') setTimeout(function(){ var b=document.querySelector('[onclick*="g-audit"]'); if(b)b.click(); },400); }
+    else if(tab === 'g-users') { if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-users'); if(b)b.click(); },400); }
+    else if(tab === 'g-email') { if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-email'); if(b)b.click(); },400); }
+  }
+});
+</script>
 
 </body>
 </html>
