@@ -505,6 +505,36 @@ if(window.self !== window.top){
 }
 </script>
 
+
+<style id="iframe-fullwidth">
+/* Ativado via JS quando detectado iframe */
+</style>
+
+<script>
+if(window.self !== window.top){
+  document.addEventListener('DOMContentLoaded', function(){
+    // Esconde banner e botão voltar
+    var banner = document.querySelector('.banner');
+    if(banner) banner.style.display = 'none';
+    var back = document.querySelector('.adl-back');
+    if(back) back.style.display = 'none';
+    
+    // Fullwidth: remove max-width e padding do body/wrap
+    document.body.style.padding = '0';
+    document.body.style.background = 'var(--sur2)';
+    var wrap = document.querySelector('.wrap');
+    if(wrap){
+      wrap.style.maxWidth = 'none';
+      wrap.style.margin = '0';
+      wrap.style.padding = '16px 24px 24px';
+    }
+    // Remove tab-nav que ficou redundante (a navegação é feita pelo sidebar do React)
+    var tabNav = document.getElementById('tab-nav');
+    if(tabNav) tabNav.style.display = 'none';
+  });
+}
+</script>
+
 </head>
 <body>
 
@@ -2007,7 +2037,7 @@ function iniciarGestao(){
   document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
   document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
   // Notifica o React parent sobre o login
-  var isAdmin = _gPerfil && (_gPerfil.role === 'admin' || _gPerfil.role === 'super');
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
   try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
   document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
   if(_gPerfil && _gPerfil.perfil==='admin'){
@@ -2036,7 +2066,7 @@ SB.auth.getSession().then(function(r){
       document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
       document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
   // Notifica o React parent sobre o login
-  var isAdmin = _gPerfil && (_gPerfil.role === 'admin' || _gPerfil.role === 'super');
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
   try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
       document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
       if(_gPerfil && _gPerfil.perfil==='admin'){
@@ -2751,6 +2781,11 @@ async function salvarEdicao(){
 // Recebe comandos de navegação do React parent
 window.addEventListener('message', function(e){
   if(!e.data || !e.data.type) return;
+
+  if(e.data.type === 'adl_open_login'){
+    if(typeof abrirLoginEquipe === 'function') abrirLoginEquipe();
+    return;
+  }
   if(e.data.type === 'adl_goto_logout' || (e.data.type === 'adl_goto' && e.data.tab === 'logout')){
     if(typeof doLogoutEquipe==='function') doLogoutEquipe();
     return;
