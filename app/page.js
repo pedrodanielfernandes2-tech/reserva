@@ -671,6 +671,67 @@ export default function Page(){
             <>
               <div className="modal-head"><h3>Nova Solicitação</h3><button onClick={fecharModal}>✕</button></div>
               {diaSelecionado&&<span className="date-badge">{pad(diaSelecionado)}/{pad(mesAtual+1)}/{anoAtual}</span>}
+
+              {/* ── Bloco de ocupação do dia ── */}
+              {diaSelecionado&&(()=>{
+                const salaCor = salas.find(s=>s.nome===form.sala)?.cor || "var(--primary)";
+                const dataD = new Date(anoAtual, mesAtual, diaSelecionado);
+                const diaSem = dataD.getDay();
+
+                const reservasDia = reservas
+                  .filter(r=>r.sala_nome===form.sala&&r.dia===diaSelecionado&&r.mes===mesAtual&&r.ano===anoAtual)
+                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+
+                const bloqDia = bloqueios
+                  .filter(b=>b.sala_nome===form.sala&&b.dia_semana===diaSem)
+                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+
+                const evSede = eventosIgreja
+                  .filter(e=>e.tipo==="sede"&&e.dia===diaSelecionado&&e.mes===mesAtual&&e.ano===anoAtual)
+                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+
+                const total = reservasDia.length + bloqDia.length + evSede.length;
+
+                return(
+                  <div style={{background:"var(--surface-soft)",borderRadius:12,padding:"12px 14px",margin:"10px 0 4px",fontSize:13}}>
+                    <div style={{fontWeight:700,color:"var(--ink)",marginBottom:total>0?8:0,display:"flex",alignItems:"center",gap:6}}>
+                      📋 {form.sala||"Sala"} — {pad(diaSelecionado)}/{pad(mesAtual+1)}/{anoAtual}
+                    </div>
+                    {total===0?(
+                      <div style={{color:"#27856A",fontWeight:600,fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>
+                        ✅ Nenhum horário ocupado — dia totalmente livre!
+                      </div>
+                    ):(
+                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                        {evSede.map(e=>(
+                          <div key={e.id} style={{display:"flex",alignItems:"center",gap:8,background:"#FCE9E6",borderRadius:8,padding:"6px 10px"}}>
+                            <span style={{fontSize:11}}>🔴</span>
+                            <span style={{fontWeight:700,color:"#9C2C20",fontSize:12,minWidth:90}}>{e.hora_inicio} – {e.hora_fim}</span>
+                            <span style={{color:"#9C2C20",fontSize:12}}>{e.nome}</span>
+                            <span style={{marginLeft:"auto",fontSize:10,color:"#9C2C20",fontWeight:600,whiteSpace:"nowrap"}}>Evento da Igreja</span>
+                          </div>
+                        ))}
+                        {bloqDia.map(b=>(
+                          <div key={b.id} style={{display:"flex",alignItems:"center",gap:8,background:"#F0F0F0",borderRadius:8,padding:"6px 10px"}}>
+                            <span style={{fontSize:11}}>🚫</span>
+                            <span style={{fontWeight:700,color:"#555",fontSize:12,minWidth:90}}>{b.hora_inicio} – {b.hora_fim}</span>
+                            <span style={{color:"#555",fontSize:12}}>{b.descricao||"Horário bloqueado"}</span>
+                            <span style={{marginLeft:"auto",fontSize:10,color:"#777",fontWeight:600,whiteSpace:"nowrap"}}>Bloqueio fixo</span>
+                          </div>
+                        ))}
+                        {reservasDia.map(r=>(
+                          <div key={r.id} style={{display:"flex",alignItems:"center",gap:8,background:salaCor+"22",borderRadius:8,padding:"6px 10px"}}>
+                            <span style={{fontSize:11}}>📌</span>
+                            <span style={{fontWeight:700,color:salaCor,fontSize:12,minWidth:90}}>{r.hora_inicio} – {r.hora_fim}</span>
+                            <span style={{color:"var(--ink)",fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.evento}</span>
+                            <span style={{marginLeft:"auto",fontSize:10,color:"var(--ink-soft)",fontWeight:600,whiteSpace:"nowrap"}}>{r.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <form className="form-grid" onSubmit={enviarReserva}>
                 {erroReserva&&<div className="form-error" style={{display:"block"}}>{erroReserva}</div>}
                 <div className="form-field full"><label>Solicitante *</label><input type="text" required placeholder="Seu nome completo" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div>
@@ -678,12 +739,6 @@ export default function Page(){
                 <div className="form-field"><label>Sala / Nave *</label>
                   <select value={form.sala} onChange={e=>setForm(f=>({...f,sala:e.target.value}))}>
                     {salas.map(s=><option key={s.id} value={s.nome}>{s.nome} ({s.tipo})</option>)}
-                  </select>
-                </div>
-                <div className="form-field"><label>Tipo de Reserva</label>
-                  <select value={form.tipoEvento} onChange={e=>setForm(f=>({...f,tipoEvento:e.target.value}))}>
-                    <option value="regular">Regular</option>
-                    <option value="evento_externo">🏢 Evento Externo</option>
                   </select>
                 </div>
                 <div className="form-field full"><label>Evento *</label><input type="text" required placeholder="Ex: Ensaio do coral" value={form.evento} onChange={e=>setForm(f=>({...f,evento:e.target.value}))}/></div>
