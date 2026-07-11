@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<title>Solicitação de Artes — Assembleia de Deus Louveira</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg-deep:#0a1a1d;
+  --bg-deep2:#0f2427;
+  --teal:#14b8a6;
+  --teal2:#0d9488;
+  --teal-light:#5eead4;
+  --teal-glow:rgba(20,184,166,.35);
+  --sur:#ffffff;
+  --sur2:#f0fdfa;
+  --bor:#d4eee9;
+  --tx:#0f2a2c;
+  --tm:#5b7a78;
+  --acc:#fb7185;
+  --gold:#f59e0b;
+  --r:14px;
+  --r-sm:10px;
+  --shadow-card: 0 1px 2px rgba(15,42,44,.04), 0 8px 24px -8px rgba(15,42,44,.12), 0 24px 48px -16px rgba(20,184,166,.08);
+  --shadow-card-hover: 0 2px 4px rgba(15,42,44,.06), 0 16px 32px -8px rgba(15,42,44,.16), 0 32px 64px -16px rgba(20,184,166,.14);
+  --shadow-inset: inset 0 2px 4px rgba(15,42,44,.04), inset 0 1px 0 rgba(255,255,255,.6);
+  --mint-bg:#e6fbf6;
+  --mint-bg2:#ecfdf9;
+  --sur-solid:#ffffff;
+}
+[data-theme="dark"]{
+  --sur:#152b2e;
+  --sur2:#0f2326;
+  --bor:#234447;
+  --tx:#e8f6f4;
+  --tm:#8db5b2;
+  --teal-glow:rgba(20,184,166,.25);
+  --shadow-inset: inset 0 2px 4px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03);
+  --mint-bg:#1a3a3d;
+  --mint-bg2:#16322f;
+  --sur-solid:#152b2e;
+}
+[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(20,184,166,.12) 0%, transparent 45%),
+    radial-gradient(circle at 100% 20%, rgba(94,234,212,.06) 0%, transparent 50%),
+    linear-gradient(165deg, #0a1a1d 0%, #0f2427 100%);
+}
+[data-theme="dark"] .tabs{background:rgba(15,35,38,.7);border-color:rgba(20,184,166,.2)}
+[data-theme="dark"] .upa{background:rgba(20,184,166,.04)}
+[data-theme="dark"] .lhint{color:#facc15}
+[data-theme="dark"] .ph{color:#5eead4}
+.theme-toggle{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:50%;cursor:pointer;
+  background:var(--sur2);border:1.5px solid var(--bor);
+  font-size:16px;transition:all .2s;flex-shrink:0;
+}
+.theme-toggle:hover{transform:scale(1.08);box-shadow:0 4px 12px -2px rgba(20,184,166,.3)}
+  --shadow-btn: 0 1px 2px rgba(13,148,136,.2), 0 8px 16px -4px rgba(20,184,166,.4), 0 16px 32px -8px rgba(20,184,166,.25);
+  --shadow-btn-hover: 0 2px 4px rgba(13,148,136,.25), 0 12px 24px -4px rgba(20,184,166,.5), 0 24px 48px -8px rgba(20,184,166,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(20,184,166,.08) 0%, transparent 45%),
+    radial-gradient(circle at 100% 20%, rgba(94,234,212,.10) 0%, transparent 50%),
+    linear-gradient(165deg, #eefcfa 0%, #f0f4f7 100%);
+  background-attachment:fixed;
+  font-family:'Inter',sans-serif;
+  color:var(--tx);
+  min-height:100vh;
+  padding:40px 20px 90px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:800px;margin:0 auto;position:relative}
+
+/* ══ Banner — hero 3D ══ */
+.banner{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  background:linear-gradient(135deg, var(--teal2) 0%, var(--teal) 55%, var(--teal-light) 130%);
+  border-radius:24px 24px 0 0;
+  padding:30px 32px;
+  overflow:hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.25) inset,
+    0 -40px 80px -40px rgba(0,0,0,.25) inset,
+    0 20px 50px -10px rgba(20,184,166,.45);
+}
+.banner::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 80% -20%, rgba(255,255,255,.35) 0%, transparent 55%),
+    radial-gradient(circle at 0% 120%, rgba(13,148,136,.5) 0%, transparent 50%);
+  pointer-events:none;
+}
+.logo{
+  width:62px;height:62px;object-fit:contain;flex-shrink:0;
+  position:relative;z-index:1;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.2));
+}
+.bn-title{font-family:'Manrope',sans-serif;font-size:clamp(17px,3.6vw,25px);font-weight:800;color:#fff;line-height:1.15;position:relative;z-index:1;text-shadow:0 2px 12px rgba(0,0,0,.15);letter-spacing:-.01em}
+.bn-sub{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:5px;position:relative;z-index:1}
+
+/* ══ Header ══ */
+.hdr{
+  text-align:center;padding:28px 32px 24px;
+  background:var(--sur);
+  position:relative;
+}
+.hdr::after{
+  content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--bor),transparent);
+}
+.hdr h1{font-family:'Manrope',sans-serif;font-size:clamp(15px,3vw,22px);font-weight:800;color:var(--teal2);line-height:1.3;letter-spacing:-.01em}
+.hdr p{margin-top:8px;font-size:13px;color:var(--tm);font-weight:400}
+
+/* ══ Tab nav — floating pills ══ */
+.tabs{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-bottom:18px;padding:6px;
+  background:rgba(255,255,255,.6);
+  border-radius:18px;
+  backdrop-filter:blur(12px);
+  box-shadow:0 4px 16px -4px rgba(15,42,44,.1), inset 0 1px 0 rgba(255,255,255,.8);
+  border:1px solid rgba(20,184,166,.15);
+}
+.tab-btn{
+  padding:11px 22px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.3px;cursor:pointer;border:none;background:transparent;
+  color:var(--tm);border-radius:13px;transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.tab-btn:hover:not(.active){background:rgba(20,184,166,.08);color:var(--teal2)}
+.tab-btn.active{
+  background:linear-gradient(135deg, var(--teal-light), var(--teal));
+  color:#06302c;
+  box-shadow:0 4px 12px -2px rgba(20,184,166,.5), 0 1px 0 rgba(255,255,255,.4) inset;
+}
+
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ══ Form body — elevated card ══ */
+.fbody{
+  background:var(--sur);
+  padding:34px 40px;
+  position:relative;
+}
+.sec{
+  font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--teal2);
+  margin:32px 0 16px;padding-bottom:10px;
+  border-bottom:1px solid var(--bor);
+  display:flex;align-items:center;gap:10px;letter-spacing:-.01em;
+}
+.sec::before{
+  content:'';width:5px;height:20px;
+  background:linear-gradient(180deg, var(--teal-light), var(--teal2));
+  border-radius:3px;flex-shrink:0;
+  box-shadow:0 2px 6px -1px rgba(20,184,166,.5);
+}
+.sec:first-of-type{margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.row.one{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--tm)}
+label .req{color:var(--teal2);margin-left:3px}
+
+input[type=text],input[type=date],input[type=time],textarea,select{
+  background:var(--sur2);
+  border:1.5px solid var(--bor);
+  border-radius:var(--r-sm);
+  color:var(--tx);font-family:'Inter',sans-serif;font-size:14px;
+  padding:11px 15px;outline:none;width:100%;
+  box-shadow:var(--shadow-inset);
+  transition:border-color .2s, box-shadow .2s, transform .15s;
+  box-sizing:border-box;
+}
+input[type=date],input[type=time]{
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--teal);
+  box-shadow:var(--shadow-inset), 0 0 0 3px var(--teal-glow);
+  transform:translateY(-1px);
+  position:relative;
+  z-index:2;
+}
+textarea{resize:vertical;min-height:86px}
+select{cursor:pointer}
+
+/* ══ Date rows ══ */
+.date-row{display:grid;grid-template-columns:1fr 1fr 40px;gap:24px;align-items:end;margin-bottom:16px}
+.date-row .field{margin-bottom:0}
+.ic{
+  width:40px;height:40px;border-radius:var(--r-sm);
+  border:1.5px solid var(--bor);background:var(--sur2);
+  font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;flex-shrink:0;
+}
+.ic.add{
+  background:linear-gradient(135deg, var(--teal-light), var(--teal));
+  color:#06302c;border-color:transparent;font-weight:800;
+  box-shadow:var(--shadow-btn);
+}
+.ic.add:hover{transform:translateY(-2px) scale(1.04);box-shadow:var(--shadow-btn-hover)}
+.ic.rem{color:var(--acc);border-color:#fecdd3}
+.ic.rem:hover{background:#fff1f2;transform:scale(1.08)}
+.add-row{display:flex;align-items:center;gap:10px;margin:6px 0 26px;cursor:pointer;width:fit-content}
+.add-row span{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--teal2)}
+
+/* ══ Pregador blocks ══ */
+.pb{
+  background:linear-gradient(145deg, var(--sur2), var(--mint-bg));
+  border:1px solid var(--bor);border-radius:var(--r);
+  padding:16px 20px;margin-bottom:14px;
+  box-shadow:0 4px 12px -4px rgba(20,184,166,.12);
+}
+.pb-title{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--teal2);margin-bottom:11px}
+
+/* ══ Radio ══ */
+.rg{display:flex;gap:22px;margin-top:5px}
+.rg label{
+  font-size:13px;font-weight:500;letter-spacing:0;text-transform:none;
+  color:var(--tx);display:flex;align-items:center;gap:8px;cursor:pointer;
+}
+.rg input[type=radio]{accent-color:var(--teal2);width:17px;height:17px;cursor:pointer}
+
+/* ══ Photo upload ══ */
+.ph{
+  font-size:12px;color:#0f6e63;font-style:italic;line-height:1.6;
+  padding:10px 14px;background:linear-gradient(135deg,var(--mint-bg2),var(--mint-bg));
+  border-left:3px solid var(--teal);border-radius:0 var(--r-sm) var(--r-sm) 0;margin-top:7px;
+}
+.upa{
+  border:2px dashed var(--bor);border-radius:var(--r);
+  padding:26px 20px;text-align:center;cursor:pointer;position:relative;
+  transition:all .25s;background:rgba(20,184,166,.02);
+}
+.upa:hover{border-color:var(--teal);background:rgba(20,184,166,.06);transform:translateY(-1px)}
+.upa input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upi{font-size:26px;margin-bottom:7px}
+.upl{font-size:13px;color:var(--tm)}
+.upl strong{color:var(--teal2)}
+.prev{display:flex;flex-wrap:wrap;gap:10px;margin-top:11px}
+.thumb{position:relative;width:80px;height:80px}
+.thumb img{width:100%;height:100%;object-fit:cover;border-radius:10px;box-shadow:0 4px 12px -2px rgba(15,42,44,.2)}
+.thumb button{
+  position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;
+  background:var(--acc);border:2px solid #fff;color:#fff;font-size:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+
+/* ══ Local outros ══ */
+.lhint{
+  font-size:12px;color:#92660a;font-style:italic;
+  padding:9px 13px;background:linear-gradient(135deg,#fffbeb,#fef3c7);
+  border-left:3px solid var(--gold);border-radius:0 var(--r-sm) var(--r-sm) 0;margin-bottom:9px;
+}
+
+/* ══ Info box — prazos ══ */
+.ibox{
+  background:linear-gradient(145deg,var(--mint-bg2),var(--mint-bg));
+  border:1px solid var(--bor);border-radius:var(--r);
+  padding:20px 24px;margin-top:8px;
+  box-shadow:0 4px 16px -4px rgba(20,184,166,.15);
+}
+.ibox-t{font-family:'Manrope',sans-serif;font-size:14px;font-weight:800;color:var(--teal2);margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.irow{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.irow:last-child{margin-bottom:0}
+.bdg{
+  background:linear-gradient(135deg,var(--teal-light),var(--teal2));color:#06302c;
+  font-size:10px;font-weight:800;letter-spacing:.8px;padding:4px 11px;border-radius:20px;
+  white-space:nowrap;margin-top:2px;flex-shrink:0;box-shadow:0 2px 6px -1px rgba(20,184,166,.4);
+}
+.bdg.or{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#451a03;box-shadow:0 2px 6px -1px rgba(245,158,11,.4)}
+.irow p{font-size:13px;color:var(--tx);line-height:1.5}
+
+/* ══ Actions ══ */
+.acts{
+  background:var(--sur);
+  border-radius:0 0 24px 24px;
+  padding:24px 40px;display:flex;gap:12px;flex-wrap:wrap;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.3);
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:12px 26px;
+  border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-size:13px;
+  font-weight:700;letter-spacing:.5px;cursor:pointer;border:none;
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+.btn-p{
+  background:linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 55%, var(--teal2) 100%);
+  color:#06302c;box-shadow:var(--shadow-btn);
+}
+.btn-p:hover{transform:translateY(-2px);box-shadow:var(--shadow-btn-hover)}
+.btn-p:active{transform:translateY(0)}
+.btn-d{background:var(--sur);color:#e05555;border:1.5px solid #fecdd3;box-shadow:0 2px 8px -2px rgba(192,64,64,.15)}
+.btn-d:hover{background:#fff1f2;transform:translateY(-1px)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+
+/* ══ Popup — sucesso ══ */
+.pop{
+  position:fixed;inset:0;background:rgba(10,26,29,.6);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:10000;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.pop.on{opacity:1;pointer-events:all}
+.pbox{
+  background:var(--sur);border-radius:22px;padding:38px 42px;text-align:center;
+  max-width:380px;width:90%;
+  box-shadow:0 30px 80px -10px rgba(0,0,0,.4), 0 1px 0 rgba(255,255,255,.6) inset;
+  transform:scale(.9) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pop.on .pbox{transform:scale(1) translateY(0)}
+.picon{font-size:50px;margin-bottom:12px;filter:drop-shadow(0 4px 12px rgba(20,184,166,.3))}
+.ptit{font-family:'Manrope',sans-serif;font-size:23px;font-weight:800;color:var(--teal2);margin-bottom:9px}
+.pmsg{font-size:14px;color:var(--tm);margin-bottom:24px;line-height:1.55}
+.pok{
+  background:linear-gradient(135deg, var(--teal-light), var(--teal));color:#06302c;
+  border:none;border-radius:var(--r-sm);padding:13px 42px;font-family:'Inter',sans-serif;
+  font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;
+  box-shadow:var(--shadow-btn);transition:all .2s;
+}
+.pok:hover{transform:translateY(-2px);box-shadow:var(--shadow-btn-hover)}
+
+/* ══ Toast ══ */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:linear-gradient(135deg, var(--teal-light), var(--teal2));color:#06302c;
+  padding:12px 24px;border-radius:30px;font-weight:700;font-size:13px;
+  opacity:0;pointer-events:none;transition:all .3s;z-index:9999;
+  box-shadow:0 8px 24px -4px rgba(20,184,166,.5);
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══ Histórico / Gestão — stat cards ══ */
+.hist-stats,.g-stats{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:20px;padding-bottom:4px}
+.stat-card,.g-sc{
+  flex:1;min-width:90px;background:var(--sur);
+  border:1px solid var(--bor);border-radius:var(--r-sm);
+  padding:14px 10px;text-align:center;
+  box-shadow:var(--shadow-card);
+  transition:transform .2s;
+}
+.stat-card:hover,.g-sc:hover{transform:translateY(-2px)}
+.stat-num,.g-sc-num{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800;color:var(--teal2)}
+.stat-lbl,.g-sc-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--tm);margin-top:4px;text-align:center}
+
+.hist-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.hist-title{font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;color:var(--teal2)}
+.hist-refresh{
+  display:inline-flex;align-items:center;gap:6px;padding:9px 18px;
+  background:linear-gradient(135deg,var(--teal-light),var(--teal));color:#06302c;
+  border:none;border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-size:12px;
+  font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:var(--shadow-btn);
+  transition:all .2s;
+}
+.hist-refresh:hover{transform:translateY(-2px);box-shadow:var(--shadow-btn-hover)}
+
+.hist-table,.g-table{width:100%;border-collapse:collapse;font-size:13px}
+.hist-table th,.g-table th,thead th{
+  background:linear-gradient(135deg,var(--teal2),var(--teal));color:#fff;
+  padding:11px 14px;text-align:left;font-size:10px;font-weight:800;
+  letter-spacing:1px;text-transform:uppercase;white-space:nowrap;
+}
+.hist-table td,.g-table td,tbody td{padding:12px 14px;border-bottom:1px solid var(--bor);color:var(--tx);vertical-align:middle}
+.hist-table tr:hover td,.g-table tr:hover td{background:var(--sur2)}
+.hist-table tr:last-child td,.g-table tr:last-child td{border-bottom:none}
+
+.badge-status,.st-sel{
+  display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;
+  border:none;outline:none;cursor:pointer;font-family:'Inter',sans-serif;
+  box-shadow:0 2px 6px -1px rgba(0,0,0,.1);
+  white-space:nowrap;
+}
+select.st-sel{min-width:128px}
+.badge-status.aguardando,.st-sel.aguardando{background:linear-gradient(135deg,#fde68a,#fbbf24);color:#451a03}
+.badge-status.producao,.st-sel.producao{background:linear-gradient(135deg,#93c5fd,#3b82f6);color:#fff}
+.badge-status.analise,.st-sel.analise{background:linear-gradient(135deg,#d8b4fe,#a855f7);color:#fff}
+.badge-status.revisao,.st-sel.revisao{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff}
+.badge-status.entregue,.st-sel.entregue{background:linear-gradient(135deg,#34d399,#059669);color:#fff}
+.badge-status.concluido,.st-sel.concluido{background:linear-gradient(135deg,#60a5fa,#1d4ed8);color:#fff}
+.st-sel option{background:#fff;color:var(--tx);font-weight:600}
+.badge-status.cancelado{background:linear-gradient(135deg,#fca5a5,#ef4444);color:#fff}
+
+.hist-empty,.g-empty{text-align:center;padding:48px 20px;color:var(--tm)}
+.hist-empty-icon,.g-empty-icon{font-size:48px;margin-bottom:12px;filter:drop-shadow(0 4px 8px rgba(20,184,166,.2))}
+.hist-loading,.g-loading{text-align:center;padding:48px 20px;color:var(--tm);font-size:14px}
+.hist-filter,.g-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.hist-filter input,.g-toolbar input{
+  flex:1;min-width:180px;background:var(--sur2);border:1.5px solid var(--bor);
+  border-radius:var(--r-sm);padding:9px 13px;font-family:'Inter',sans-serif;
+  font-size:13px;color:var(--tx);outline:none;box-shadow:var(--shadow-inset);
+}
+.hist-filter input:focus,.g-toolbar input:focus{border-color:var(--teal)}
+.hist-filter select,.g-toolbar select{
+  background:var(--sur2);border:1.5px solid var(--bor);border-radius:var(--r-sm);
+  padding:9px 13px;font-family:'Inter',sans-serif;font-size:13px;color:var(--tx);
+  cursor:pointer;outline:none;box-shadow:var(--shadow-inset);
+}
+
+/* ══ Gestão extras ══ */
+.gestao-sub{display:flex;gap:4px;margin-bottom:0;border-bottom:1px solid var(--bor);padding-bottom:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.gestao-sub-btn{
+  padding:11px 22px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.4px;text-transform:uppercase;cursor:pointer;border:none;
+  background:transparent;color:var(--tm);border-bottom:3px solid transparent;
+  transition:all .2s;border-radius:var(--r-sm) var(--r-sm) 0 0;
+  white-space:nowrap;flex-shrink:0;
+}
+.gestao-sub-btn.active{color:var(--teal2);border-bottom-color:var(--teal);background:var(--sur2)}
+.gestao-sub-btn:hover:not(.active){color:var(--teal2);background:rgba(20,184,166,.05)}
+.gestao-page{display:none;padding:22px 0}
+.gestao-page.active{display:block}
+.g-table-wrap{overflow-x:auto;border-radius:var(--r-sm);box-shadow:var(--shadow-card)}
+.g-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;box-shadow:0 2px 6px -1px rgba(0,0,0,.1)}
+.g-badge.admin{background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff}
+.g-badge.designer{background:linear-gradient(135deg,#a7f3d0,#6ee7b7);color:#065f46;border:1px solid #34d399}
+.g-badge.ativo{background:linear-gradient(135deg,#86efac,#4ade80);color:#14532d}
+.g-badge.inativo{background:linear-gradient(135deg,#fca5a5,#f87171);color:#7f1d1d}
+.login-modal-box{max-width:380px}
+.login-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.login-field label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--tm)}
+.login-field input{
+  background:var(--sur2);border:1.5px solid var(--bor);border-radius:var(--r-sm);
+  padding:10px 14px;font-size:14px;outline:none;box-shadow:var(--shadow-inset);
+}
+.login-field input:focus{border-color:var(--teal);box-shadow:var(--shadow-inset),0 0 0 4px var(--teal-glow)}
+.login-err{
+  color:#dc2626;font-size:12px;text-align:center;margin-top:8px;padding:8px;
+  background:#fef2f2;border-radius:var(--r-sm);display:none;
+}
+.sidebar-user-box{
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(145deg,var(--sur2),#e6fbf6);border:1px solid var(--bor);
+  border-radius:var(--r-sm);padding:12px 18px;margin-bottom:18px;
+  box-shadow:0 4px 12px -4px rgba(20,184,166,.12);
+}
+.sidebar-user-name{font-size:13px;font-weight:800;color:var(--teal2)}
+.sidebar-user-role{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:1px}
+
+@media print{
+  body{background:#fff;padding:0}
+  .acts,.pop{display:none!important}
+  .banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:580px){
+  .fbody,.acts{padding:24px 20px}
+  .row{grid-template-columns:1fr}
+  .date-row{grid-template-columns:1fr;gap:10px}
+  .date-row .ic{justify-self:end;margin-top:-6px}
+  .tabs{justify-content:center}
+  .gestao-container{padding:18px 16px!important}
+  .gestao-sub-btn{padding:10px 14px;font-size:11px}
+  .g-table-wrap{overflow-x:auto}
+  .g-table{min-width:560px}
+  .sidebar-user-box{flex-wrap:wrap;gap:10px}
+}
+@media(max-width:420px){
+  input[type=date],input[type=time]{font-size:13px;padding:10px 10px}
+}
+</style>
+</head>
+<body>
+<!-- ===== BARRA DE NAVEGAÇÃO UNIFICADA AD LOUVEIRA ===== -->
+<style>
+  .adl-nav{
+    position:sticky;top:0;z-index:9999;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    background:linear-gradient(135deg,#075F5C,#0E8E89 60%,#5FCFC4);
+    padding:8px 16px;
+    box-shadow:0 2px 12px rgba(7,95,92,.35);
+    font-family:'Manrope','Inter',sans-serif;
+  }
+  .adl-nav-logo{
+    width:32px;height:32px;border-radius:8px;overflow:hidden;
+    margin-right:6px;flex-shrink:0;
+  }
+  .adl-nav-logo img{width:100%;height:100%;object-fit:cover;}
+  .adl-nav-title{
+    font-size:13px;font-weight:800;color:#fff;
+    margin-right:16px;white-space:nowrap;opacity:.9;
+    display:none;
+  }
+  @media(min-width:520px){.adl-nav-title{display:block;}}
+  .adl-nav a{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:999px;
+    font-size:13px;font-weight:700;text-decoration:none;
+    color:rgba(255,255,255,.75);
+    transition:background .15s,color .15s;
+    white-space:nowrap;
+  }
+  .adl-nav a:hover{background:rgba(255,255,255,.15);color:#fff;}
+  .adl-nav a.adl-ativo{
+    background:rgba(255,255,255,.2);color:#fff;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  }
+  /* Compensar o sticky nav no padding do body */
+  body{ padding-top: 0 !important; }
+</style>
+<nav class="adl-nav">
+  <div class="adl-nav-logo">
+    <img src="/logo.jpg" alt="AD Louveira" onerror="this.style.display='none'"/>
+  </div>
+  <span class="adl-nav-title">AD Louveira</span>
+  <a href="/artes.html" id="adl-link-artes">🎨 Solicitação de Artes</a>
+  <a href="/" id="adl-link-reservas">📅 Reserva de Salas</a>
+</nav>
+<script>
+  (function(){
+    var p = window.location.pathname;
+    if(p.includes('artes')){
+      document.getElementById('adl-link-artes').classList.add('adl-ativo');
+    } else {
+      document.getElementById('adl-link-reservas').classList.add('adl-ativo');
+    }
+  })();
+</script>
+<!-- ===== FIM DA BARRA DE NAVEGAÇÃO ===== -->
+
+<div class="wrap" id="main-wrap">
+
+<!-- popup -->
+<div class="pop" id="pop">
+  <div class="pbox">
+    <div class="picon">✅</div>
+    <div class="ptit">Solicitação Enviada!</div>
+    <div class="pmsg">Sua solicitação foi registrada com sucesso.<br>Em breve nossa equipe entrará em contato.</div>
+    <button class="pok" onclick="document.getElementById('pop').classList.remove('on')">OK</button>
+  </div>
+</div>
+
+<!-- tabs nav -->
+<div class="tabs" id="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('formulario')">📝 Nova Solicitação</button>
+  <button class="tab-btn" onclick="switchTab('historico')">📋 Histórico</button>
+  <button class="tab-btn" id="tab-btn-gestao" onclick="switchTab('gestao')" style="display:none;position:relative">🔐 Gestão<span id="badge-aguardando" style="display:none;position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#451a03;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 6px -1px rgba(245,158,11,.5)">0</span></button>
+  <button class="tab-btn" id="tab-btn-login" onclick="abrirLoginEquipe()" style="margin-left:auto;background:transparent;color:var(--tm);font-size:11px;border:1px solid var(--bor)">👤 Acesso da Equipe</button>
+  <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
+</div>
+
+<!-- ── Tab Formulário ── -->
+<div class="tab-pane active" id="tab-formulario">
+
+<!-- banner -->
+<div class="banner">
+  <img class="logo" src="data:image/jpeg;base64,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" alt="AD Louveira"/>
+  <div>
+    <div class="bn-title">Assembleia de Deus Louveira</div>
+    <div class="bn-sub">Comunicação &amp; Mídia</div>
+  </div>
+</div>
+
+<!-- header -->
+<div class="hdr">
+  <h1>Questionário para Solicitação de<br/>Artes / Post / Material para Eventos</h1>
+  <p>Preencha todos os campos com atenção antes de enviar</p>
+</div>
+
+<!-- form body -->
+<div class="fbody" id="fbody">
+
+  <div class="sec">Identificação</div>
+  <div class="row">
+    <div class="field">
+      <label>Congregação <span class="req">*</span></label>
+      <select id="congregacao">
+        <option value="">Selecione…</option>
+        <option>Cavalli</option>
+        <option>Colinas São José</option>
+        <option>Estiva</option>
+        <option>Sede</option>
+        <option>Lago Azul</option>
+        <option>Monterrey</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Data da Solicitação</label>
+      <input id="data-sol" type="text" readonly style="background:var(--sur2);color:var(--teal2);font-weight:700;cursor:default;border-color:var(--teal-light)"/>
+    </div>
+  </div>
+  <div class="row one">
+    <div class="field">
+      <label>Solicitante <span class="req">*</span></label>
+      <input id="solicitante" type="text" placeholder="Nome completo de quem está fazendo a solicitação"/>
+    </div>
+  </div>
+
+  <div class="sec">Dados do Evento</div>
+  <div class="row one">
+    <div class="field">
+      <label>Nome do Trabalho / Evento <span class="req">*</span></label>
+      <input id="nome-trab" type="text" placeholder="Ex: Culto de Celebração, Conferência de Jovens…"/>
+    </div>
+  </div>
+
+  <div id="datas-cont"></div>
+  <div class="add-row" onclick="addData()">
+    <button class="ic add" type="button">+</button>
+    <span>Adicionar outra data / horário</span>
+  </div>
+
+  <div class="row one">
+    <div class="field">
+      <label>Local <span class="req">*</span></label>
+      <select id="local" onchange="toggleOutros()">
+        <option value="">Selecione o local…</option>
+        <option value="TODAS AS CONGREGAÇÕES">TODAS AS CONGREGAÇÕES</option>
+        <option value="Cavalli — Rua da Liberdade, 41-17 – Jardim Vista Alegre – Louveira/SP">Cavalli — Rua da Liberdade, 41-17 – Louveira/SP</option>
+        <option value="Colinas São José — Rua Guerino Furlan, 333 – Louveira/SP">Colinas São José — Rua Guerino Furlan, 333 – Louveira/SP</option>
+        <option value="Estiva — Bairro Leitão – Louveira/SP">Estiva — Bairro Leitão – Louveira/SP</option>
+        <option value="Lago Azul — Rua Giácomo J Nechio, 114 – Louveira/SP">Lago Azul — Rua Giácomo J Nechio, 114 – Louveira/SP</option>
+        <option value="Monterrey — Avenida Escorial, 50 – Louveira/SP">Monterrey — Avenida Escorial, 50 – Louveira/SP</option>
+        <option value="Sede — Rua Deolindo Nichi, 105 – Vila Pasti – Louveira/SP">Sede — Rua Deolindo Nichi, 105 – Vila Pasti – Louveira/SP</option>
+        <option value="OUTROS">OUTROS (informar endereço)</option>
+      </select>
+      <div id="outros-sec" style="display:none;margin-top:10px">
+        <div class="lhint">📍 Informe o endereço completo: Rua, número, bairro e cidade.</div>
+        <input id="outros-inp" type="text" placeholder="Ex: Rua das Flores, 100 – Centro – Louveira/SP"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Tema <span class="req">*</span></label>
+      <input id="tema" type="text" placeholder="Tema do evento"/>
+    </div>
+    <div class="field">
+      <label>Referência Bíblica</label>
+      <input id="ref" type="text" placeholder="Ex: João 3:16"/>
+    </div>
+  </div>
+
+  <div class="sec">Pregador / Ministro</div>
+  <div id="preg-cont"></div>
+
+  <div class="sec">Informações Complementares</div>
+  <div class="row one">
+    <div class="field">
+      <label>Mais Informações (caso queira acrescentar)</label>
+      <textarea id="mais-info" placeholder="Acrescente aqui qualquer informação adicional relevante…"></textarea>
+    </div>
+  </div>
+
+  <div class="sec">Referência Visual / Paleta de Cores</div>
+  <div class="field">
+    <!-- Destaque: pergunta sobre paleta de cores -->
+    <div style="background:linear-gradient(135deg,var(--mint-bg2),var(--mint-bg));border:2px solid var(--teal);border-radius:var(--r);padding:18px 20px;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:800;color:var(--teal2);font-family:'Manrope',sans-serif;margin-bottom:10px">🎨 Qual será a Paleta de Cores?</div>
+      <div style="font-size:12px;color:var(--tm);margin-bottom:12px">Descreva as cores desejadas para a arte.</div>
+      <textarea id="f-paleta-texto" placeholder="Descreva as cores desejadas para a arte." style="width:100%;min-height:80px;background:var(--sur);border:1.5px solid var(--bor);border-radius:var(--r-sm);padding:10px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--tx);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+    </div>
+
+    <label style="margin-bottom:8px;display:block">Imagens de referência <em style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(opcional — prints, fotos, exemplos de estilo)</em></label>
+    <div class="ph" style="margin-bottom:10px">Envie imagens que sirvam de referência para as cores ou estilo da arte desejada. Pode ser um print, paleta, foto ou qualquer inspiração visual.</div>
+    <label class="upa" id="dz-paleta" for="paleta-input" style="display:block">
+      <input type="file" id="paleta-input" accept="image/*" multiple onchange="hPaleta(this.files)"/>
+      <div class="upi">🖼️</div>
+      <div class="upl">Clique ou arraste as imagens aqui<br/><strong>JPG, PNG ou WEBP — múltiplas imagens aceitas</strong></div>
+    </label>
+    <div class="prev" id="pv-paleta"></div>
+    <input id="cores-hid" type="hidden"/>
+  </div>
+
+  <div class="sec">Campo Informativo — Prazos</div>
+  <div class="ibox">
+    <div class="ibox-t">⏱ Prazos para Solicitação de Arte</div>
+    <div class="irow"><span class="bdg">✔ IDEAL</span><p><strong>60 dias</strong> de antecedência do evento. Prazo recomendado para garantir qualidade e revisões.</p></div>
+    <div class="irow"><span class="bdg or">⚠ MÍNIMO</span><p><strong>30 dias</strong> de antecedência do evento. Prazo aceitável, sujeito à disponibilidade da equipe.</p></div>
+  </div>
+
+</div><!-- /fbody -->
+
+<div class="acts">
+  <button class="btn btn-p" type="button" onclick="gerarPDF()">📄 Exportar PDF</button>
+  <button class="btn btn-p btn-send" type="button" onclick="enviar()">📨 Enviar Formulário</button>
+  <button class="btn btn-d" type="button" onclick="limpar()">🗑 Limpar</button>
+</div>
+
+</div><!-- tab formulario -->
+
+  <!-- ── Tab Histórico ── -->
+  <div class="tab-pane" id="tab-historico">
+    <div style="background:var(--sur);border:1px solid var(--bor);border-top:none;padding:28px 40px;border-radius:0 0 0 0">
+
+      <div class="hist-header">
+        <div class="hist-title">📋 Histórico de Solicitações</div>
+        <div style="display:flex;gap:8px">
+          <button class="hist-refresh" style="background:linear-gradient(135deg,#34d399,#059669)" onclick="exportarExcelHistorico()">📊 Excel</button>
+          <button class="hist-refresh" onclick="carregarHistorico()">🔄 Atualizar</button>
+        </div>
+      </div>
+
+      <div class="hist-stats" id="hist-stats">
+        <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card" style="border-top:3px solid #f0c030"><div class="stat-num" id="stat-aguardando" style="color:#7a5800">—</div><div class="stat-lbl">Aguardando</div></div>
+        <div class="stat-card" style="border-top:3px solid #5b9bd5"><div class="stat-num" id="stat-producao" style="color:#004085">—</div><div class="stat-lbl">Em Produção</div></div>
+        <div class="stat-card" style="border-top:3px solid #b39ddb"><div class="stat-num" id="stat-analise" style="color:#311b6b">—</div><div class="stat-lbl">Em Analise</div></div>
+        <div class="stat-card" style="border-top:3px solid #6a1fa0"><div class="stat-num" id="stat-revisao" style="color:#6a1fa0">—</div><div class="stat-lbl">Revisão</div></div>
+        <div class="stat-card" style="border-top:3px solid #1a6e3a"><div class="stat-num" id="stat-entregue" style="color:#1a6e3a">—</div><div class="stat-lbl">Entregue</div></div>
+        <div class="stat-card" style="border-top:3px solid #1a4a8a"><div class="stat-num" id="stat-concluido" style="color:#1a4a8a">—</div><div class="stat-lbl">Concluído</div></div>
+      </div>
+
+      <div class="hist-filter">
+        <input id="hist-busca" placeholder="🔍 Buscar por nome, solicitante…" oninput="filtrarHistorico()"/>
+        <select id="hist-status-filter" onchange="filtrarHistorico()">
+          <option value="">Todos os status</option>
+          <option value="Aguardando">Aguardando</option>
+          <option value="Em Produção">Em Produção</option>
+          <option value="Em Analise">Em Analise</option>
+          <option value="Revisão">Revisão</option>
+          <option value="Entregue">Entregue</option>
+          <option value="Concluido">Concluído</option>
+        </select>
+      </div>
+
+      <div id="hist-corpo">
+        <div class="hist-loading">⏳ Clique em Atualizar para carregar o histórico…</div>
+      </div>
+
+    </div>
+
+    <div class="acts" style="border-radius:0 0 10px 10px">
+      <button class="btn btn-p" type="button" onclick="switchTab('formulario')">✏️ Nova Solicitação</button>
+    </div>
+  </div><!-- /tab historico -->
+
+  <!-- Tab Gestão -->
+  <div class="tab-pane" id="tab-gestao">
+    <div class="gestao-container" style="background:var(--sur);border:1px solid var(--bor);border-top:none;padding:24px 40px">
+
+      <div class="sidebar-user-box">
+        <div>
+          <div class="sidebar-user-name" id="g-user-name">—</div>
+          <div class="sidebar-user-role" id="g-user-role">—</div>
+        </div>
+        <button class="btn btn-d" style="padding:7px 16px;font-size:11px" onclick="doLogoutEquipe()">Sair</button>
+      </div>
+
+      <div class="gestao-sub">
+        <button class="gestao-sub-btn active" onclick="showGestaoPage(this,'g-solic')">📋 Solicitações</button>
+        <button class="gestao-sub-btn" onclick="showGestaoPage(this,'g-audit')">🕓 Auditoria</button>
+        <button class="gestao-sub-btn" id="g-nav-users" style="display:none" onclick="showGestaoPage(this,'g-users')">👥 Usuários</button>
+        <button class="gestao-sub-btn" id="g-nav-email" style="display:none" onclick="showGestaoPage(this,'g-email')">⚙️ Configuração</button>
+      </div>
+
+      <div class="gestao-page active" id="g-solic">
+        <div class="g-stats">
+          <div class="g-sc"><div class="g-sc-num" id="gs-tot">—</div><div class="g-sc-lbl">Total</div></div>
+          <div class="g-sc" style="border-top:3px solid #f0c030"><div class="g-sc-num" id="gs-ag" style="color:#7a5800">—</div><div class="g-sc-lbl">Aguardando</div></div>
+          <div class="g-sc" style="border-top:3px solid #5b9bd5"><div class="g-sc-num" id="gs-pr" style="color:#004085">—</div><div class="g-sc-lbl">Em Produção</div></div>
+          <div class="g-sc" style="border-top:3px solid #b39ddb"><div class="g-sc-num" id="gs-an" style="color:#311b6b">—</div><div class="g-sc-lbl">Em Analise</div></div>
+          <div class="g-sc" style="border-top:3px solid #6a1fa0"><div class="g-sc-num" id="gs-re" style="color:#6a1fa0">—</div><div class="g-sc-lbl">Revisão</div></div>
+          <div class="g-sc" style="border-top:3px solid #1a6e3a"><div class="g-sc-num" id="gs-en" style="color:#1a6e3a">—</div><div class="g-sc-lbl">Entregue</div></div>
+          <div class="g-sc" style="border-top:3px solid #1a4a8a"><div class="g-sc-num" id="gs-co" style="color:#1a4a8a">—</div><div class="g-sc-lbl">Concluído</div></div>
+        </div>
+        <div class="g-toolbar">
+          <input id="g-busca" placeholder="🔍 Buscar nome, solicitante, congregação…" oninput="filtrarGSolic()"/>
+          <select id="g-f-status" onchange="filtrarGSolic()">
+            <option value="">Todos os status</option>
+            <option>Aguardando</option><option>Em Produção</option>
+            <option>Em Analise</option><option>Revisão</option>
+            <option>Entregue</option><option>Concluido</option>
+          </select>
+          <button class="btn btn-p" style="padding:8px 16px;font-size:11px" onclick="carregarGSolic()">🔄 Atualizar</button>
+          <button class="btn btn-p" style="padding:8px 16px;font-size:11px;background:linear-gradient(135deg,#34d399,#059669)" onclick="exportarExcelSolic()">📊 Exportar Excel</button>
+        </div>
+        <div class="g-table-wrap">
+          <table class="g-table"><thead><tr>
+            <th>#</th><th>Data</th><th>Congregação</th><th>Solicitante</th>
+            <th>Nome do Trabalho</th><th>Status</th><th></th>
+          </tr></thead><tbody id="g-tb-solic"></tbody></table>
+        </div>
+      </div>
+
+      <div class="gestao-page" id="g-audit">
+        <div class="g-toolbar">
+          <input id="g-busca-audit" placeholder="🔍 Buscar por nome ou usuário…" oninput="filtrarGAudit()"/>
+          <button class="btn btn-p" style="padding:8px 16px;font-size:11px" onclick="carregarGAudit()">🔄 Atualizar</button>
+        </div>
+        <div class="g-table-wrap">
+          <table class="g-table"><thead><tr>
+            <th>Data/Hora</th><th>Usuário</th><th>Solicitação</th>
+            <th>Status Anterior</th><th>Novo Status</th>
+          </tr></thead><tbody id="g-tb-audit"></tbody></table>
+        </div>
+      </div>
+
+      <div class="gestao-page" id="g-users">
+        <div class="g-toolbar">
+          <button class="btn btn-p" style="padding:8px 16px;font-size:11px" onclick="openNovoUsuario()">+ Novo Usuário</button>
+          <button class="btn btn-p" style="padding:8px 16px;font-size:11px" onclick="carregarGUsers()">🔄 Atualizar</button>
+        </div>
+        <div class="g-table-wrap">
+          <table class="g-table"><thead><tr>
+            <th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>📧 Notif.</th><th></th>
+          </tr></thead><tbody id="g-tb-users"></tbody></table>
+        </div>
+      </div>
+
+      <div class="gestao-page" id="g-email">
+        <div style="max-width:560px">
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-card)">
+            <div style="font-size:13px;color:var(--tm);line-height:1.6">
+              ✉️ Os <strong>destinatários</strong> são definidos automaticamente: qualquer usuário com a opção <strong>"Recebe notificações"</strong> marcada na aba 👥 Usuários receberá os e-mails. Use o campo abaixo apenas para adicionar e-mails extras (que não têm login no sistema).
+            </div>
+          </div>
+
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r-sm);padding:14px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start">
+            <span style="font-size:20px;flex-shrink:0">📮</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:4px">Remetente configurado via Gmail</div>
+              <div style="font-size:12px;color:#78350f;line-height:1.6">
+                O e-mail é enviado pela conta Gmail configurada nos secrets do Supabase (<strong>GMAIL_USER</strong>).<br/>
+                Para alterar o remetente, atualize o secret <strong>GMAIL_USER</strong> no painel do Supabase → Edge Functions → Secrets.
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--tx);margin-bottom:8px">
+              <input type="checkbox" id="cfg-usar-extra" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer" onchange="document.getElementById('cfg-destinatarios').disabled=!this.checked"/>
+              Adicionar e-mails extras (além dos usuários cadastrados)
+            </label>
+            <textarea id="cfg-destinatarios" placeholder="exemplo@gmail.com, outro@outlook.com" style="min-height:60px" disabled></textarea>
+            <div style="font-size:11px;color:var(--tm);margin-top:4px">Separe múltiplos e-mails por vírgula.</div>
+          </div>
+
+          <div class="field" style="margin-top:8px">
+            <label>Notificações E-mail Ativas</label>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--tx)">
+                <input type="checkbox" id="cfg-ativo-solic" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer"/>
+                Nova solicitação enviada
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--tx)">
+                <input type="checkbox" id="cfg-ativo-comentario" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer"/>
+                Novo comentário em uma solicitação
+              </label>
+            </div>
+          </div>
+
+          <!-- WhatsApp -->
+          <div style="margin-top:24px;padding-top:20px;border-top:2px solid var(--bor)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <span style="font-size:22px">📱</span>
+              <div>
+                <div style="font-size:14px;font-weight:800;color:var(--tx);font-family:'Manrope',sans-serif">WhatsApp</div>
+                <div style="font-size:12px;color:var(--tm)">Ao enviar, abrirá o WhatsApp com mensagem pré-pronta para cada número</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Números WhatsApp <span style="font-weight:400;text-transform:none;letter-spacing:0">(sem + ou espaços, ex: 5511999999999)</span></label>
+              <textarea id="cfg-wpp-numeros" placeholder="5511999999999&#10;5519988887777" style="min-height:80px;font-family:monospace;font-size:13px"></textarea>
+              <div style="font-size:11px;color:var(--tm);margin-top:4px">Um número por linha. Máximo 5 números. Inclua o código do país (55 para Brasil) + DDD + número.</div>
+            </div>
+
+            <div class="field" style="margin-top:4px">
+              <label>Enviar WhatsApp quando</label>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--tx)">
+                  <input type="checkbox" id="cfg-wpp-solic" style="width:18px;height:18px;accent-color:#25d366;cursor:pointer"/>
+                  Nova solicitação enviada
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--tx)">
+                  <input type="checkbox" id="cfg-wpp-comentario" style="width:18px;height:18px;accent-color:#25d366;cursor:pointer"/>
+                  Novo comentário em uma solicitação
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Permissões do Solicitante -->
+          <div style="margin-top:24px;padding-top:20px;border-top:2px solid var(--bor)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:22px">👤</span>
+              <div>
+                <div style="font-size:14px;font-weight:800;color:var(--tx);font-family:'Manrope',sans-serif">Permissões do Solicitante</div>
+                <div style="font-size:12px;color:var(--tm)">O que o solicitante pode fazer na aba Histórico</div>
+              </div>
+            </div>
+
+            <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+
+              <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer">
+                <input type="checkbox" id="cfg-solic-editar" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer;margin-top:2px;flex-shrink:0"/>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--tx)">✏️ Pode Editar a solicitação</div>
+                  <div style="font-size:11px;color:var(--tm);margin-top:2px">O solicitante poderá alterar os dados da própria solicitação no Histórico</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer">
+                <input type="checkbox" id="cfg-solic-excluir" style="width:18px;height:18px;accent-color:#ef4444;cursor:pointer;margin-top:2px;flex-shrink:0"/>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--tx)">🗑️ Pode Excluir a solicitação</div>
+                  <div style="font-size:11px;color:var(--tm);margin-top:2px">O solicitante poderá excluir a própria solicitação no Histórico</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer">
+                <input type="checkbox" id="cfg-solic-ver-status" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer;margin-top:2px;flex-shrink:0"/>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--tx)">🏷️ Pode ver o Status da solicitação</div>
+                  <div style="font-size:11px;color:var(--tm);margin-top:2px">O solicitante verá o status atual (Aguardando, Em Produção, etc.) no Histórico</div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <div id="cfg-email-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;color:#dc2626;margin-top:14px"></div>
+          <div id="cfg-email-ok" style="display:none;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;color:#065f46;margin-top:14px">✓ Configuração salva com sucesso!</div>
+
+          <button class="btn btn-p" style="margin-top:16px;padding:12px 28px" onclick="salvarConfigEmail()">💾 Salvar Configuração</button>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab gestao -->
+
+<div class="pop" id="m-login-equipe">
+  <div class="pbox login-modal-box">
+    <div class="picon">🔐</div>
+    <div class="ptit" style="font-size:18px">Acesso da Equipe</div>
+    <div class="pmsg" style="margin-bottom:18px">Entre com seu e-mail e senha cadastrados.</div>
+    <div class="login-field" style="text-align:left">
+      <label>E-mail</label>
+      <input type="email" id="le-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLoginEquipe()"/>
+    </div>
+    <div class="login-field" style="text-align:left">
+      <label>Senha</label>
+      <input type="password" id="le-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLoginEquipe()"/>
+    </div>
+    <div class="login-err" id="le-err"></div>
+    <button class="pok" id="btn-le" style="width:100%;margin-top:10px" onclick="doLoginEquipe()">Entrar</button>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" onclick="abrirRecuperarSenha();return false;" style="font-size:12px;color:var(--teal2);text-decoration:underline;font-weight:600">Esqueci minha senha</a>
+    </div>
+    <button class="pok" style="width:100%;margin-top:8px;background:transparent;color:var(--tm);border:1px solid var(--bor)" onclick="document.getElementById('m-login-equipe').classList.remove('on')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: Recuperar Senha -->
+<div class="pop" id="m-recuperar">
+  <div class="pbox login-modal-box">
+    <div class="picon">🔑</div>
+    <div class="ptit" style="font-size:18px">Recuperar Senha</div>
+    <div class="pmsg" style="margin-bottom:18px">Informe seu e-mail. Enviaremos um link para redefinir sua senha.</div>
+    <div class="login-field" style="text-align:left">
+      <label>E-mail</label>
+      <input type="email" id="rec-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')enviarRecuperarSenha()"/>
+    </div>
+    <div class="login-err" id="rec-err"></div>
+    <div id="rec-success" style="display:none;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:var(--r-sm);padding:12px;font-size:13px;color:#065f46;margin-top:10px">
+      ✓ E-mail enviado! Verifique sua caixa de entrada.
+    </div>
+    <button class="pok" id="btn-rec" style="width:100%;margin-top:10px" onclick="enviarRecuperarSenha()">Enviar Link</button>
+    <button class="pok" style="width:100%;margin-top:8px;background:transparent;color:var(--tm);border:1px solid var(--bor)" onclick="document.getElementById('m-recuperar').classList.remove('on');document.getElementById('m-login-equipe').classList.add('on')">Voltar ao Login</button>
+  </div>
+</div>
+
+<!-- Modal: Confirmar Exclusão -->
+<div class="pop" id="m-excluir">
+  <div class="pbox" style="max-width:520px;text-align:left">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:32px">🗑️</div>
+      <div>
+        <div class="ptit" style="font-size:17px;margin:0;color:#c04040">Excluir Solicitação</div>
+        <div style="font-size:13px;color:var(--tm);margin-top:2px">Esta ação não pode ser desfeita.</div>
+      </div>
+    </div>
+    <div id="m-excluir-body" style="background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r-sm);padding:14px;margin-bottom:18px;font-size:13px;line-height:1.7;max-height:280px;overflow-y:auto"></div>
+    <div style="font-size:14px;font-weight:700;color:#c04040;margin-bottom:16px;text-align:center">Deseja realmente excluir esta solicitação?</div>
+    <div style="display:flex;gap:10px">
+      <button class="pok" id="btn-confirmar-excluir" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 4px 12px -2px rgba(220,38,38,.4)" onclick="confirmarExcluir()">✓ Sim, Excluir</button>
+      <button class="pok" style="flex:1;background:transparent;color:var(--tm);border:1.5px solid var(--bor)" onclick="document.getElementById('m-excluir').classList.remove('on')">✕ Não, Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Solicitação -->
+<div class="pop" id="m-editar">
+  <div class="pbox" style="max-width:580px;text-align:left;max-height:88vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;position:sticky;top:0;background:var(--sur);padding-bottom:12px;border-bottom:1px solid var(--bor);z-index:1">
+      <div>
+        <div class="ptit" style="font-size:17px;margin:0">✏️ Editar Solicitação</div>
+        <div id="m-editar-subtitle" style="font-size:12px;color:var(--tm);margin-top:2px"></div>
+      </div>
+      <button onclick="document.getElementById('m-editar').classList.remove('on')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--tm)">✕</button>
+    </div>
+    <div class="login-field"><label>Congregação</label>
+      <select id="e-congregacao" style="background:var(--sur2);border:1.5px solid var(--bor);border-radius:var(--r-sm);padding:10px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;width:100%">
+        <option value="">Selecione…</option>
+        <option>Cavalli</option><option>Colinas São José</option><option>Estiva</option>
+        <option>Igreja Sede</option><option>Lago Azul</option><option>Monterrey</option>
+      </select>
+    </div>
+    <div class="login-field"><label>Solicitante</label>
+      <input type="text" id="e-solicitante" placeholder="Nome do solicitante"/>
+    </div>
+    <div class="login-field"><label>Nome do Trabalho / Evento</label>
+      <input type="text" id="e-nome-trabalho" placeholder="Nome do trabalho"/>
+    </div>
+    <div class="login-field"><label>Local</label>
+      <input type="text" id="e-local" placeholder="Local do evento"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="login-field"><label>Tema</label>
+        <input type="text" id="e-tema" placeholder="Tema"/>
+      </div>
+      <div class="login-field"><label>Referência Bíblica</label>
+        <input type="text" id="e-referencia" placeholder="Ex: João 3:16"/>
+      </div>
+    </div>
+    <div class="login-field"><label>Datas / Horários</label>
+      <input type="text" id="e-datas" placeholder="Ex: Data 1: 15/06/2026 | 19:00"/>
+    </div>
+    <div class="login-field"><label>Pregadores / Ministros</label>
+      <input type="text" id="e-pregadores" placeholder="Ex: Pregador 1: Pastor João | Foto: Sim"/>
+    </div>
+    <div class="login-field"><label>Paleta de Cores / Referência Visual</label>
+      <input type="text" id="e-paleta" placeholder="Cores ou referências"/>
+    </div>
+    <div class="login-field"><label>Mais Informações</label>
+      <textarea id="e-mais-info" style="min-height:70px" placeholder="Informações adicionais…"></textarea>
+    </div>
+    <div class="login-field"><label>Status</label>
+      <select id="e-status" style="background:var(--sur2);border:1.5px solid var(--bor);border-radius:var(--r-sm);padding:10px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;width:100%">
+        <option>Aguardando</option><option>Em Produção</option><option>Em Analise</option>
+        <option>Revisão</option><option>Entregue</option><option>Concluido</option>
+      </select>
+    </div>
+    <div id="m-editar-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r-sm);padding:10px;font-size:13px;color:#dc2626;margin-bottom:10px"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="pok" style="flex:1" onclick="salvarEdicao()">💾 Salvar Alterações</button>
+      <button class="pok" style="flex:1;background:transparent;color:var(--tm);border:1.5px solid var(--bor)" onclick="document.getElementById('m-editar').classList.remove('on')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="pop" id="m-gdet">
+  <div class="pbox" style="max-width:520px;text-align:left;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ptit" id="m-gdet-title" style="font-size:17px;margin:0">Detalhes</div>
+      <button onclick="document.getElementById('m-gdet').classList.remove('on')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tm)">✕</button>
+    </div>
+    <div id="m-gdet-body"></div>
+
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--bor)">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--teal2);margin-bottom:10px">💬 Comentários</div>
+      <div id="m-gdet-comments" style="max-height:220px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="m-gdet-novo-comentario" placeholder="Escreva um comentário…" style="flex:1;background:var(--sur2);border:1.5px solid var(--bor);border-radius:var(--r-sm);padding:9px 13px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')enviarComentario()"/>
+        <button class="btn btn-p" style="padding:9px 16px;font-size:12px" onclick="enviarComentario()">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pop" id="m-novo-user">
+  <div class="pbox" style="max-width:480px;text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ptit" style="font-size:17px;margin:0">Novo Usuário</div>
+      <button onclick="document.getElementById('m-novo-user').classList.remove('on')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tm)">✕</button>
+    </div>
+    <div class="login-field">
+      <label>Nome completo</label>
+      <input type="text" id="u-nome" placeholder="Nome"/>
+    </div>
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="u-email" placeholder="email@exemplo.com"/>
+    </div>
+    <div class="login-field">
+      <label>Senha inicial</label>
+      <input type="password" id="u-pass" placeholder="Mínimo 6 caracteres"/>
+    </div>
+    <div class="login-field">
+      <label>Perfil</label>
+      <select id="u-perfil" style="background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:Lato,sans-serif;outline:none">
+        <option value="designer">Designer</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="login-field">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--tx)">
+        <input type="checkbox" id="u-notif" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer"/>
+        Recebe notificações por e-mail
+      </label>
+    </div>
+    <div class="login-err" id="u-err"></div>
+    <button class="pok" style="width:100%;margin-top:10px" onclick="criarUsuario()">Criar Usuário</button>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<div id="toast"></div>
+
+<script>
+var SUPA_URL = 'https://tcvqkkgirxdarldhdeoz.supabase.co';
+var SUPA_KEY = 'sb_publishable_GO8wtvQaIp2jO_2wD342zw_rHU7v4jM';
+
+// ── Data de hoje ──
+(function(){
+  var n=new Date();
+  var d=String(n.getDate()).padStart(2,'0');
+  var mo=String(n.getMonth()+1).padStart(2,'0');
+  document.getElementById('data-sol').value=d+'/'+mo+'/'+n.getFullYear();
+})();
+
+// ── Datas dinâmicas ──
+var numDatas=0;
+function addData(){
+  numDatas++;
+  var c=document.getElementById('datas-cont');
+  var row=document.createElement('div');
+  row.className='date-row';
+  row.dataset.n=numDatas;
+  var label1=numDatas===1?'Data do Evento <span class="req">*</span>':'Data do Evento ('+numDatas+'ª)';
+  var label2=numDatas===1?'Horário <span class="req">*</span>':'Horário ('+numDatas+'ª)';
+  row.innerHTML=
+    '<div class="field"><label>'+label1+'</label><input type="date" class="c-data" onchange="renderPreg()"/></div>'+
+    '<div class="field"><label>'+label2+'</label><input type="time" class="c-hora" onchange="renderPreg()"/></div>'+
+    '<button class="ic rem" type="button" onclick="remData(this)" style="display:none">✕</button>';
+  c.appendChild(row);
+  updBtns();
+  renderPreg();
+}
+function remData(btn){btn.closest('.date-row').remove();updBtns();renderPreg();}
+function updBtns(){
+  var rs=document.querySelectorAll('.date-row');
+  rs.forEach(function(r){r.querySelector('.ic.rem').style.display=rs.length>1?'flex':'none';});
+}
+
+// ── Local outros ──
+function toggleOutros(){
+  document.getElementById('outros-sec').style.display=
+    document.getElementById('local').value==='OUTROS'?'block':'none';
+}
+
+// ── Pregadores dinâmicos ──
+var fMap={};
+function renderPreg(){
+  var rows=document.querySelectorAll('.date-row');
+  var n=rows.length;
+  var cont=document.getElementById('preg-cont');
+  // salva valores existentes
+  var saved={};
+  cont.querySelectorAll('.pb').forEach(function(b){
+    var i=parseInt(b.dataset.i);
+    var cm=b.querySelector('.cm');
+    var rs=b.querySelectorAll('input[type=radio]');
+    saved[i]={
+      min:cm?cm.value:'',
+      sim:rs[0]?rs[0].checked:false,
+      nao:rs[1]?rs[1].checked:false
+    };
+  });
+  cont.innerHTML='';
+  rows.forEach(function(row,i){
+    var dv=row.querySelector('.c-data').value;
+    var hv=row.querySelector('.c-hora').value;
+    var dlbl=dv?fmtDate(dv):'Data '+(i+1);
+    if(hv) dlbl+=' às '+hv;
+    var sv=saved[i]||{};
+    var mult=n>1;
+    var fotoLbl=mult
+      ?'Haverá foto do(a) pregador(a)? <em style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</em>'
+      :'A arte terá foto do(a) pregador(a)? <span class="req">*</span>';
+    var sc=fMap[i]?'block':'none';
+    var block=document.createElement('div');
+    block.className='pb';
+    block.dataset.i=i;
+    block.innerHTML=
+      '<div class="pb-title">'+(mult?'📋 Pregador — '+dlbl:'📋 Pregador / Ministro')+'</div>'+
+      '<div class="field"><label>'+(mult?'Nome e Cidade — <span style="color:var(--teal2)">'+dlbl+'</span>':'Nome e Cidade de quem irá ministrar <span class="req">*</span>')+'</label>'+
+      '<input type="text" class="cm" placeholder="Nome completo — Cidade/UF" value="'+(sv.min||'')+'"/></div>'+
+      '<div class="field"><label>'+fotoLbl+'</label>'+
+      '<div class="rg">'+
+      '<label><input type="radio" name="fp'+i+'" value="sim"'+(sv.sim?' checked':'')+'onchange="tgFoto('+i+')"/> Sim</label>'+
+      '<label><input type="radio" name="fp'+i+'" value="nao"'+(sv.nao?' checked':'')+'onchange="tgFoto('+i+')"/> Não</label>'+
+      '</div></div>'+
+      '<div id="fs'+i+'" style="display:'+sc+'">'+
+      '<div class="ph">📸 Foto com boa resolução, da cintura para cima, ombros aparecendo, sem cortar a cabeça. <strong>Não aceitamos selfies.</strong></div>'+
+      '<div class="field" style="margin-top:10px"><label>Foto(s)</label>'+
+      '<label class="upa" id="dz'+i+'" for="fi'+i+'" style="display:block"><input type="file" id="fi'+i+'" accept="image/*" multiple onchange="hFiles(this.files,'+i+')"/>'+
+      '<div class="upi">🖼️</div><div class="upl">Clique ou arraste aqui<br/><strong>JPG, PNG ou WEBP</strong></div></label>'+
+      '<div class="prev" id="pv'+i+'"></div></div></div>';
+    cont.appendChild(block);
+    if(fMap[i]) renderPv(i);
+  });
+}
+function tgFoto(i){
+  var r=document.querySelector('input[name="fp'+i+'"]:checked');
+  var s=document.getElementById('fs'+i);
+  if(s) s.style.display=(r&&r.value==='sim')?'block':'none';
+}
+function hFiles(files,i){
+  if(!fMap[i]) fMap[i]=[];
+  Array.from(files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    var r=new FileReader();
+    r.onload=function(e){fMap[i].push({n:f.name,s:e.target.result});renderPv(i);};
+    r.readAsDataURL(f);
+  });
+}
+function renderPv(i){
+  var p=document.getElementById('pv'+i);
+  if(!p) return;
+  p.innerHTML='';
+  (fMap[i]||[]).forEach(function(f,j){
+    var d=document.createElement('div');
+    d.className='thumb';
+    d.innerHTML='<img src="'+f.s+'" alt="'+f.n+'"/>'+
+      '<button type="button" onclick="remF('+i+','+j+')">✕</button>';
+    p.appendChild(d);
+  });
+}
+function remF(i,j){if(fMap[i])fMap[i].splice(j,1);renderPv(i);}
+
+// ── Paleta / Referência visual ──
+var paletaFiles=[];
+function hPaleta(files){
+  Array.from(files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    var r=new FileReader();
+    r.onload=function(e){paletaFiles.push({n:f.name,s:e.target.result});renderPvPaleta();};
+    r.readAsDataURL(f);
+  });
+}
+function renderPvPaleta(){
+  var p=document.getElementById('pv-paleta');
+  p.innerHTML='';
+  paletaFiles.forEach(function(f,i){
+    var d=document.createElement('div');
+    d.className='thumb';
+    d.innerHTML='<img src="'+f.s+'" alt="'+f.n+'" title="'+f.n+'"/>'+
+      '<button type="button" onclick="remPaleta('+i+')">✕</button>';
+    p.appendChild(d);
+  });
+  document.getElementById('cores-hid').value=paletaFiles.map(function(f){return f.n;}).join(', ');
+}
+function remPaleta(i){paletaFiles.splice(i,1);renderPvPaleta();}
+
+// ── ENVIAR → Google Sheets ──
+function enviar(){
+  var cong  =document.getElementById('congregacao').value;
+  var solit =document.getElementById('solicitante').value.trim();
+  var dsol  =document.getElementById('data-sol').value;
+  var nome  =document.getElementById('nome-trab').value.trim();
+  var localV=document.getElementById('local').value;
+  var localF=localV==='OUTROS'
+    ?(document.getElementById('outros-inp').value.trim()||'Outros')
+    :localV;
+  var tema  =document.getElementById('tema').value.trim();
+  var ref   =document.getElementById('ref').value.trim();
+  var mais  =document.getElementById('mais-info').value.trim();
+
+  if(!cong||!nome||!localV){
+    toast('Preencha Congregação, Nome do Evento e Local.',true);return;
+  }
+
+  var datas=[];
+  document.querySelectorAll('.date-row').forEach(function(r,i){
+    datas.push('Data '+(i+1)+': '+(fmtDate(r.querySelector('.c-data').value)||'—')+' | '+(r.querySelector('.c-hora').value||'—'));
+  });
+
+  var pregs=[];
+  var fotosBase64=[];
+  document.querySelectorAll('.pb').forEach(function(b,i){
+    var m=b.querySelector('.cm')?b.querySelector('.cm').value.trim():'—';
+    var fp=b.querySelector('input[name="fp'+i+'"]:checked');
+    var ft=fp?(fp.value==='sim'?'Sim':'Não'):'—';
+    pregs.push('Pregador '+(i+1)+': '+m+' | Foto: '+ft);
+    if(fMap[i] && fMap[i].length>0){
+      fMap[i].forEach(function(f,j){
+        fotosBase64.push({ pregador: i+1, nome: f.n, data: f.s });
+      });
+    }
+  });
+
+  var payload={
+    data_solic:    dsol,
+    congregacao:   cong,
+    solicitante:   solit,
+    nome_trabalho: nome,
+    local:         localF,
+    tema:          tema,
+    referencia:    ref,
+    datas:         datas.join(' || '),
+    pregadores:    pregs.join(' || '),
+    paleta_cores:  (function(){
+      var texto = document.getElementById('f-paleta-texto').value.trim();
+      var imgs  = paletaFiles.length>0 ? paletaFiles.map(function(f){return f.n;}).join(', ') : '';
+      if(texto && imgs) return texto + ' | Imagens: ' + imgs;
+      return texto || imgs || '';
+    })(),
+    mais_info:     mais,
+    status:        'Aguardando',
+    fotos_pregadores_json: fotosBase64.length>0 ? JSON.stringify(fotosBase64) : null,
+    fotos_referencia_json: paletaFiles.length>0 ? JSON.stringify(paletaFiles.map(function(f){return {nome:f.n, data:f.s};})) : null
+  };
+
+  var btn=document.querySelector('.btn-send');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Enviando...';}
+  toast('Enviando solicitação...');
+
+  fetch(SUPA_URL + '/rest/v1/solicitacoes', {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'apikey':         SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Prefer':        'return=representation'
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error('HTTP '+r.status+': '+t); });
+    return r.json();
+  })
+  .then(async function(data){
+    var newId = data[0] ? data[0].id : '';
+    if(newId){
+      fetch(SUPA_URL + '/rest/v1/solicitacoes?id=eq.' + newId, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':         SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY
+        },
+        body: JSON.stringify({ num: newId })
+      });
+    }
+    if(btn){btn.disabled=false;btn.textContent='📨 Enviar Formulário';}
+    document.getElementById('pop').classList.add('on');
+
+    // Gera PDF igual ao exportado ANTES de limpar o formulário
+    var pdfBase64 = null;
+    try {
+      toast('Gerando PDF...');
+      pdfBase64 = await gerarPDFBase64({
+        num: newId, id: newId, data_solic: dsol,
+        congregacao: cong, solicitante: solit, nome_trabalho: nome,
+        local: localF, tema: tema, referencia: ref,
+        datas: datas.join(' || '), pregadores: pregs.join(' || '),
+        paleta_cores: document.getElementById('f-paleta-texto').value.trim(),
+        mais_info: mais
+      });
+    } catch(e) {
+      console.warn('Erro ao gerar PDF:', e.message);
+    }
+
+    // Faz upload do PDF e fotos para o Supabase Storage e obtém links
+    var linksStorage = { pdf: null, fotos: [] };
+    try {
+      toast('Fazendo upload dos arquivos...');
+      linksStorage = await uploadParaStorage(newId||'novo', nome, cong, solit, dsol, localF, tema, ref, datas, pregs, mais, pdfBase64);
+      toast('Upload concluído! PDF=' + (linksStorage.pdf?'Sim':'Não') + ' Fotos=' + linksStorage.fotos.length);
+    } catch(e) {
+      toast('Aviso upload: ' + e.message, true);
+      console.warn('Upload Storage falhou:', e.message);
+    }
+
+    dispararWhatsApp('solicitacao', {
+      nome_trabalho: nome,
+      congregacao: cong,
+      solicitante: solit,
+      data_solic: dsol,
+      local: localF,
+      tema: tema,
+      referencia: ref,
+      datas: datas.join(' | '),
+      pregadores: pregs.join(' | '),
+      paleta_cores: (function(){
+        var texto = document.getElementById('f-paleta-texto').value.trim();
+        var imgs  = paletaFiles.length>0 ? paletaFiles.map(function(f){return f.n;}).join(', ') : '';
+        if(texto && imgs) return texto + ' | Imagens: ' + imgs;
+        return texto || imgs || '';
+      })(),
+      mais_info: mais,
+      link_pdf: linksStorage.pdf,
+      links_fotos: linksStorage.fotos
+    });
+  })
+  .catch(function(err){
+    console.error('Supabase error:', err);
+    toast('Erro ao enviar: ' + err.message, true);
+    if(btn){btn.disabled=false;btn.textContent='📨 Enviar Formulário';}
+  });
+}
+// ── Upload PDF + Fotos para Supabase Storage ──
+async function uploadParaStorage(id, nome, cong, solit, dsol, localF, tema, ref, datas, pregs, mais, pdfBase64){
+  var resultado = { pdf: null, fotos: [] };
+  var bucket = 'solicitacoes-pdf';
+  var pasta = 'solic-' + id + '-' + Date.now();
+
+  // 1. Upload do PDF gerado pelo navegador (igual ao botão Exportar)
+  if(pdfBase64){
+    try {
+      var pdfBlob = dataURItoBlob(pdfBase64);
+    var pdfNome = bucket + '/' + pasta + '/solicitacao-' + id + '.pdf';
+
+    var uploadR = await fetch(SUPA_URL + '/storage/v1/object/' + pdfNome, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'apikey': SUPA_KEY,
+        'x-upsert': 'true',
+        'Content-Type': 'application/pdf'
+      },
+      body: pdfBlob
+    });
+
+    var uploadText = await uploadR.text();
+    console.log('PDF upload status:', uploadR.status, uploadText);
+
+    if(uploadR.ok){
+      resultado.pdf = SUPA_URL + '/storage/v1/object/public/' + pdfNome;
+      // Salva a URL do PDF no banco para o trigger incluir no e-mail
+      if(id && id !== 'novo'){
+        await fetch(SUPA_URL + '/rest/v1/solicitacoes?id=eq.' + id, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY
+          },
+          body: JSON.stringify({ pdf_url: resultado.pdf })
+        });
+      }
+    } else {
+      console.warn('PDF upload failed:', uploadR.status, uploadText);
+    }
+    } catch(e){ console.warn('Erro upload PDF:', e.message); }
+  }
+
+  // 2. Upload das fotos dos pregadores
+  var fotoIdx = 0;
+  for(var i in fMap){
+    var fotos = fMap[i] || [];
+    for(var j = 0; j < fotos.length; j++){
+      try {
+        var f = fotos[j];
+        var blob = dataURItoBlob(f.s);
+        var ext = f.n.split('.').pop() || 'jpg';
+        var fNome = bucket + '/' + pasta + '/pregador-' + (parseInt(i)+1) + '-foto' + (j+1) + '.' + ext;
+        var upR = await fetch(SUPA_URL + '/storage/v1/object/' + fNome, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + SUPA_KEY, 'apikey': SUPA_KEY, 'x-upsert': 'true' },
+          body: blob
+        });
+        if(upR.ok) resultado.fotos.push({ nome: f.n, url: SUPA_URL + '/storage/v1/object/public/' + fNome, tipo: 'pregador' });
+        else console.warn('Foto pregador upload failed:', await upR.text());
+      } catch(e){ console.warn('Erro upload foto pregador:', e.message); }
+    }
+  }
+
+  // 3. Upload das fotos de paleta/referência
+  for(var k = 0; k < paletaFiles.length; k++){
+    try {
+      var pf = paletaFiles[k];
+      var blobP = dataURItoBlob(pf.s);
+      var extP = pf.n.split('.').pop() || 'jpg';
+      var pfNome = bucket + '/' + pasta + '/referencia-' + (k+1) + '.' + extP;
+      var upRP = await fetch(SUPA_URL + '/storage/v1/object/' + pfNome, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + SUPA_KEY, 'apikey': SUPA_KEY, 'x-upsert': 'true' },
+        body: blobP
+      });
+      if(upRP.ok) resultado.fotos.push({ nome: pf.n, url: SUPA_URL + '/storage/v1/object/public/' + pfNome, tipo: 'referencia' });
+      else console.warn('Foto referencia upload failed:', await upRP.text());
+    } catch(e){ console.warn('Erro upload foto referencia:', e.message); }
+  }
+
+  return resultado;
+}
+
+// Helper: converte dataURI para Blob
+function dataURItoBlob(dataURI){
+  var parts = dataURI.split(',');
+  var mime = parts[0].match(/:(.*?);/)[1];
+  var raw = atob(parts[1]);
+  var arr = new Uint8Array(raw.length);
+  for(var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+
+// ── Gera PDF igual ao exportado, retorna base64 para anexo no e-mail ──
+async function gerarPDFBase64(dados){
+  return new Promise(function(resolve, reject){
+    try {
+      var doc = new jspdf.jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+      var pw = doc.internal.pageSize.getWidth();
+      var ph = doc.internal.pageSize.getHeight();
+      var y = 10;
+      var margin = 14;
+      var maxW = pw - margin * 2;
+
+      // Cabeçalho com fundo teal
+      doc.setFillColor(20, 184, 166);
+      doc.rect(0, 0, pw, 28, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Assembleia de Deus Louveira', margin, 13);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('SOLICITACAO DE ARTE / POST / MATERIAL PARA EVENTOS', margin, 21);
+      y = 36;
+
+      function addSecao(titulo) {
+        if (y > ph - 20) { doc.addPage(); y = 14; }
+        doc.setFillColor(240, 253, 250);
+        doc.rect(margin, y - 4, maxW, 8, 'F');
+        doc.setDrawColor(20, 184, 166);
+        doc.line(margin, y + 4, margin + maxW, y + 4);
+        doc.setTextColor(13, 148, 136);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(titulo.toUpperCase(), margin + 2, y + 1);
+        y += 10;
+        doc.setTextColor(15, 42, 44);
+      }
+
+      function addCampo(label, valor) {
+        if (!valor || valor === '-' || valor === '—') return;
+        var linhas = doc.splitTextToSize(String(valor), maxW - 36);
+        var h = linhas.length * 5 + 4;
+        if (y + h > ph - 10) { doc.addPage(); y = 14; }
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(91, 122, 120);
+        doc.text(label.toUpperCase(), margin, y);
+        y += 5;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(15, 42, 44);
+        linhas.forEach(function(l) { doc.text(l, margin, y); y += 5.5; });
+        y += 3;
+      }
+
+      // Seção Identificação
+      addSecao('Identificação');
+      addCampo('Nº Solicitação', String(dados.num || dados.id || '-'));
+      addCampo('Data Solicitação', dados.data_solic || '-');
+      addCampo('Congregação', dados.congregacao || '-');
+      addCampo('Solicitante', dados.solicitante || '-');
+
+      // Seção Dados do Evento
+      addSecao('Dados do Evento');
+      addCampo('Nome do Trabalho / Evento', dados.nome_trabalho || '-');
+      addCampo('Datas e Horários', (dados.datas || '-').replace(/ \|\| /g, '\n').replace(/Data \d+: /g, ''));
+      addCampo('Local', dados.local || '-');
+      addCampo('Tema', dados.tema || '-');
+      addCampo('Referência Bíblica', dados.referencia || '-');
+
+      // Seção Pregadores
+      if (dados.pregadores) {
+        addSecao('Pregadores / Ministros');
+        addCampo('Pregadores', dados.pregadores.replace(/ \|\| /g, '\n').replace(/Pregador \d+: /g, ''));
+      }
+
+      // Seção Paleta / Mais Info
+      if (dados.paleta_cores || dados.mais_info) {
+        addSecao('Informações Complementares');
+        addCampo('Paleta de Cores / Referência Visual', dados.paleta_cores || '-');
+        addCampo('Mais Informações', dados.mais_info || '-');
+      }
+
+      // Rodapé
+      doc.setFillColor(240, 253, 250);
+      doc.rect(0, ph - 14, pw, 14, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(91, 122, 120);
+      doc.text('Prazos: 60 dias (ideal)  ·  30 dias (mínimo)  ·  Sistema de Solicitações AD Louveira', margin, ph - 5);
+
+      var base64 = doc.output('datauristring');
+      resolve(base64);
+    } catch(e) {
+      reject(e);
+    }
+  });
+}
+
+function gerarPDF(){
+  toast('Gerando PDF...');
+
+  var acts=document.querySelector('.acts');
+  var pop =document.getElementById('pop');
+  acts.style.display='none';
+  if(pop) pop.style.display='none';
+
+  var src=document.getElementById('main-wrap');
+
+  html2canvas(src,{
+    scale:2,
+    useCORS:true,
+    backgroundColor:'#f0f4f7',
+    logging:false,
+    windowWidth:src.scrollWidth,
+    windowHeight:src.scrollHeight,
+    x:0,y:0,
+    scrollX:0,scrollY:0
+  }).then(function(canvas){
+    var imgData=canvas.toDataURL('image/jpeg',0.92);
+    var pdf=new jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+    var pw=pdf.internal.pageSize.getWidth();
+    var ph=pdf.internal.pageSize.getHeight();
+    var ratio=canvas.width/canvas.height;
+    var imgW=pw;
+    var imgH=pw/ratio;
+    var pos=0;
+    // Se maior que uma página, adiciona páginas
+    if(imgH<=ph){
+      pdf.addImage(imgData,'JPEG',0,0,imgW,imgH);
+    } else {
+      var remaining=imgH;
+      var yOffset=0;
+      while(remaining>0){
+        var sliceH=Math.min(ph,remaining);
+        var srcY=yOffset*(canvas.height/imgH);
+        var srcH=sliceH*(canvas.height/imgH);
+        var sliceCanvas=document.createElement('canvas');
+        sliceCanvas.width=canvas.width;
+        sliceCanvas.height=srcH;
+        var ctx=sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas,0,srcY,canvas.width,srcH,0,0,canvas.width,srcH);
+        var sliceData=sliceCanvas.toDataURL('image/jpeg',0.92);
+        if(yOffset>0) pdf.addPage();
+        pdf.addImage(sliceData,'JPEG',0,0,imgW,sliceH);
+        remaining-=ph;
+        yOffset+=ph;
+      }
+    }
+    pdf.save('Solicitacao-Arte-ADLouveira.pdf');
+    acts.style.display='';
+    if(pop) pop.style.display='';
+    toast('PDF exportado com sucesso! ✓');
+  }).catch(function(err){
+    console.error(err);
+    acts.style.display='';
+    if(pop) pop.style.display='';
+    toast('Erro ao gerar PDF.',true);
+  });
+}
+
+// ── Limpar ──
+function limpar(){
+  if(!confirm('Deseja realmente limpar todos os campos?')) return;
+  ['congregacao','local','nome-trab','tema','ref','mais-info','solicitante']
+    .forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('outros-sec').style.display='none';
+  document.getElementById('outros-inp').value='';
+  document.getElementById('datas-cont').innerHTML='';
+  numDatas=0; fMap={}; paletaFiles=[];
+  renderPvPaleta();
+  document.getElementById('pv-paleta').innerHTML='';
+  document.getElementById('f-paleta-texto').value='';
+  addData();
+  toast('Formulário limpo ✓');
+}
+
+function fmtDate(d){if(!d)return'';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;}
+
+function fmtDataHist(v){
+  if(!v||v.trim()==='') return '—';
+  // Já está no formato DD/MM/YYYY
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(v.trim())) return v.trim();
+  // Tenta converter Date object string (ex: "Fri Jun 05 2026 00:00:00...")
+  var d = new Date(v);
+  if(!isNaN(d.getTime())){
+    var dd  = String(d.getDate()).padStart(2,'0');
+    var mo  = String(d.getMonth()+1).padStart(2,'0');
+    var yy  = d.getFullYear();
+    return dd+'/'+mo+'/'+yy;
+  }
+  return v;
+}
+
+function toast(msg,warn){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=warn?'#e08a2a':'#3aafa9';
+  t.classList.add('on');
+  setTimeout(function(){t.classList.remove('on');},3200);
+}
+
+// ── Exportar Excel ──
+function exportarExcelHistorico(){
+  if(!_histDados || _histDados.length===0){
+    toast('Nenhum dado para exportar.', true); return;
+  }
+  var rows = _histDados.map(function(r){
+    return {
+      'Nº': r.num,
+      'Data Solicitação': r.data_solicitacao,
+      'Congregação': r.congregacao,
+      'Solicitante': r.solicitante,
+      'Nome do Trabalho': r.nome_trabalho,
+      'Status': r.status
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
+  XLSX.writeFile(wb, 'Historico-Solicitacoes-ADLouveira.xlsx');
+  toast('Excel exportado com sucesso!');
+}
+
+function exportarExcelSolic(){
+  if(!_gSolic || _gSolic.length===0){
+    toast('Nenhum dado para exportar.', true); return;
+  }
+  var rows = _gSolic.map(function(r){
+    return {
+      'Nº': r.num || r.id,
+      'Data Solicitação': fmtDataHist(r.data_solic),
+      'Congregação': r.congregacao,
+      'Solicitante': r.solicitante,
+      'Nome do Trabalho': r.nome_trabalho,
+      'Local': r.local,
+      'Tema': r.tema,
+      'Referência Bíblica': r.referencia,
+      'Datas/Horários': (r.datas||'').replace(/ \|\| /g, ' | '),
+      'Pregadores': (r.pregadores||'').replace(/ \|\| /g, ' | '),
+      'Paleta de Cores': r.paleta_cores,
+      'Mais Informações': r.mais_info,
+      'Status': r.status
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Solicitações');
+  XLSX.writeFile(wb, 'Solicitacoes-ADLouveira-Completo.xlsx');
+  toast('Excel exportado com sucesso!');
+}
+
+// Init
+addData();
+
+// ── Tema (claro/escuro) ──
+(function(){
+  var saved = localStorage.getItem('ad-theme');
+  if(saved === 'dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    var btn = document.getElementById('theme-toggle-btn');
+    if(btn) btn.textContent = '☀️';
+  }
+})();
+
+function toggleTheme(){
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if(isDark){
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('theme-toggle-btn').textContent = '🌙';
+    localStorage.setItem('ad-theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('theme-toggle-btn').textContent = '☀️';
+    localStorage.setItem('ad-theme', 'dark');
+  }
+}
+
+// ── Tabs ──
+function switchTab(tab){
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+tab).classList.add('active');
+
+  var btnMap = { 'formulario':0, 'historico':1, 'gestao':2 };
+  var allBtns = document.querySelectorAll('#tab-nav .tab-btn');
+  var idx = btnMap[tab];
+  if(idx !== undefined && allBtns[idx]) allBtns[idx].classList.add('active');
+
+  if(tab==='historico') carregarHistorico();
+  if(tab==='gestao' && typeof _gUser !== 'undefined' && _gUser) carregarGSolic();
+}
+
+// ── Histórico ──
+var _histDados = [];
+
+function carregarHistorico(){
+  document.getElementById('hist-corpo').innerHTML = '<div class="hist-loading">⏳ Carregando histórico…</div>';
+  // Carrega permissões antes de renderizar
+  carregarPermissoes().then(function(){
+
+  fetch(SUPA_URL + '/rest/v1/solicitacoes?select=id,num,data_solic,congregacao,solicitante,nome_trabalho,status&order=id.desc', {
+    headers: {
+      'apikey':         SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY
+    }
+  })
+  .then(function(r){
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(rows){
+    _histDados = rows.map(function(r){
+      return {
+        id:               r.id,
+        num:              String(r.num || r.id || ''),
+        data_solicitacao: r.data_solic || '',
+        congregacao:      r.congregacao || '',
+        solicitante:      r.solicitante || '',
+        nome_trabalho:    r.nome_trabalho || '',
+        status:           r.status || 'Aguardando'
+      };
+    });
+    atualizarStats(_histDados);
+    renderHistorico(_histDados);
+  })
+  .catch(function(err){
+    console.error('Historico error:', err);
+    document.getElementById('hist-corpo').innerHTML =
+      '<div class="hist-empty"><div class="hist-empty-icon">📡</div>' +
+      '<p>Não foi possível carregar o histórico.<br>' + err.message + '</p></div>';
+  });
+  }); // fim carregarPermissoes().then
+}
+
+function atualizarStats(rows){
+  function cnt(st){ return rows.filter(function(r){ return (r.status||'Aguardando')===st; }).length; }
+  document.getElementById('stat-total').textContent      = rows.length;
+  document.getElementById('stat-aguardando').textContent = cnt('Aguardando');
+  document.getElementById('stat-producao').textContent   = cnt('Em Produção');
+  document.getElementById('stat-analise').textContent    = cnt('Em Analise');
+  document.getElementById('stat-revisao').textContent    = cnt('Revisão');
+  document.getElementById('stat-entregue').textContent   = cnt('Entregue');
+  document.getElementById('stat-concluido').textContent  = cnt('Concluido') + cnt('Concluído');
+}
+
+function statusBadge(s){
+  var map={
+    'Aguardando' :'aguardando',
+    'Em Produção':'producao',
+    'Em Analise' :'analise',
+    'Revisão'    :'revisao',
+    'Entregue'   :'entregue',
+    'Concluido'  :'concluido',
+    'Concluído'  :'concluido',
+    'Cancelado'  :'cancelado'
+  };
+  var st  = s || 'Aguardando';
+  var cls = map[st] || 'aguardando';
+  return '<span class="badge-status '+cls+'">'+st+'</span>';
+}
+
+// ── Permissões do Solicitante ──
+var _permSolic = { editar: false, excluir: false, verStatus: true };
+
+function aplicarPermissoesSolicitante(cfg){
+  _permSolic.editar    = cfg.solic_pode_editar    === true;
+  _permSolic.excluir   = cfg.solic_pode_excluir   === true;
+  _permSolic.verStatus = cfg.solic_pode_ver_status !== false;
+}
+
+async function carregarPermissoes(){
+  var r = await SB.from('config_email').select('solic_pode_editar,solic_pode_excluir,solic_pode_ver_status').eq('id',1).single();
+  if(!r.error && r.data) aplicarPermissoesSolicitante(r.data);
+}
+
+async function excluirHistorico(id){
+  if(!confirm('Deseja realmente excluir esta solicitação?')) return;
+  var idNum = parseInt(id, 10);
+  var r = await SB.from('solicitacoes').delete().eq('id', idNum);
+  if(r.error){ toast('Erro ao excluir: ' + r.error.message, true); return; }
+  toast('Solicitação excluída!');
+  carregarHistorico();
+}
+
+function renderHistorico(rows){
+  if(!rows || rows.length===0){
+    document.getElementById('hist-corpo').innerHTML=
+      '<div class="hist-empty"><div class="hist-empty-icon">📭</div><p>Nenhuma solicitação encontrada.</p></div>';
+    return;
+  }
+  var html='<div style="overflow-x:auto"><table class="hist-table">'+
+    '<thead><tr>'+
+    '<th>#</th>'+
+    '<th>Data Solicitação</th>'+
+    '<th>Solicitante</th>'+
+    '<th>Nome do Trabalho</th>'+
+    (_permSolic.verStatus ? '<th>Status</th>' : '')+
+    '<th></th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(function(r){
+    var acoes =
+      '<button title="Visualizar" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirVerHistorico('+r.id+')">👁️</button>';
+    if(_permSolic.editar)
+      acoes += '<button title="Editar" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirEditarHistorico('+r.id+')">✏️</button>';
+    if(_permSolic.excluir)
+      acoes += '<button title="Excluir" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="excluirHistorico('+r.id+')">🗑️</button>';
+
+    html+='<tr>'+
+      '<td style="color:var(--tm);font-size:12px">'+(r.num||'—')+'</td>'+
+      '<td style="white-space:nowrap">'+fmtDataHist(r.data_solicitacao)+'</td>'+
+      '<td>'+(r.solicitante||'—')+'</td>'+
+      '<td><strong>'+(r.nome_trabalho||'—')+'</strong></td>'+
+      (_permSolic.verStatus ? '<td>'+statusBadge(r.status)+'</td>' : '')+
+      '<td style="white-space:nowrap">'+acoes+'</td>'+
+      '</tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('hist-corpo').innerHTML=html;
+}
+
+function filtrarHistorico(){
+  var busca = document.getElementById('hist-busca').value.toLowerCase();
+  var statusF = document.getElementById('hist-status-filter').value;
+  var filtrado = _histDados.filter(function(r){
+    var matchBusca = !busca ||
+      (r.nome_trabalho||'').toLowerCase().indexOf(busca)>=0 ||
+      (r.solicitante||'').toLowerCase().indexOf(busca)>=0 ||
+      (r.data_solicitacao||'').toLowerCase().indexOf(busca)>=0;
+    var matchStatus = !statusF || (r.status||'Aguardando')===statusF;
+    return matchBusca && matchStatus;
+  });
+  renderHistorico(filtrado);
+}
+
+// ════════════════════════════════════════════════════════════
+// GESTÃO — Supabase Auth + CRUD + Auditoria
+// ════════════════════════════════════════════════════════════
+const SB = supabase.createClient('https://tcvqkkgirxdarldhdeoz.supabase.co', 'sb_publishable_GO8wtvQaIp2jO_2wD342zw_rHU7v4jM');
+
+var _gUser = null;
+var _gPerfil = null;
+var _gSolic = [];
+var _gAudit = [];
+var _gUsers = [];
+
+var gStMap = {
+  'Aguardando':'aguardando','Em Produção':'producao',
+  'Em Analise':'analise','Revisão':'revisao',
+  'Entregue':'entregue','Concluido':'concluido','Concluído':'concluido'
+};
+var gStOpts = ['Aguardando','Em Produção','Em Analise','Revisão','Entregue','Concluido'];
+
+function abrirLoginEquipe(){
+  if(_gUser){ switchTab('gestao'); return; }
+  document.getElementById('le-err').style.display='none';
+  document.getElementById('le-email').value='';
+  document.getElementById('le-pass').value='';
+  document.getElementById('m-login-equipe').classList.add('on');
+}
+
+function abrirRecuperarSenha(){
+  document.getElementById('m-login-equipe').classList.remove('on');
+  document.getElementById('rec-err').style.display='none';
+  document.getElementById('rec-success').style.display='none';
+  document.getElementById('rec-email').value=document.getElementById('le-email').value||'';
+  document.getElementById('m-recuperar').classList.add('on');
+}
+
+async function enviarRecuperarSenha(){
+  var email = document.getElementById('rec-email').value.trim();
+  var err   = document.getElementById('rec-err');
+  var ok    = document.getElementById('rec-success');
+  var btn   = document.getElementById('btn-rec');
+  err.style.display='none'; ok.style.display='none';
+
+  if(!email){
+    err.textContent='Informe um e-mail válido.';
+    err.style.display='block';
+    return;
+  }
+
+  btn.disabled=true; btn.textContent='Enviando…';
+  var resp = await SB.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  btn.disabled=false; btn.textContent='Enviar Link';
+
+  if(resp.error){
+    err.textContent='Erro ao enviar: ' + resp.error.message;
+    err.style.display='block';
+    return;
+  }
+  ok.style.display='block';
+}
+
+async function doLoginEquipe(){
+  var email = document.getElementById('le-email').value.trim();
+  var pass  = document.getElementById('le-pass').value;
+  var btn   = document.getElementById('btn-le');
+  var err   = document.getElementById('le-err');
+  err.style.display='none';
+  btn.disabled=true; btn.textContent='Entrando…';
+
+  var resp = await SB.auth.signInWithPassword({ email:email, password:pass });
+  if(resp.error){
+    err.textContent='E-mail ou senha incorretos.';
+    err.style.display='block';
+    btn.disabled=false; btn.textContent='Entrar';
+    return;
+  }
+  _gUser = resp.data.user;
+  await carregarGPerfil();
+  document.getElementById('m-login-equipe').classList.remove('on');
+  iniciarGestao();
+  btn.disabled=false; btn.textContent='Entrar';
+}
+
+async function carregarGPerfil(){
+  var r = await SB.from('perfis').select('*').eq('id', _gUser.id).single();
+  _gPerfil = r.data;
+}
+
+function iniciarGestao(){
+  document.getElementById('tab-btn-gestao').style.display='inline-flex';
+  document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
+  document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+  document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
+  if(_gPerfil && _gPerfil.perfil==='admin'){
+    document.getElementById('g-nav-users').style.display='inline-block';
+    document.getElementById('g-nav-email').style.display='inline-block';
+  }
+  switchTab('gestao');
+  carregarGSolic();
+  iniciarPollingNotificacoes();
+}
+
+async function doLogoutEquipe(){
+  await SB.auth.signOut();
+  _gUser=null; _gPerfil=null;
+  document.getElementById('tab-btn-gestao').style.display='none';
+  document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
+  switchTab('formulario');
+}
+
+SB.auth.getSession().then(function(r){
+  if(r.data.session){
+    _gUser = r.data.session.user;
+    carregarGPerfil().then(function(){
+      document.getElementById('tab-btn-gestao').style.display='inline-flex';
+      document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
+      document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+      document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
+      if(_gPerfil && _gPerfil.perfil==='admin'){
+        document.getElementById('g-nav-users').style.display='inline-block';
+    document.getElementById('g-nav-email').style.display='inline-block';
+      }
+      iniciarPollingNotificacoes();
+      SB.from('solicitacoes').select('status').eq('status','Aguardando').then(function(r){
+        if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
+      });
+    });
+  }
+});
+
+function showGestaoPage(btnEl, id){
+  document.querySelectorAll('.gestao-page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.gestao-sub-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if(btnEl) btnEl.classList.add('active');
+  if(id==='g-audit') carregarGAudit();
+  if(id==='g-users') carregarGUsers();
+  if(id==='g-email') carregarConfigEmail();
+}
+
+async function carregarConfigEmail(){
+  var r = await SB.from('config_email').select('*').eq('id', 1).single();
+  if(r.error){
+    document.getElementById('cfg-email-err').textContent = 'Não foi possível carregar a configuração. Verifique se a tabela config_email existe no Supabase.';
+    document.getElementById('cfg-email-err').style.display = 'block';
+    return;
+  }
+  document.getElementById('cfg-destinatarios').value = r.data.destinatarios || '';
+  document.getElementById('cfg-usar-extra').checked = r.data.usar_destinatarios_extra || false;
+  document.getElementById('cfg-destinatarios').disabled = !r.data.usar_destinatarios_extra;
+  document.getElementById('cfg-ativo-solic').checked = r.data.ativo_nova_solicitacao !== false;
+  document.getElementById('cfg-ativo-comentario').checked = r.data.ativo_comentario !== false;
+  // WhatsApp
+  document.getElementById('cfg-wpp-numeros').value = (r.data.whatsapp_numeros||'').replace(/,/g,'\n');
+  document.getElementById('cfg-wpp-solic').checked = r.data.ativo_whatsapp_solicitacao !== false;
+  document.getElementById('cfg-wpp-comentario').checked = r.data.ativo_whatsapp_comentario !== false;
+  // Permissões do Solicitante
+  document.getElementById('cfg-solic-editar').checked    = r.data.solic_pode_editar    === true;
+  document.getElementById('cfg-solic-excluir').checked   = r.data.solic_pode_excluir   === true;
+  document.getElementById('cfg-solic-ver-status').checked = r.data.solic_pode_ver_status !== false;
+  // Aplica permissões imediatamente no Histórico
+  aplicarPermissoesSolicitante(r.data);
+}
+
+async function salvarConfigEmail(){
+  var usarExtra = document.getElementById('cfg-usar-extra').checked;
+  var destinatarios = document.getElementById('cfg-destinatarios').value.trim();
+  var ativoSolic = document.getElementById('cfg-ativo-solic').checked;
+  var ativoComentario = document.getElementById('cfg-ativo-comentario').checked;
+  var wppNums = document.getElementById('cfg-wpp-numeros').value.trim().split('\n').map(function(n){ return n.replace(/\D/g,''); }).filter(function(n){ return n.length >= 10; }).slice(0,5).join(',');
+  var wppSolic = document.getElementById('cfg-wpp-solic').checked;
+  var wppComent = document.getElementById('cfg-wpp-comentario').checked;
+  var err = document.getElementById('cfg-email-err');
+  var ok  = document.getElementById('cfg-email-ok');
+  err.style.display='none'; ok.style.display='none';
+
+  if(usarExtra && !destinatarios){
+    err.textContent = 'Você marcou "e-mails extras" mas não preencheu nenhum.';
+    err.style.display = 'block';
+    return;
+  }
+
+  var r = await SB.from('config_email').update({
+    destinatarios: destinatarios,
+    usar_destinatarios_extra: usarExtra,
+    ativo_nova_solicitacao: ativoSolic,
+    ativo_comentario: ativoComentario,
+    whatsapp_numeros: wppNums,
+    ativo_whatsapp_solicitacao: wppSolic,
+    ativo_whatsapp_comentario: wppComent,
+    solic_pode_editar:    document.getElementById('cfg-solic-editar').checked,
+    solic_pode_excluir:   document.getElementById('cfg-solic-excluir').checked,
+    solic_pode_ver_status: document.getElementById('cfg-solic-ver-status').checked,
+    updated_at: new Date().toISOString()
+  }).eq('id', 1);
+
+  if(r.error){
+    err.textContent = 'Erro ao salvar: ' + r.error.message;
+    err.style.display = 'block';
+    return;
+  }
+  ok.style.display = 'block';
+  toast('Configuração salva com sucesso!');
+}
+
+// ── WhatsApp: abre wa.me para cada número configurado ──
+var _wppConfig = null;
+
+async function carregarWppConfig(){
+  if(_wppConfig) return _wppConfig;
+  var r = await SB.from('config_email').select('whatsapp_numeros,ativo_whatsapp_solicitacao,ativo_whatsapp_comentario').eq('id',1).single();
+  if(!r.error && r.data) _wppConfig = r.data;
+  return _wppConfig;
+}
+
+async function dispararWhatsApp(tipo, dados){
+  var cfg = await carregarWppConfig();
+  if(!cfg) return;
+  if(tipo==='solicitacao' && !cfg.ativo_whatsapp_solicitacao) return;
+  if(tipo==='comentario' && !cfg.ativo_whatsapp_comentario) return;
+
+  var numeros = (cfg.whatsapp_numeros||'').split(',').map(function(n){ return n.trim(); }).filter(function(n){ return n.length>=10; });
+  if(!numeros.length) return;
+
+  var msg = '';
+  if(tipo==='solicitacao'){
+    var linhas = [
+      '🆕 *NOVA SOLICITAÇÃO DE ARTE*',
+      '━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      '📋 *Nome do Trabalho:* ' + (dados.nome_trabalho||'—'),
+      '🏛️ *Congregação:* ' + (dados.congregacao||'—'),
+      '👤 *Solicitante:* ' + (dados.solicitante||'—'),
+      '📅 *Data Solicitação:* ' + (dados.data_solic||'—'),
+      '',
+      '📍 *Local:* ' + (dados.local||'—'),
+      '✝️ *Tema:* ' + (dados.tema||'—'),
+    ];
+    if(dados.referencia) linhas.push('📖 *Ref. Bíblica:* ' + dados.referencia);
+    if(dados.datas) linhas.push('🕐 *Datas/Horários:* ' + dados.datas.replace(/ \|\| /g, ', ').replace(/Data \d+: /g, ''));
+    if(dados.pregadores) linhas.push('🎤 *Pregadores:* ' + dados.pregadores.replace(/ \|\| /g, ', ').replace(/Pregador \d+: /g, ''));
+    if(dados.paleta_cores) linhas.push('🎨 *Paleta/Referência:* ' + dados.paleta_cores);
+    if(dados.mais_info) linhas.push('💬 *Mais Info:* ' + dados.mais_info);
+
+    // Links do Storage
+    if(dados.link_pdf || (dados.links_fotos && dados.links_fotos.length > 0)){
+      linhas.push('');
+      linhas.push('━━━━━━━━━━━━━━━━━━━━━');
+      linhas.push('📎 *Anexos:*');
+      if(dados.link_pdf){
+        linhas.push('📄 PDF da solicitação:');
+        linhas.push(dados.link_pdf);
+      }
+      if(dados.links_fotos && dados.links_fotos.length > 0){
+        var fotoPregs = dados.links_fotos.filter(function(f){ return f.tipo==='pregador'; });
+        var fotoRefs  = dados.links_fotos.filter(function(f){ return f.tipo==='referencia'; });
+        if(fotoPregs.length > 0){
+          linhas.push('📸 Foto(s) do(s) Pregador(es):');
+          fotoPregs.forEach(function(f){ linhas.push(f.url); });
+        }
+        if(fotoRefs.length > 0){
+          linhas.push('🎨 Referência Visual/Paleta:');
+          fotoRefs.forEach(function(f){ linhas.push(f.url); });
+        }
+      }
+    }
+
+    linhas.push('');
+    linhas.push('━━━━━━━━━━━━━━━━━━━━━');
+    linhas.push('_Enviado pelo sistema de solicitações AD Louveira_');
+    msg = linhas.join('\n');
+  } else if(tipo==='comentario'){
+    msg = '💬 *Novo Comentário — AD Louveira*\n\n' +
+      '📋 *Solicitação:* ' + (dados.nome_trabalho||'—') + '\n' +
+      '👤 *De:* ' + (dados.usuario_nome||'—') + '\n\n' +
+      '_"' + (dados.mensagem||'—') + '"_\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━━\n' +
+      '_Acesse o painel para responder._';
+  }
+
+  var msgEnc = encodeURIComponent(msg);
+  // Abre uma janela para cada número com delay para não bloquear pop-ups
+  numeros.forEach(function(num, i){
+    setTimeout(function(){
+      window.open('https://wa.me/' + num + '?text=' + msgEnc, '_blank');
+    }, i * 1500);
+  });
+}
+
+async function carregarGSolic(){
+  document.getElementById('g-tb-solic').innerHTML='<tr><td colspan="7" class="g-loading">⏳ Carregando…</td></tr>';
+  var r = await SB.from('solicitacoes').select('*').order('id',{ascending:false});
+  if(r.error){ toast('Erro: '+r.error.message, true); return; }
+  _gSolic = r.data || [];
+  atualizarGStats(_gSolic);
+  filtrarGSolic();
+}
+
+function atualizarGStats(rows){
+  function cnt(s){ return rows.filter(function(x){ return (x.status||'Aguardando')===s; }).length; }
+  document.getElementById('gs-tot').textContent = rows.length;
+  document.getElementById('gs-ag').textContent  = cnt('Aguardando');
+  document.getElementById('gs-pr').textContent  = cnt('Em Produção');
+  document.getElementById('gs-an').textContent  = cnt('Em Analise');
+  document.getElementById('gs-re').textContent  = cnt('Revisão');
+  document.getElementById('gs-en').textContent  = cnt('Entregue');
+  document.getElementById('gs-co').textContent  = cnt('Concluido')+cnt('Concluído');
+  atualizarBadgeAguardando(cnt('Aguardando'));
+}
+
+function atualizarBadgeAguardando(n){
+  var badge = document.getElementById('badge-aguardando');
+  if(!badge) return;
+  if(n > 0){
+    badge.textContent = n > 99 ? '99+' : n;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Polling leve: verifica solicitações pendentes a cada 60s quando logado
+var _pollInterval = null;
+function iniciarPollingNotificacoes(){
+  if(_pollInterval) clearInterval(_pollInterval);
+  _pollInterval = setInterval(async function(){
+    if(!_gUser) return;
+    var r = await SB.from('solicitacoes').select('status').eq('status','Aguardando');
+    if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
+  }, 60000);
+}
+
+function filtrarGSolic(){
+  var b  = document.getElementById('g-busca').value.toLowerCase();
+  var sf = document.getElementById('g-f-status').value;
+  var f = _gSolic.filter(function(r){
+    var mb = !b ||
+      (r.nome_trabalho||'').toLowerCase().indexOf(b)>=0 ||
+      (r.solicitante||'').toLowerCase().indexOf(b)>=0 ||
+      (r.congregacao||'').toLowerCase().indexOf(b)>=0;
+    var ms = !sf || (r.status||'Aguardando')===sf;
+    return mb && ms;
+  });
+  renderGSolic(f);
+}
+
+function renderGSolic(rows){
+  if(!rows.length){
+    document.getElementById('g-tb-solic').innerHTML='<tr><td colspan="7" class="g-empty"><div class="g-empty-icon">📭</div><p>Nenhuma solicitação encontrada.</p></td></tr>';
+    return;
+  }
+  document.getElementById('g-tb-solic').innerHTML = rows.map(function(r){
+    var st=r.status||'Aguardando';
+    var cls=gStMap[st]||'aguardando';
+    var opts=gStOpts.map(function(o){ return '<option value="'+o+'"'+(o===st?' selected':'')+'>'+o+'</option>'; }).join('');
+    return '<tr>'+
+      '<td style="color:#888;font-size:11px">'+(r.num||r.id||'—')+'</td>'+
+      '<td style="white-space:nowrap">'+fmtDataHist(r.data_solic)+'</td>'+
+      '<td>'+(r.congregacao||'—')+'</td>'+
+      '<td>'+(r.solicitante||'—')+'</td>'+
+      '<td><strong>'+(r.nome_trabalho||'—')+'</strong></td>'+
+      '<td><select class="st-sel '+cls+'" onchange="updateGStatus('+r.id+',this)">'+opts+'</select></td>'+
+      '<td style="white-space:nowrap">'+
+        '<button title="Ver detalhes" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="verGDetalhe('+r.id+')">👁️</button>'+
+        '<button title="Editar" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirEditar('+r.id+')">✏️</button>'+
+        '<button title="Excluir" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirExcluir('+r.id+')">🗑️</button>'+
+      '</td>'+
+      '</tr>';
+  }).join('');
+}
+
+async function updateGStatus(id, sel){
+  var novo=sel.value;
+  var row=_gSolic.find(function(r){ return r.id===id; });
+  var antes = row ? (row.status||'Aguardando') : '';
+  sel.className='st-sel '+(gStMap[novo]||'aguardando');
+
+  var r = await SB.from('solicitacoes').update({status:novo}).eq('id',id);
+  if(r.error){ toast('Erro ao atualizar.', true); return; }
+
+  var userName = _gPerfil ? _gPerfil.nome : (_gUser?_gUser.email:'Desconhecido');
+  await SB.from('auditoria').insert({
+    solicitacao_id:id, usuario_id:_gUser?_gUser.id:null,
+    usuario_nome:userName, status_antes:antes, status_depois:novo
+  });
+
+  if(row) row.status=novo;
+  atualizarGStats(_gSolic);
+  toast('Status atualizado: '+novo);
+}
+
+function verGDetalhe(id){
+  var r=_gSolic.find(function(d){ return d.id===id; });
+  if(!r) return;
+  document.getElementById('m-gdet-title').textContent='Solicitação #'+(r.num||r.id);
+  var campos=[
+    ['Congregação',r.congregacao||'—'],['Solicitante',r.solicitante||'—'],
+    ['Data',fmtDataHist(r.data_solic)],['Nome do Trabalho',r.nome_trabalho||'—'],
+    ['Local',r.local||'—'],['Tema',r.tema||'—'],['Ref. Bíblica',r.referencia||'—'],
+    ['Datas/Horários',(r.datas||'—').replace(/ \|\| /g,'<br>')],
+    ['Pregadores',(r.pregadores||'—').replace(/ \|\| /g,'<br>')],
+    ['Paleta de Cores',r.paleta_cores||'—'],
+    ['Mais Informações',r.mais_info||'—'],
+    ['Status',r.status||'—']
+  ];
+  document.getElementById('m-gdet-body').innerHTML=campos.map(function(c){
+    return '<div style="display:flex;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--bor)">'+
+      '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tm);min-width:130px;flex-shrink:0">'+c[0]+'</div>'+
+      '<div style="font-size:13px;color:var(--tx);flex:1">'+c[1]+'</div></div>';
+  }).join('') + renderFotosDownload(r);
+  document.getElementById('m-gdet').classList.add('on');
+  document.getElementById('m-gdet').dataset.solicId = id;
+  carregarComentarios(id);
+}
+
+function renderFotosDownload(r){
+  var fotosPreg = [];
+  var fotosRef = [];
+  try { if(r.fotos_pregadores_json) fotosPreg = JSON.parse(r.fotos_pregadores_json); } catch(e){}
+  try { if(r.fotos_referencia_json) fotosRef = JSON.parse(r.fotos_referencia_json); } catch(e){}
+
+  if(fotosPreg.length===0 && fotosRef.length===0) return '';
+
+  var html = '<div style="margin-top:6px"><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tm);margin-bottom:8px">📎 Anexos</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+
+  fotosPreg.forEach(function(f, i){
+    html += downloadChip(f.data, f.nome || ('pregador_'+f.pregador+'.jpg'), '👤 Pregador '+f.pregador);
+  });
+  fotosRef.forEach(function(f, i){
+    html += downloadChip(f.data, f.nome || ('referencia_'+(i+1)+'.jpg'), '🎨 Referência '+(i+1));
+  });
+
+  html += '</div></div>';
+  return html;
+}
+
+function downloadChip(base64data, filename, label){
+  return '<a href="'+base64data+'" download="'+filename+'" style="display:inline-flex;align-items:center;gap:6px;background:var(--sur2);border:1px solid var(--bor);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--teal2);text-decoration:none;transition:all .2s" onmouseover="this.style.background=\'var(--mint-bg)\'" onmouseout="this.style.background=\'var(--sur2)\'">'+
+    '⬇️ '+label+
+  '</a>';
+}
+
+async function carregarComentarios(solicId){
+  var box = document.getElementById('m-gdet-comments');
+  box.innerHTML = '<div style="text-align:center;padding:14px;color:var(--tm);font-size:12px">⏳ Carregando…</div>';
+  var r = await SB.from('comentarios').select('*').eq('solicitacao_id', solicId).order('created_at',{ascending:true});
+  if(r.error){
+    box.innerHTML = '<div style="text-align:center;padding:14px;color:var(--tm);font-size:12px">Comentários ainda não disponíveis.</div>';
+    return;
+  }
+  renderComentarios(r.data || []);
+}
+
+function renderComentarios(rows){
+  var box = document.getElementById('m-gdet-comments');
+  if(!rows.length){
+    box.innerHTML = '<div style="text-align:center;padding:14px;color:var(--tm);font-size:12px">Nenhum comentário ainda.</div>';
+    return;
+  }
+  box.innerHTML = rows.map(function(c){
+    var dt = new Date(c.created_at);
+    var dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r-sm);padding:9px 12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+      '<strong style="font-size:12px;color:var(--teal2)">'+(c.usuario_nome||'—')+'</strong>'+
+      '<span style="font-size:10px;color:var(--tm)">'+dtStr+'</span></div>'+
+      '<div style="font-size:13px;color:var(--tx)">'+c.mensagem+'</div></div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function enviarComentario(){
+  var input = document.getElementById('m-gdet-novo-comentario');
+  var msg = input.value.trim();
+  if(!msg) return;
+  var solicId = document.getElementById('m-gdet').dataset.solicId;
+  var userName = _gPerfil ? _gPerfil.nome : (_gUser ? _gUser.email : 'Desconhecido');
+
+  var r = await SB.from('comentarios').insert({
+    solicitacao_id: solicId,
+    usuario_id: _gUser ? _gUser.id : null,
+    usuario_nome: userName,
+    mensagem: msg
+  });
+
+  if(r.error){
+    toast('Erro ao enviar comentário: ' + r.error.message, true);
+    return;
+  }
+  input.value = '';
+  // Dispara WhatsApp se configurado
+  var solRow = _gSolic.find(function(s){ return String(s.id)===String(solicId); });
+  dispararWhatsApp('comentario', {
+    nome_trabalho: solRow ? solRow.nome_trabalho : '#'+solicId,
+    usuario_nome: userName,
+    mensagem: msg
+  });
+  carregarComentarios(solicId);
+}
+
+async function carregarGAudit(){
+  document.getElementById('g-tb-audit').innerHTML='<tr><td colspan="5" class="g-loading">⏳ Carregando…</td></tr>';
+  var r = await SB.from('auditoria').select('*, solicitacoes(nome_trabalho)').order('created_at',{ascending:false}).limit(200);
+  if(r.error){ toast('Erro: '+r.error.message, true); return; }
+  _gAudit = r.data || [];
+  filtrarGAudit();
+}
+
+function filtrarGAudit(){
+  var b=document.getElementById('g-busca-audit').value.toLowerCase();
+  var f=!b?_gAudit:_gAudit.filter(function(r){
+    return (r.usuario_nome||'').toLowerCase().indexOf(b)>=0 ||
+      ((r.solicitacoes&&r.solicitacoes.nome_trabalho)||'').toLowerCase().indexOf(b)>=0;
+  });
+  renderGAudit(f);
+}
+
+function renderGAudit(rows){
+  if(!rows.length){
+    document.getElementById('g-tb-audit').innerHTML='<tr><td colspan="5" class="g-empty"><div class="g-empty-icon">🕓</div><p>Nenhum registro.</p></td></tr>';
+    return;
+  }
+  document.getElementById('g-tb-audit').innerHTML = rows.map(function(r){
+    var nome=(r.solicitacoes&&r.solicitacoes.nome_trabalho)?r.solicitacoes.nome_trabalho:'#'+r.solicitacao_id;
+    var dt=new Date(r.created_at);
+    var dtStr=dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    var cA=gStMap[r.status_antes]||'aguardando';
+    var cD=gStMap[r.status_depois]||'aguardando';
+    return '<tr>'+
+      '<td style="white-space:nowrap"><span style="font-size:11px;font-weight:700;color:var(--teal2);background:var(--sur2);padding:4px 9px;border-radius:8px;border:1px solid var(--bor)">'+dtStr+'</span></td>'+
+      '<td><strong>'+(r.usuario_nome||'—')+'</strong></td>'+
+      '<td>'+nome+'</td>'+
+      '<td><span class="st-sel '+cA+'" style="cursor:default">'+(r.status_antes||'—')+'</span></td>'+
+      '<td><span class="st-sel '+cD+'" style="cursor:default">'+(r.status_depois||'—')+'</span></td>'+
+      '</tr>';
+  }).join('');
+}
+
+async function carregarGUsers(){
+  document.getElementById('g-tb-users').innerHTML='<tr><td colspan="5" class="g-loading">⏳ Carregando…</td></tr>';
+  var r = await SB.from('perfis').select('*').order('nome');
+  if(r.error){ toast('Erro: '+r.error.message, true); return; }
+  _gUsers = r.data || [];
+  renderGUsers(_gUsers);
+}
+
+function renderGUsers(rows){
+  if(!rows.length){
+    document.getElementById('g-tb-users').innerHTML='<tr><td colspan="6" class="g-empty"><div class="g-empty-icon">👥</div><p>Nenhum usuário.</p></td></tr>';
+    return;
+  }
+  document.getElementById('g-tb-users').innerHTML = rows.map(function(u){
+    var pc=u.perfil==='admin'?'admin':'designer';
+    var plbl=u.perfil==='admin'?'Admin':'Designer';
+    var ac=u.ativo!==false?'ativo':'inativo';
+    var albl=u.ativo!==false?'Ativo':'Inativo';
+    var toggleLbl=u.ativo!==false?'Desativar':'Ativar';
+    var notifChecked = u.recebe_notificacoes ? 'checked' : '';
+    return '<tr>'+
+      '<td><strong>'+u.nome+'</strong></td>'+
+      '<td>'+u.email+'</td>'+
+      '<td><span class="g-badge '+pc+'">'+plbl+'</span></td>'+
+      '<td><span class="g-badge '+ac+'">'+albl+'</span></td>'+
+      '<td style="text-align:center"><input type="checkbox" '+notifChecked+' onchange="toggleNotificacao(\''+u.id+'\',this.checked)" style="width:18px;height:18px;accent-color:var(--teal2);cursor:pointer" title="Recebe notificações por e-mail"/></td>'+
+      '<td><button class="btn btn-p" style="padding:4px 10px;font-size:10px" onclick="toggleGUser(\''+u.id+'\','+(u.ativo!==false)+')">'+toggleLbl+'</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+async function toggleNotificacao(id, ativo){
+  await SB.from('perfis').update({ recebe_notificacoes: ativo }).eq('id', id);
+  toast(ativo ? 'Notificações ativadas.' : 'Notificações desativadas.');
+}
+
+function openNovoUsuario(){
+  ['u-nome','u-email','u-pass'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('u-err').style.display='none';
+  document.getElementById('m-novo-user').classList.add('on');
+}
+
+async function criarUsuario(){
+  var nome=document.getElementById('u-nome').value.trim();
+  var email=document.getElementById('u-email').value.trim();
+  var pass=document.getElementById('u-pass').value;
+  var perf=document.getElementById('u-perfil').value;
+  var notif=document.getElementById('u-notif').checked;
+  var err=document.getElementById('u-err');
+  err.style.display='none';
+
+  if(!nome||!email||!pass){
+    err.textContent='Preencha todos os campos.';
+    err.style.display='block'; return;
+  }
+
+  var resp = await SB.auth.signUp({ email:email, password:pass, options:{ data:{ nome:nome } } });
+  if(resp.error){
+    err.textContent=resp.error.message;
+    err.style.display='block'; return;
+  }
+
+  await SB.from('perfis').upsert({ id:resp.data.user.id, nome:nome, email:email, perfil:perf, ativo:true, recebe_notificacoes:notif });
+
+  document.getElementById('m-novo-user').classList.remove('on');
+  toast('Usuário criado com sucesso!');
+  carregarGUsers();
+}
+
+async function toggleGUser(id, ativo){
+  await SB.from('perfis').update({ ativo: !ativo }).eq('id', id);
+  toast(ativo?'Usuário desativado.':'Usuário ativado.');
+  carregarGUsers();
+}
+
+// ── Excluir Solicitação ──
+var _excluirId = null;
+
+function abrirExcluir(id){
+  var r = _gSolic.find(function(d){ return d.id===id || d.id===parseInt(id,10); });
+  if(!r) return;
+  _excluirId = parseInt(id, 10);
+  var campos = [
+    ['Nº', r.num||r.id||'—'],
+    ['Congregação', r.congregacao||'—'],
+    ['Solicitante', r.solicitante||'—'],
+    ['Data', fmtDataHist(r.data_solic)],
+    ['Nome do Trabalho', r.nome_trabalho||'—'],
+    ['Local', r.local||'—'],
+    ['Tema', r.tema||'—'],
+    ['Ref. Bíblica', r.referencia||'—'],
+    ['Datas/Horários', (r.datas||'—').replace(/ \|\| /g,' | ')],
+    ['Pregadores', (r.pregadores||'—').replace(/ \|\| /g,' | ')],
+    ['Status', r.status||'—']
+  ];
+  document.getElementById('m-excluir-body').innerHTML = campos.map(function(c){
+    return '<div style="display:flex;gap:8px;border-bottom:1px solid var(--bor);padding:5px 0">' +
+      '<span style="font-size:11px;font-weight:700;color:var(--tm);min-width:130px;flex-shrink:0">'+c[0]+'</span>' +
+      '<span style="font-size:13px;color:var(--tx)">'+c[1]+'</span></div>';
+  }).join('');
+  document.getElementById('m-excluir').classList.add('on');
+}
+
+async function confirmarExcluir(){
+  if(!_excluirId) { toast('ID não encontrado.', true); return; }
+  var btn = document.getElementById('btn-confirmar-excluir');
+  btn.disabled = true; btn.textContent = '⏳ Excluindo…';
+
+  var idNum = parseInt(_excluirId, 10);
+
+  try {
+    var r = await SB.from('solicitacoes').delete().eq('id', idNum);
+
+    if(r.error){
+      toast('Erro: ' + r.error.message, true);
+      btn.disabled = false; btn.textContent = '✓ Sim, Excluir';
+      return;
+    }
+
+    // Fecha popup e reseta estado
+    document.getElementById('m-excluir').classList.remove('on');
+    btn.disabled = false; btn.textContent = '✓ Sim, Excluir';
+    _excluirId = null;
+
+    // Recarrega lista do banco e atualiza badge
+    await carregarGSolic();
+    // Atualiza badge com contagem fresca do banco
+    SB.from('solicitacoes').select('status').eq('status','Aguardando').then(function(r){
+      if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
+    });
+    toast('Solicitação excluída com sucesso!');
+
+  } catch(err) {
+    toast('Erro inesperado: ' + err.message, true);
+    btn.disabled = false; btn.textContent = '✓ Sim, Excluir';
+    _excluirId = null;
+  }
+}
+
+// ── Editar via Histórico (busca dados completos do Supabase) ──
+async function abrirVerHistorico(id){
+  var idNum = parseInt(id, 10);
+  var r = await SB.from('solicitacoes').select('*').eq('id', idNum).single();
+  if(r.error){ toast('Erro ao carregar: ' + r.error.message, true); return; }
+  var s = r.data;
+  var campos = [
+    ['Nº', s.num||s.id||'—'],
+    ['Data Solicitação', fmtDataHist(s.data_solic)],
+    ['Congregação', s.congregacao||'—'],
+    ['Solicitante', s.solicitante||'—'],
+    ['Nome do Trabalho', s.nome_trabalho||'—'],
+    ['Local', s.local||'—'],
+    ['Tema', s.tema||'—'],
+    ['Ref. Bíblica', s.referencia||'—'],
+    ['Datas/Horários', (s.datas||'—').replace(/ \|\| /g,'<br>')],
+    ['Pregadores', (s.pregadores||'—').replace(/ \|\| /g,'<br>')],
+    ['Paleta de Cores', s.paleta_cores||'—'],
+    ['Mais Informações', s.mais_info||'—'],
+    ['Status', s.status||'Aguardando'],
+  ];
+  var body = campos.map(function(c){
+    return '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bor)">' +
+      '<div style="font-size:11px;font-weight:700;color:var(--tm);min-width:130px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px">' + c[0] + '</div>' +
+      '<div style="font-size:13px;color:var(--tx)">' + c[1] + '</div></div>';
+  }).join('');
+  // Usa o modal de detalhe existente (m-gdet) ou abre um novo popup simples
+  var pop = document.getElementById('m-gdet');
+  if(pop){
+    document.getElementById('m-gdet-title').textContent = 'Solicitação #' + (s.num||s.id);
+    document.getElementById('m-gdet-body').innerHTML = body;
+    document.getElementById('m-gdet-comments').innerHTML = '';
+    pop.classList.add('on');
+  } else {
+    alert('Solicitação #' + (s.num||s.id) + '\n\n' + campos.map(function(c){return c[0]+': '+c[1].replace(/<br>/g,', ');}).join('\n'));
+  }
+}
+
+async function abrirEditarHistorico(id){
+  var idNum = parseInt(id, 10);
+  var r = await SB.from('solicitacoes').select('*').eq('id', idNum).single();
+  if(r.error){
+    toast('Erro ao carregar: ' + r.error.message, true);
+    return;
+  }
+  // Injeta ou atualiza nos dados de gestão
+  var idx = _gSolic.findIndex(function(s){ return s.id===idNum || s.id===id; });
+  if(idx === -1){
+    _gSolic.push(r.data);
+  } else {
+    _gSolic[idx] = r.data;
+  }
+  abrirEditar(idNum);
+}
+
+// ── Editar Solicitação ──
+var _editarId = null;
+
+function abrirEditar(id){
+  var idNum = parseInt(id, 10);
+  var r = _gSolic.find(function(d){ return d.id===idNum || d.id===id; });
+  if(!r) return;
+  _editarId = idNum;
+  document.getElementById('m-editar-subtitle').textContent = 'Solicitação #'+(r.num||r.id)+' — '+(r.nome_trabalho||'');
+  document.getElementById('e-congregacao').value  = r.congregacao   || '';
+  document.getElementById('e-solicitante').value  = r.solicitante   || '';
+  document.getElementById('e-nome-trabalho').value= r.nome_trabalho || '';
+  document.getElementById('e-local').value        = r.local         || '';
+  document.getElementById('e-tema').value         = r.tema          || '';
+  document.getElementById('e-referencia').value   = r.referencia    || '';
+  document.getElementById('e-datas').value        = (r.datas        || '').replace(/ \|\| /g,'\n');
+  document.getElementById('e-pregadores').value   = (r.pregadores   || '').replace(/ \|\| /g,'\n');
+  document.getElementById('e-paleta').value       = r.paleta_cores  || '';
+  document.getElementById('e-mais-info').value    = r.mais_info     || '';
+  document.getElementById('e-status').value       = r.status        || 'Aguardando';
+  document.getElementById('m-editar-err').style.display = 'none';
+  document.getElementById('m-editar').classList.add('on');
+}
+
+async function salvarEdicao(){
+  if(!_editarId) return;
+  var err = document.getElementById('m-editar-err');
+  err.style.display = 'none';
+
+  var payload = {
+    congregacao:   document.getElementById('e-congregacao').value,
+    solicitante:   document.getElementById('e-solicitante').value.trim(),
+    nome_trabalho: document.getElementById('e-nome-trabalho').value.trim(),
+    local:         document.getElementById('e-local').value.trim(),
+    tema:          document.getElementById('e-tema').value.trim(),
+    referencia:    document.getElementById('e-referencia').value.trim(),
+    datas:         document.getElementById('e-datas').value.trim().replace(/\n/g,' || '),
+    pregadores:    document.getElementById('e-pregadores').value.trim().replace(/\n/g,' || '),
+    paleta_cores:  document.getElementById('e-paleta').value.trim(),
+    mais_info:     document.getElementById('e-mais-info').value.trim(),
+    status:        document.getElementById('e-status').value
+  };
+
+  if(!payload.congregacao || !payload.nome_trabalho){
+    err.textContent = 'Congregação e Nome do Trabalho são obrigatórios.';
+    err.style.display = 'block'; return;
+  }
+
+  var r = await SB.from('solicitacoes').update(payload).eq('id', _editarId);
+  if(r.error){
+    err.textContent = 'Erro ao salvar: ' + r.error.message;
+    err.style.display = 'block'; return;
+  }
+
+  // Registra na auditoria se o status mudou
+  var row = _gSolic.find(function(s){ return s.id===_editarId; });
+  if(row && row.status !== payload.status){
+    var userName = _gPerfil ? _gPerfil.nome : (_gUser?_gUser.email:'Desconhecido');
+    await SB.from('auditoria').insert({
+      solicitacao_id: _editarId,
+      usuario_id: _gUser ? _gUser.id : null,
+      usuario_nome: userName,
+      status_antes: row.status || 'Aguardando',
+      status_depois: payload.status
+    });
+  }
+
+  // Atualiza localmente
+  Object.assign(row, payload);
+  document.getElementById('m-editar').classList.remove('on');
+  _editarId = null;
+  atualizarGStats(_gSolic);
+  filtrarGSolic();
+  toast('Solicitação atualizada com sucesso!');
+}
+
+</script>
+</body>
+</html>
