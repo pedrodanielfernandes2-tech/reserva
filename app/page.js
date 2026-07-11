@@ -294,45 +294,20 @@ export default function Page(){
                 ?<div className="admin-pill">🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button></div>
                 :<button className="btn-ghost-admin" onClick={()=>setModalAdmin(true)}>🔒 Entrar como Admin</button>}
             </div>
-
-            {/* Separador + atalho para Solicitação de Artes */}
-            <div style={{borderTop:"1px dashed var(--border)",marginTop:8,paddingTop:10}}>
-              <a href="/artes.html" className="nav-btn"
-                style={{textDecoration:"none",color:"var(--ink)",display:"flex",alignItems:"center",gap:10,
-                  background:"linear-gradient(135deg,rgba(14,142,137,.07),rgba(14,142,137,.03))",
-                  border:"1.5px solid rgba(14,142,137,.18)"}}>
-                <span className="ico">🎨</span> Solicitação de Artes
-              </a>
-            </div>
           </div>
           <div className="versiculo-box"><strong>Versículo do Dia</strong><span>{versiculo}</span></div>
         </aside>
 
-        <main className="content">
+        <main className="content" style={artesAberto?{padding:0,overflow:"hidden"}:{}}>
 
-          {/* SOLICITAÇÃO DE ARTES — iframes */}
+          {/* SOLICITAÇÃO DE ARTES — iframes sem borda */}
           {artesAberto&&secaoArtes&&(
-            <div style={{position:"relative",width:"100%",height:"calc(100vh - 140px)",minHeight:500,borderRadius:16,overflow:"hidden",boxShadow:"var(--shadow-md)",border:"1px solid var(--border)"}}>
-              {/* Nova Solicitação */}
+            <div style={{width:"100%",height:"calc(100vh - 86px)",display:"flex",flexDirection:"column"}}>
               <iframe
-                key={"formulario"}
-                src="/artes.html"
-                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="formulario"?"block":"none"}}
-                title="Nova Solicitação de Arte"
-              />
-              {/* Histórico */}
-              <iframe
-                key={"historico"}
-                src="/artes.html?tab=historico"
-                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="historico"?"block":"none"}}
-                title="Histórico de Artes"
-              />
-              {/* Acesso à Equipe */}
-              <iframe
-                key={"equipe"}
-                src="/artes.html?tab=gestao"
-                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="equipe"?"block":"none"}}
-                title="Acesso à Equipe"
+                src={`/artes.html${secaoArtes==="formulario"?"":secaoArtes==="historico"?"?tab=historico":"?tab=gestao"}`}
+                key={secaoArtes}
+                style={{width:"100%",flex:1,border:"none",display:"block"}}
+                title="Solicitação de Artes"
               />
             </div>
           )}
