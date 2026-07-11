@@ -75,13 +75,29 @@ export async function POST(request) {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const dataReserva = new Date(ano, mes, dia);
   let limiteAtual = LIMITE_PADRAO;
+  let antecedenciaHoras = 0;
   try {
     const { getConfig } = await import("@/lib/db");
     const cfg = await getConfig();
     limiteAtual = parseInt(cfg.limite_dias || LIMITE_PADRAO, 10);
+    antecedenciaHoras = parseInt(cfg.antecedencia_horas || "0", 10);
   } catch(e) {}
+
   if (Math.round((dataReserva - hoje) / 86400000) > limiteAtual) {
     return NextResponse.json({ erro: `Reservas podem ser feitas com no máximo ${limiteAtual} dias de antecedência.` }, { status: 400 });
+  }
+
+  // Validação de antecedência mínima em horas
+  if (antecedenciaHoras > 0) {
+    const agora = new Date();
+    const dataHoraEvento = new Date(ano, mes, dia, parseInt(horaInicio.split(":")[0]), parseInt(horaInicio.split(":")[1]));
+    const diffHoras = (dataHoraEvento - agora) / 3600000;
+    if (diffHoras < antecedenciaHoras) {
+      return NextResponse.json({
+        erro: `Reserva não permitida. As reservas devem ser realizadas com, no mínimo, ${antecedenciaHoras} hora${antecedenciaHoras > 1 ? "s" : ""} de antecedência em relação à data e horário desejados.`,
+        tipo: "antecedencia_insuficiente"
+      }, { status: 400 });
+    }
   }
 
   // Bloqueios fixos
