@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const DIAS_SEMANA=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
@@ -19,7 +19,9 @@ export default function Page(){
   const [secao,setSecao]=useState("calendario");
   const [secaoConfig,setSecaoConfig]=useState("email");
   const [artesAberto,setArtesAberto]=useState(false);
-  const [secaoArtes,setSecaoArtes]=useState(null); // 'formulario'|'historico'|'equipe' // email | ambientes | bloqueios | calendario
+  const [secaoArtes,setSecaoArtes]=useState(null);
+  const [artesUser,setArtesUser]=useState(null); // {nome, isAdmin} quando logado no Artes
+  const iframeRef = useRef(null); // email | ambientes | bloqueios | calendario
 
   // Dados
   const [salas,setSalas]=useState([]);
@@ -86,6 +88,28 @@ export default function Page(){
   const carregarEventos=useCallback(async()=>{try{const r=await fetch("/api/eventos-igreja");const d=await r.json();setEventosIgreja(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarContatos=useCallback(async()=>{try{const r=await fetch("/api/contatos");const d=await r.json();setContatos(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarConfig=useCallback(async()=>{try{const r=await fetch("/api/config");const d=await r.json();if(d&&typeof d==="object")setConfig(prev=>({...prev,...d}));}catch(e){}});
+
+  useEffect(()=>{
+    // Escuta mensagens do iframe de Artes (login/logout)
+    function onMsg(e){
+      if(!e.data||!e.data.type) return;
+      if(e.data.type==="adl_login") setArtesUser({nome:e.data.nome,isAdmin:Boolean(e.data.isAdmin)});
+      if(e.data.type==="adl_logout") setArtesUser(null);
+    }
+    window.addEventListener("message",onMsg);
+    return ()=>window.removeEventListener("message",onMsg);
+  },[]);
+
+  function irParaArtes(tab){
+    setArtesAberto(true);
+    setSecaoArtes(tab);
+    setSecao(null);
+    setTimeout(()=>{
+      if(iframeRef.current?.contentWindow){
+        iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab},"/");
+      }
+    },300);
+  }
 
   useEffect(()=>{
     setVersiculo(VERSICULOS[Math.floor(Math.random()*VERSICULOS.length)]);
@@ -245,22 +269,60 @@ export default function Page(){
             {/* ── SOLICITAÇÃO DE ARTES ── */}
             <button
               className={"nav-btn"+(artesAberto?" active":"")}
-              onClick={()=>{ setArtesAberto(a=>!a); if(!artesAberto){ setSecaoArtes("formulario"); setSecao(null); } }}
+              onClick={()=>{ setArtesAberto(a=>!a); if(!artesAberto){ irParaArtes("formulario"); } }}
             >
               <span className="ico">🎨</span> Solicitação de Artes
               <span style={{marginLeft:"auto",fontSize:10,opacity:.65}}>{artesAberto?"▲":"▼"}</span>
             </button>
             {artesAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
-                {[["formulario","📝","Nova Solicitação"],["historico","📋","Histórico"],["equipe","👥","Acesso à Equipe"]].map(([id,ico,label])=>(
+                {/* Itens sempre visíveis */}
+                {[["formulario","📝","Nova Solicitação"],["historico","📋","Histórico"]].map(([id,ico,label])=>(
                   <button key={id}
                     style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
                       padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,
                       cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
-                    onClick={()=>setSecaoArtes(id)}>
+                    onClick={()=>irParaArtes(id)}>
                     <span>{ico}</span> {label}
                   </button>
                 ))}
+
+                {/* Login / Logout da equipe */}
+                {!artesUser?(
+                  <button
+                    style={{background:secaoArtes==="equipe"?"var(--surface-soft)":"none",border:"none",textAlign:"left",
+                      padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes==="equipe"?700:500,fontSize:13,
+                      cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                    onClick={()=>irParaArtes("equipe")}>
+                    <span>👤</span> Acesso à Equipe
+                  </button>
+                ):(
+                  <>
+                    {/* Usuário logado — mostra itens de Gestão */}
+                    <div style={{fontSize:11,color:"var(--ink-soft)",padding:"6px 10px 2px",fontWeight:700,letterSpacing:".5px"}}>
+                      👋 {artesUser.nome.split(" ")[0]} — Gestão
+                    </div>
+                    {[
+                      ["g-solic","📋","Solicitações"],
+                      ["g-audit","🕓","Auditoria"],
+                      ...(artesUser.isAdmin?[["g-users","👥","Usuários"],["g-email","⚙️","Configuração"]]:[]),
+                    ].map(([id,ico,label])=>(
+                      <button key={id}
+                        style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
+                          padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,
+                          cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                        onClick={()=>irParaArtes(id)}>
+                        <span>{ico}</span> {label}
+                      </button>
+                    ))}
+                    <button
+                      style={{border:"none",textAlign:"left",padding:"6px 10px",borderRadius:8,fontSize:12,
+                        cursor:"pointer",color:"#D6483A",background:"none",display:"flex",alignItems:"center",gap:7}}
+                      onClick={()=>{ if(iframeRef.current?.contentWindow) iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab:"logout"},"/"); }}>
+                      <span>🚪</span> Sair da Equipe
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
@@ -304,8 +366,9 @@ export default function Page(){
           {artesAberto&&secaoArtes&&(
             <div style={{width:"100%",height:"calc(100vh - 86px)",display:"flex",flexDirection:"column"}}>
               <iframe
-                src={`/artes.html${secaoArtes==="formulario"?"":secaoArtes==="historico"?"?tab=historico":"?tab=gestao"}`}
-                key={secaoArtes}
+                ref={iframeRef}
+                src={`/artes.html${secaoArtes==="formulario"||secaoArtes.startsWith("g-")||secaoArtes==="equipe"?"":secaoArtes==="historico"?"?tab=historico":""}`}
+                key="artes-frame"
                 style={{width:"100%",flex:1,border:"none",display:"block"}}
                 title="Solicitação de Artes"
               />
