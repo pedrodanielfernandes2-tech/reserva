@@ -17,7 +17,9 @@ export default function Page(){
 
   // Navegação
   const [secao,setSecao]=useState("calendario");
-  const [secaoConfig,setSecaoConfig]=useState("email"); // email | ambientes | bloqueios | calendario
+  const [secaoConfig,setSecaoConfig]=useState("email");
+  const [artesAberto,setArtesAberto]=useState(false);
+  const [secaoArtes,setSecaoArtes]=useState(null); // 'formulario'|'historico'|'equipe' // email | ambientes | bloqueios | calendario
 
   // Dados
   const [salas,setSalas]=useState([]);
@@ -239,17 +241,45 @@ export default function Page(){
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="sidebar-eyebrow">Menu</div>
+
+            {/* ── SOLICITAÇÃO DE ARTES ── */}
+            <button
+              className={"nav-btn"+(artesAberto?" active":"")}
+              onClick={()=>{ setArtesAberto(a=>!a); if(!artesAberto){ setSecaoArtes("formulario"); setSecao(null); } }}
+            >
+              <span className="ico">🎨</span> Solicitação de Artes
+              <span style={{marginLeft:"auto",fontSize:10,opacity:.65}}>{artesAberto?"▲":"▼"}</span>
+            </button>
+            {artesAberto&&(
+              <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
+                {[["formulario","📝","Nova Solicitação"],["historico","📋","Histórico"],["equipe","👥","Acesso à Equipe"]].map(([id,ico,label])=>(
+                  <button key={id}
+                    style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
+                      padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,
+                      cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                    onClick={()=>setSecaoArtes(id)}>
+                    <span>{ico}</span> {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div style={{borderTop:"1px dashed var(--border)",margin:"6px 0 4px"}}/>
+
+            {/* ── RESERVAS ── */}
             {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"]].map(([id,ico,label])=>(
-              <button key={id} className={"nav-btn"+(secao===id?" active":"")} onClick={()=>setSecao(id)}>
+              <button key={id} className={"nav-btn"+(secao===id&&!artesAberto?" active":"")}
+                onClick={()=>{ setSecao(id); setArtesAberto(false); setSecaoArtes(null); }}>
                 <span className="ico">{ico}</span> {label}
               </button>
             ))}
 
             {/* Configurações com submenu */}
-            <button className={"nav-btn"+(secao==="config"?" active":"")} onClick={()=>setSecao("config")}>
+            <button className={"nav-btn"+(secao==="config"&&!artesAberto?" active":"")}
+              onClick={()=>{ setSecao("config"); setArtesAberto(false); setSecaoArtes(null); }}>
               <span className="ico">⚙️</span> Configurações
             </button>
-            {secao==="config"&&(
+            {secao==="config"&&!artesAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
                 {[["email","📧","E-mail"],["ambientes","🏛️","Ambientes"],["bloqueios","🚫","Bloqueios"],["calendario","📅","Importar Calendário"]].map(([id,ico,label])=>(
                   <button key={id} style={{background:secaoConfig===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoConfig===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>setSecaoConfig(id)}>
@@ -280,8 +310,35 @@ export default function Page(){
 
         <main className="content">
 
+          {/* SOLICITAÇÃO DE ARTES — iframes */}
+          {artesAberto&&secaoArtes&&(
+            <div style={{position:"relative",width:"100%",height:"calc(100vh - 140px)",minHeight:500,borderRadius:16,overflow:"hidden",boxShadow:"var(--shadow-md)",border:"1px solid var(--border)"}}>
+              {/* Nova Solicitação */}
+              <iframe
+                key={"formulario"}
+                src="/artes.html"
+                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="formulario"?"block":"none"}}
+                title="Nova Solicitação de Arte"
+              />
+              {/* Histórico */}
+              <iframe
+                key={"historico"}
+                src="/artes.html?tab=historico"
+                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="historico"?"block":"none"}}
+                title="Histórico de Artes"
+              />
+              {/* Acesso à Equipe */}
+              <iframe
+                key={"equipe"}
+                src="/artes.html?tab=gestao"
+                style={{width:"100%",height:"100%",border:"none",display:secaoArtes==="equipe"?"block":"none"}}
+                title="Acesso à Equipe"
+              />
+            </div>
+          )}
+
           {/* CALENDÁRIO */}
-          {secao==="calendario"&&(
+          {secao==="calendario"&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                 <div><h3>Calendário de Reservas</h3><p className="block-sub">Clique em um dia para solicitar.</p></div>
@@ -415,7 +472,7 @@ export default function Page(){
           )}
 
           {/* RESERVAS DO DIA */}
-          {secao==="reservaInfo"&&(
+          {secao==="reservaInfo"&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <div className="reservas-dia-head">
                 <div><h3>Reservas do Dia</h3><p className="block-sub">Todas as salas juntas.</p></div>
@@ -449,7 +506,7 @@ export default function Page(){
           )}
 
           {/* CONFIGURAÇÕES */}
-          {secao==="config"&&(
+          {secao==="config"&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <h3>⚙️ Configurações</h3>
               {!adminMode?(
