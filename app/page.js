@@ -63,7 +63,7 @@ export default function Page(){
   const [erroBloqueio,setErroBloqueio]=useState("");
 
   // Configurações
-  const [config,setConfig]=useState({email_admin:"",limite_dias:"60",email_mensagem:""});
+  const [config,setConfig]=useState({email_admin:"",limite_dias:"60",email_mensagem:"",antecedencia_horas:"0"});
   const [salvandoConfig,setSalvandoConfig]=useState(false);
   const [sucessoConfig,setSucessoConfig]=useState(false);
 
@@ -122,11 +122,20 @@ export default function Page(){
   useEffect(()=>{const t=setInterval(carregarReservas,15000);return()=>clearInterval(t);},[]);
 
   const LIMITE=parseInt(config.limite_dias||"60",10);
+  const ANTECEDENCIA_H=parseInt(config.antecedencia_horas||"0",10);
 
   // ---- RESERVAS ----
   function abrirModal(dia){
     const d=new Date(anoAtual,mesAtual,dia);
     if(Math.round((d-hoje())/86400000)>LIMITE){alert(`Só é possível reservar com até ${LIMITE} dias de antecedência.`);return;}
+    // Antecedência mínima: compara início do dia selecionado com agora
+    if(ANTECEDENCIA_H>0){
+      const diffH=(d-new Date())/3600000;
+      if(diffH<ANTECEDENCIA_H){
+        alert(`Reserva não permitida\n\nAs reservas devem ser realizadas com, no mínimo, ${ANTECEDENCIA_H} hora${ANTECEDENCIA_H>1?"s":""} de antecedência em relação à data desejada.`);
+        return;
+      }
+    }
     setDiaSelecionado(dia);setErroReserva("");setSucessoReserva(null);
     setForm({...FORM_VAZIO,sala:salaAtiva||(salas[0]?.nome||"")});
     setModalAberto(true);
@@ -355,7 +364,7 @@ export default function Page(){
             </button>
             {secao==="config"&&!artesAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
-                {[["email","📧","E-mail"],["ambientes","🏛️","Ambientes"],["bloqueios","🚫","Bloqueios"],["calendario","📅","Importar Calendário"]].map(([id,ico,label])=>(
+                {[["email","📧","E-mail"],["reservas","⏱️","Reservas"],["ambientes","🏛️","Ambientes"],["bloqueios","🚫","Bloqueios"],["calendario","📅","Importar Calendário"]].map(([id,ico,label])=>(
                   <button key={id} style={{background:secaoConfig===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoConfig===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>setSecaoConfig(id)}>
                     <span>{ico}</span> {label}
                   </button>
@@ -564,6 +573,36 @@ export default function Page(){
               ):(
                 <div style={{maxWidth:720}}>
                   {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"12px 16px",fontWeight:700,fontSize:13,marginBottom:18}}>✅ Configurações salvas com sucesso!</div>}
+
+                  {/* ── RESERVAS ── */}
+                  {secaoConfig==="reservas"&&(
+                    <div>
+                      <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 16px"}}>⏱️ Parâmetros de Reserva</h4>
+                      <div className="form-grid">
+                        <div className="form-field">
+                          <label>Limite de antecedência máxima (dias)</label>
+                          <input type="number" min="1" max="365" value={config.limite_dias||"60"} onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar. Ex: 60 dias.</small>
+                        </div>
+                        <div className="form-field">
+                          <label>Antecedência mínima obrigatória (horas)</label>
+                          <input type="number" min="0" max="720" value={config.antecedencia_horas||"0"} onChange={e=>setConfig(c=>({...c,antecedencia_horas:e.target.value}))}/>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Mínimo de horas antes do evento. Ex: 24 = só é possível reservar com 24h de antecedência. 0 = sem restrição.</small>
+                        </div>
+                        <button className="btn-primary" style={{alignSelf:"flex-end"}} disabled={salvandoConfig} onClick={salvarConfig}>{salvandoConfig?"Salvando…":"💾 Salvar Configurações"}</button>
+                      </div>
+                      {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"12px 16px",fontWeight:700,fontSize:13,marginTop:16}}>✅ Configurações salvas com sucesso!</div>}
+
+                      <div style={{marginTop:24,background:"var(--surface-soft)",borderRadius:12,padding:"14px 16px",fontSize:13,color:"var(--ink-soft)",lineHeight:1.7}}>
+                        <b style={{color:"var(--ink)",display:"block",marginBottom:6}}>📌 Como funcionam os parâmetros:</b>
+                        <b>Antecedência máxima:</b> impede que reservas sejam feitas com muita antecedência.<br/>
+                        <b>Antecedência mínima:</b> impede reservas de última hora. Se definido como 24h e alguém tentar reservar para hoje, verá a mensagem:<br/>
+                        <span style={{fontStyle:"italic",color:"var(--primary-dark)"}}>
+                          "As reservas devem ser realizadas com, no mínimo, 24 horas de antecedência."
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* ── E-MAIL ── */}
                   {secaoConfig==="email"&&(
