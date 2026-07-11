@@ -470,6 +470,23 @@ select.st-sel{min-width:128px}
   input[type=date],input[type=time]{font-size:13px;padding:10px 10px}
 }
 </style>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var tab = params.get('tab');
+  if(tab){
+    window.addEventListener('DOMContentLoaded', function(){
+      if(tab === 'historico' && typeof switchTab === 'function') switchTab('historico');
+      if(tab === 'gestao' && typeof switchTab === 'function'){
+        // Dispara login da equipe se não logado, senão abre gestão
+        if(typeof abrirLoginEquipe === 'function') abrirLoginEquipe();
+      }
+    });
+  }
+})();
+</script>
+
 </head>
 <body>
 
