@@ -15,33 +15,28 @@ const FORM_VAZIO={ nome:"",sala:"",evento:"",observacao:"",horaInicio:"",horaFim
 export default function Page(){
   const agora=new Date();
 
-  // Navegação
   const [secao,setSecao]=useState("calendario");
   const [secaoConfig,setSecaoConfig]=useState("email");
   const [artesAberto,setArtesAberto]=useState(false);
   const [secaoArtes,setSecaoArtes]=useState(null);
-  const [artesUser,setArtesUser]=useState(null); // {nome, isAdmin} quando logado no Artes
-  const iframeRef = useRef(null); // email | ambientes | bloqueios | calendario
+  const [artesUser,setArtesUser]=useState(null);
+  const iframeRef = useRef(null);
 
-  // Dados
   const [salas,setSalas]=useState([]);
   const [reservas,setReservas]=useState([]);
   const [bloqueios,setBloqueios]=useState([]);
   const [eventosIgreja,setEventosIgreja]=useState([]);
   const [contatos,setContatos]=useState([]);
 
-  // Calendário
   const [mesAtual,setMesAtual]=useState(agora.getMonth());
   const [anoAtual,setAnoAtual]=useState(agora.getFullYear());
   const [salaAtiva,setSalaAtiva]=useState(null);
   const [modoGrade,setModoGrade]=useState(false);
 
-  // Auth
   const [adminMode,setAdminMode]=useState(false);
   const [versiculo,setVersiculo]=useState("");
   const [carregando,setCarregando]=useState(true);
 
-  // Modal reserva
   const [modalAberto,setModalAberto]=useState(false);
   const [diaSelecionado,setDiaSelecionado]=useState(null);
   const [form,setForm]=useState(FORM_VAZIO);
@@ -49,39 +44,32 @@ export default function Page(){
   const [enviando,setEnviando]=useState(false);
   const [sucessoReserva,setSucessoReserva]=useState(null);
 
-  // Modal admin
   const [modalAdmin,setModalAdmin]=useState(false);
   const [senhaAdmin,setSenhaAdmin]=useState("");
   const [erroAdmin,setErroAdmin]=useState("");
 
-  // Salas
   const [formSala,setFormSala]=useState({nome:"",tipo:"Sala"});
   const [erroSala,setErroSala]=useState("");
 
-  // Bloqueios
   const [formBloqueio,setFormBloqueio]=useState({sala_nome:"",dia_semana:"0",hora_inicio:"",hora_fim:"",descricao:""});
   const [erroBloqueio,setErroBloqueio]=useState("");
 
-  // Configurações
   const [config,setConfig]=useState({email_admin:"",limite_dias:"60",email_mensagem:"",antecedencia_horas:"0"});
   const [salvandoConfig,setSalvandoConfig]=useState(false);
   const [sucessoConfig,setSucessoConfig]=useState(false);
 
-  // Contatos de notificação
-  const [formContato,setFormContato]=useState({nome:"",email:"",recebe_todas:true,recebe_som:false,recebe_projecao:false,recebe_fotografia:false,recebe_mesa_cadeira:false});
+  // ✅ MUDANÇA 1: adicionado celular:""
+  const [formContato,setFormContato]=useState({nome:"",email:"",celular:"",recebe_todas:true,recebe_som:false,recebe_projecao:false,recebe_fotografia:false,recebe_mesa_cadeira:false});
   const [erroContato,setErroContato]=useState("");
 
-  // Relatório
   const [dataRelatorio,setDataRelatorio]=useState(toDateInput(agora));
   const [buscaRelatorio,setBuscaRelatorio]=useState("");
 
-  // Importação PDF
   const [pdfImportando,setPdfImportando]=useState(false);
   const [pdfErro,setPdfErro]=useState("");
   const [eventosPreview,setEventosPreview]=useState(null);
   const [salvandoEventos,setSalvandoEventos]=useState(false);
 
-  // ---- CARREGAMENTO ----
   const carregarSalas=useCallback(async()=>{try{const r=await fetch("/api/salas");const d=await r.json();setSalas(Array.isArray(d)?d:[]);setSalaAtiva(p=>p||(Array.isArray(d)&&d[0]?d[0].nome:null));}catch(e){}});
   const carregarReservas=useCallback(async()=>{try{const r=await fetch("/api/reservas");const d=await r.json();setReservas(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarBloqueios=useCallback(async()=>{try{const r=await fetch("/api/bloqueios");const d=await r.json();setBloqueios(Array.isArray(d)?d:[]);}catch(e){}});
@@ -90,7 +78,6 @@ export default function Page(){
   const carregarConfig=useCallback(async()=>{try{const r=await fetch("/api/config");const d=await r.json();if(d&&typeof d==="object")setConfig(prev=>({...prev,...d}));}catch(e){}});
 
   useEffect(()=>{
-    // Escuta mensagens do iframe de Artes (login/logout)
     function onMsg(e){
       if(!e.data||!e.data.type) return;
       if(e.data.type==="adl_login") setArtesUser({nome:e.data.nome,isAdmin:Boolean(e.data.isAdmin)});
@@ -124,11 +111,9 @@ export default function Page(){
   const LIMITE=parseInt(config.limite_dias||"60",10);
   const ANTECEDENCIA_H=parseInt(config.antecedencia_horas||"0",10);
 
-  // ---- RESERVAS ----
   function abrirModal(dia){
     const d=new Date(anoAtual,mesAtual,dia);
     if(Math.round((d-hoje())/86400000)>LIMITE){alert(`Só é possível reservar com até ${LIMITE} dias de antecedência.`);return;}
-    // Antecedência mínima: compara início do dia selecionado com agora
     if(ANTECEDENCIA_H>0){
       const diffH=(d-new Date())/3600000;
       if(diffH<ANTECEDENCIA_H){
@@ -170,7 +155,6 @@ export default function Page(){
     await carregarReservas();
   }
 
-  // ---- ADMIN ----
   async function loginAdmin(e){e.preventDefault();setErroAdmin("");
     const res=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({senha:senhaAdmin})});
     if(!res.ok){setErroAdmin("Senha incorreta.");return;}
@@ -178,7 +162,6 @@ export default function Page(){
   }
   async function sairAdmin(){await fetch("/api/admin/logout",{method:"POST"});setAdminMode(false);}
 
-  // ---- SALAS ----
   async function cadastrarSala(){setErroSala("");if(!formSala.nome.trim()){setErroSala("Informe um nome.");return;}
     const res=await fetch("/api/salas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formSala)});
     const d=await res.json();if(!res.ok){setErroSala(d.erro||"Erro.");return;}
@@ -186,7 +169,6 @@ export default function Page(){
   }
   async function excluirSala(s){if(!confirm("Excluir esta sala?"))return;await fetch(`/api/salas/${s.id}`,{method:"DELETE"});if(s.nome===salaAtiva)setSalaAtiva(salas.filter(x=>x.id!==s.id)[0]?.nome||null);await carregarSalas();}
 
-  // ---- BLOQUEIOS ----
   async function cadastrarBloqueio(){setErroBloqueio("");if(!formBloqueio.sala_nome||!formBloqueio.hora_inicio||!formBloqueio.hora_fim){setErroBloqueio("Preencha todos os campos.");return;}
     const res=await fetch("/api/bloqueios",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formBloqueio)});
     const d=await res.json();if(!res.ok){setErroBloqueio(d.erro||"Erro.");return;}
@@ -194,7 +176,6 @@ export default function Page(){
   }
   async function excluirBloqueio(id){await fetch(`/api/bloqueios/${id}`,{method:"DELETE"});await carregarBloqueios();}
 
-  // ---- EVENTOS IGREJA ----
   async function excluirEventoIgreja(id){await fetch(`/api/eventos-igreja/${id}`,{method:"DELETE"});await carregarEventos();}
 
   async function importarPDF(e){
@@ -214,23 +195,21 @@ export default function Page(){
     finally{setSalvandoEventos(false);}
   }
 
-  // ---- CONTATOS ----
+  // ✅ MUDANÇA 2: reset inclui celular:""
   async function cadastrarContato(){setErroContato("");
     if(!formContato.nome.trim()||!formContato.email.trim()){setErroContato("Nome e e-mail são obrigatórios.");return;}
     const res=await fetch("/api/contatos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formContato)});
     const d=await res.json();if(!res.ok){setErroContato(d.erro||"Erro.");return;}
-    setFormContato({nome:"",email:"",recebe_todas:true,recebe_som:false,recebe_projecao:false,recebe_fotografia:false,recebe_mesa_cadeira:false});
+    setFormContato({nome:"",email:"",celular:"",recebe_todas:true,recebe_som:false,recebe_projecao:false,recebe_fotografia:false,recebe_mesa_cadeira:false});
     await carregarContatos();
   }
   async function excluirContato(id){await fetch(`/api/contatos/${id}`,{method:"DELETE"});await carregarContatos();}
 
-  // ---- CONFIG ----
   async function salvarConfig(){setSalvandoConfig(true);setSucessoConfig(false);
     try{const r=await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(config)});if(r.ok){setSucessoConfig(true);setTimeout(()=>setSucessoConfig(false),3000);}}
     finally{setSalvandoConfig(false);}
   }
 
-  // ---- DERIVADOS ----
   const corAtiva=salas.find(s=>s.nome===salaAtiva);
   const isEventoExterno=form.sala.toLowerCase().includes("evento externo");
   const proximas=reservas.filter(r=>r.sala_nome===salaAtiva&&new Date(r.ano,r.mes,r.dia)>=hoje())
@@ -249,10 +228,7 @@ export default function Page(){
   const salaTipo=salas.find(s=>s.nome===form.sala)?.tipo;
   function getEvDia(dia,mes,ano){return eventosIgreja.filter(e=>e.dia===dia&&e.mes===mes&&e.ano===ano);}
 
-  // Componente lixeira
   function Lixeira({onClick}){return<button type="button" onClick={onClick} title="Excluir" style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:"#D6483A",fontSize:14,lineHeight:1,flexShrink:0}}>🗑️</button>;}
-
-  // Badge de recurso
   function Badge({c,label}){return c?<span style={{fontSize:11,background:"#E8F6F5",color:"#075F5C",padding:"2px 6px",borderRadius:6,fontWeight:700}}>{label}</span>:null;}
 
   if(carregando)return<div style={{padding:40,fontFamily:"Manrope,sans-serif"}}>Carregando…</div>;
@@ -274,44 +250,20 @@ export default function Page(){
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="sidebar-eyebrow">Menu</div>
-
-            {/* ── SOLICITAÇÃO DE ARTES ── */}
-            <button
-              className={"nav-btn"+(artesAberto?" active":"")}
-              onClick={()=>{ setArtesAberto(a=>!a); if(!artesAberto){ irParaArtes("formulario"); } }}
-            >
+            <button className={"nav-btn"+(artesAberto?" active":"")} onClick={()=>{ setArtesAberto(a=>!a); if(!artesAberto){ irParaArtes("formulario"); } }}>
               <span className="ico">🎨</span> Solicitação de Artes
               <span style={{marginLeft:"auto",fontSize:10,opacity:.65}}>{artesAberto?"▲":"▼"}</span>
             </button>
             {artesAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
-                {/* Itens sempre visíveis */}
                 {[["formulario","📝","Nova Solicitação"],["historico","📋","Histórico"]].map(([id,ico,label])=>(
-                  <button key={id}
-                    style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
-                      padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,
-                      cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
-                    onClick={()=>irParaArtes(id)}>
+                  <button key={id} style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>irParaArtes(id)}>
                     <span>{ico}</span> {label}
                   </button>
                 ))}
-
-                {/* Login / Logout da equipe */}
                 {!artesUser?(
-                  <button
-                    style={{background:"none",border:"none",textAlign:"left",
-                      padding:"8px 10px",borderRadius:8,fontWeight:500,fontSize:13,
-                      cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
-                    onClick={()=>{
-                      setArtesAberto(true);
-                      setSecao(null);
-                      // Garante que o iframe está carregado antes de enviar a mensagem
-                      setTimeout(()=>{
-                        if(iframeRef.current?.contentWindow){
-                          iframeRef.current.contentWindow.postMessage({type:"adl_open_login"},"*");
-                        }
-                      },600);
-                    }}>
+                  <button style={{background:"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                    onClick={()=>{setArtesAberto(true);setSecao(null);setTimeout(()=>{if(iframeRef.current?.contentWindow){iframeRef.current.contentWindow.postMessage({type:"adl_open_login"},"*");}},600);}}>
                     <span>👤</span> Acesso à Equipe
                   </button>
                 ):(
@@ -319,47 +271,26 @@ export default function Page(){
                     <div style={{fontSize:11,color:"var(--primary-dark)",padding:"6px 10px 2px",fontWeight:800,letterSpacing:".4px",background:"var(--surface-soft)",borderRadius:8,margin:"2px 0"}}>
                       👋 {artesUser.nome.split(" ")[0]}
                     </div>
-                    {[
-                      ["g-solic","📋","Solicitações"],
-                      ["g-audit","🕓","Auditoria"],
-                      ["g-users","👥","Usuários"],
-                      ["g-email","⚙️","Configuração"],
-                    ].map(([id,ico,label])=>(
-                      <button key={id}
-                        style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
-                          padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,
-                          cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
-                        onClick={()=>irParaArtes(id)}>
+                    {[["g-solic","📋","Solicitações"],["g-audit","🕓","Auditoria"],["g-users","👥","Usuários"],["g-email","⚙️","Configuração"]].map(([id,ico,label])=>(
+                      <button key={id} style={{background:secaoArtes===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoArtes===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>irParaArtes(id)}>
                         <span>{ico}</span> {label}
                       </button>
                     ))}
-                    <button
-                      style={{border:"none",textAlign:"left",padding:"6px 10px",borderRadius:8,fontSize:12,
-                        cursor:"pointer",color:"#D6483A",background:"none",display:"flex",alignItems:"center",gap:7}}
-                      onClick={()=>{
-                        if(iframeRef.current?.contentWindow)
-                          iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab:"logout"},"*");
-                      }}>
+                    <button style={{border:"none",textAlign:"left",padding:"6px 10px",borderRadius:8,fontSize:12,cursor:"pointer",color:"#D6483A",background:"none",display:"flex",alignItems:"center",gap:7}}
+                      onClick={()=>{if(iframeRef.current?.contentWindow)iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab:"logout"},"*");}}>
                       <span>🚪</span> Sair da Equipe
                     </button>
                   </>
                 )}
               </div>
             )}
-
             <div style={{borderTop:"1px dashed var(--border)",margin:"6px 0 4px"}}/>
-
-            {/* ── RESERVAS ── */}
             {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"]].map(([id,ico,label])=>(
-              <button key={id} className={"nav-btn"+(secao===id&&!artesAberto?" active":"")}
-                onClick={()=>{ setSecao(id); setArtesAberto(false); setSecaoArtes(null); }}>
+              <button key={id} className={"nav-btn"+(secao===id&&!artesAberto?" active":"")} onClick={()=>{ setSecao(id); setArtesAberto(false); setSecaoArtes(null); }}>
                 <span className="ico">{ico}</span> {label}
               </button>
             ))}
-
-            {/* Configurações com submenu */}
-            <button className={"nav-btn"+(secao==="config"&&!artesAberto?" active":"")}
-              onClick={()=>{ setSecao("config"); setArtesAberto(false); setSecaoArtes(null); }}>
+            <button className={"nav-btn"+(secao==="config"&&!artesAberto?" active":"")} onClick={()=>{ setSecao("config"); setArtesAberto(false); setSecaoArtes(null); }}>
               <span className="ico">⚙️</span> Configurações
             </button>
             {secao==="config"&&!artesAberto&&(
@@ -371,7 +302,6 @@ export default function Page(){
                 ))}
               </div>
             )}
-
             <div className="admin-box">
               {adminMode
                 ?<div className="admin-pill">🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button></div>
@@ -382,17 +312,9 @@ export default function Page(){
         </aside>
 
         <main className="content" style={artesAberto?{padding:0,overflow:"hidden"}:{}}>
-
-          {/* SOLICITAÇÃO DE ARTES — iframes sem borda */}
           {artesAberto&&secaoArtes&&(
             <div style={{width:"100%",height:"calc(100vh - 86px)",display:"flex",flexDirection:"column"}}>
-              <iframe
-                ref={iframeRef}
-                src={`/artes.html${secaoArtes==="formulario"||secaoArtes.startsWith("g-")||secaoArtes==="equipe"?"":secaoArtes==="historico"?"?tab=historico":""}`}
-                key="artes-frame"
-                style={{width:"100%",flex:1,border:"none",display:"block"}}
-                title="Solicitação de Artes"
-              />
+              <iframe ref={iframeRef} src={`/artes.html${secaoArtes==="formulario"||secaoArtes.startsWith("g-")||secaoArtes==="equipe"?"":secaoArtes==="historico"?"?tab=historico":""}`} key="artes-frame" style={{width:"100%",flex:1,border:"none",display:"block"}} title="Solicitação de Artes"/>
             </div>
           )}
 
@@ -401,16 +323,13 @@ export default function Page(){
             <div className="block" style={{marginTop:0}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                 <div><h3>Calendário de Reservas</h3><p className="block-sub">Clique em um dia para solicitar.</p></div>
-                <button className={"room-tab"+(modoGrade?" active":"")} style={{"--tab-color":"var(--primary)"}} onClick={()=>setModoGrade(g=>!g)}>
-                  {modoGrade?"📅 Por sala":"🗂️ Ver todas"}
-                </button>
+                <button className={"room-tab"+(modoGrade?" active":"")} style={{"--tab-color":"var(--primary)"}} onClick={()=>setModoGrade(g=>!g)}>{modoGrade?"📅 Por sala":"🗂️ Ver todas"}</button>
               </div>
               <div style={{display:"flex",gap:14,flexWrap:"wrap",margin:"10px 0 4px",fontSize:11,alignItems:"center",color:"var(--ink-soft)"}}>
                 <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:9,height:9,borderRadius:2,background:"#D6483A",display:"inline-block"}}/>Evento Sede</span>
                 <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:9,height:9,borderRadius:2,background:"#E0A23B",display:"inline-block"}}/>Congregação</span>
                 <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:9,height:9,borderRadius:2,background:"#888",display:"inline-block"}}/>Bloqueio</span>
               </div>
-
               {!modoGrade&&(
                 <div className="room-tabs">
                   {salas.map(s=>(
@@ -420,16 +339,10 @@ export default function Page(){
                   ))}
                 </div>
               )}
-
               <div className="cal-controls">
-                <select value={mesAtual} onChange={e=>setMesAtual(parseInt(e.target.value,10))}>
-                  {MESES.map((m,i)=><option key={m} value={i}>{m}</option>)}
-                </select>
-                <select value={anoAtual} onChange={e=>setAnoAtual(parseInt(e.target.value,10))}>
-                  {anos.map(a=><option key={a} value={a}>{a}</option>)}
-                </select>
+                <select value={mesAtual} onChange={e=>setMesAtual(parseInt(e.target.value,10))}>{MESES.map((m,i)=><option key={m} value={i}>{m}</option>)}</select>
+                <select value={anoAtual} onChange={e=>setAnoAtual(parseInt(e.target.value,10))}>{anos.map(a=><option key={a} value={a}>{a}</option>)}</select>
               </div>
-
               {modoGrade?(
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",minWidth:salas.length*120+80}}>
@@ -488,8 +401,7 @@ export default function Page(){
                     const evsSede=evsDia.filter(e=>e.tipo==="sede");
                     const evsCong=evsDia.filter(e=>e.tipo==="congregacao");
                     return(
-                      <div key={dia} className={"day"+(ehHoje?" today":"")+(acima?" fora-limite":"")}
-                        onClick={()=>!acima&&abrirModal(dia)} title={acima?`Reservas só até ${LIMITE} dias no futuro`:""}>
+                      <div key={dia} className={"day"+(ehHoje?" today":"")+(acima?" fora-limite":"")} onClick={()=>!acima&&abrirModal(dia)} title={acima?`Reservas só até ${LIMITE} dias no futuro`:""}>
                         <div className="day-number">{dia}</div>
                         {evsSede.map(e=><div key={e.id} className="reserva-item" style={{background:"#D6483A",fontSize:"9px"}}>🔴 {e.nome}</div>)}
                         {evsCong.map(e=><div key={e.id} className="reserva-item" style={{background:"#E0A23B",fontSize:"9px"}}>🟡 {e.congregacao||e.nome}</div>)}
@@ -505,7 +417,6 @@ export default function Page(){
                   })}
                 </div>
               )}
-
               <h3 style={{marginTop:26,fontSize:16}}>Próximas reservas — {salaAtiva||"—"}</h3>
               <ul className="lista-reservas">
                 {proximas.length===0&&<div className="empty-state">Nenhuma reserva futura. Calendário livre.</div>}
@@ -574,7 +485,6 @@ export default function Page(){
                 <div style={{maxWidth:720}}>
                   {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"12px 16px",fontWeight:700,fontSize:13,marginBottom:18}}>✅ Configurações salvas com sucesso!</div>}
 
-                  {/* ── RESERVAS ── */}
                   {secaoConfig==="reservas"&&(
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 16px"}}>⏱️ Parâmetros de Reserva</h4>
@@ -582,29 +492,23 @@ export default function Page(){
                         <div className="form-field">
                           <label>Limite de antecedência máxima (dias)</label>
                           <input type="number" min="1" max="365" value={config.limite_dias||"60"} onChange={e=>setConfig(c=>({...c,limite_dias:e.target.value}))}/>
-                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar. Ex: 60 dias.</small>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Máximo de dias no futuro que alguém pode reservar.</small>
                         </div>
                         <div className="form-field">
                           <label>Antecedência mínima obrigatória (horas)</label>
                           <input type="number" min="0" max="720" value={config.antecedencia_horas||"0"} onChange={e=>setConfig(c=>({...c,antecedencia_horas:e.target.value}))}/>
-                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Mínimo de horas antes do evento. Ex: 24 = só é possível reservar com 24h de antecedência. 0 = sem restrição.</small>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Mínimo de horas antes do evento. 0 = sem restrição.</small>
                         </div>
                         <button className="btn-primary" style={{alignSelf:"flex-end"}} disabled={salvandoConfig} onClick={salvarConfig}>{salvandoConfig?"Salvando…":"💾 Salvar Configurações"}</button>
                       </div>
-                      {sucessoConfig&&<div style={{background:"#E6F4F1",color:"#075F5C",borderRadius:10,padding:"12px 16px",fontWeight:700,fontSize:13,marginTop:16}}>✅ Configurações salvas com sucesso!</div>}
-
                       <div style={{marginTop:24,background:"var(--surface-soft)",borderRadius:12,padding:"14px 16px",fontSize:13,color:"var(--ink-soft)",lineHeight:1.7}}>
                         <b style={{color:"var(--ink)",display:"block",marginBottom:6}}>📌 Como funcionam os parâmetros:</b>
-                        <b>Antecedência máxima:</b> impede que reservas sejam feitas com muita antecedência.<br/>
-                        <b>Antecedência mínima:</b> impede reservas de última hora. Se definido como 24h e alguém tentar reservar para hoje, verá a mensagem:<br/>
-                        <span style={{fontStyle:"italic",color:"var(--primary-dark)"}}>
-                          "As reservas devem ser realizadas com, no mínimo, 24 horas de antecedência."
-                        </span>
+                        <b>Antecedência máxima:</b> impede reservas muito antecipadas.<br/>
+                        <b>Antecedência mínima:</b> impede reservas de última hora. Ex: 24h = só reserva com 24h de antecedência.
                       </div>
                     </div>
                   )}
 
-                  {/* ── E-MAIL ── */}
                   {secaoConfig==="email"&&(
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 16px"}}>📧 E-mail Geral</h4>
@@ -615,9 +519,8 @@ export default function Page(){
                         </div>
                         <div className="form-field full">
                           <label>Destinatários (recebem todas as notificações)</label>
-                          <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com"
-                            value={config.email_admin||""} onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
-                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe por vírgula. Estes e-mails recebem TODAS as notificações de reserva.</small>
+                          <input type="text" placeholder="admin@igreja.com, secretaria@gmail.com" value={config.email_admin||""} onChange={e=>setConfig(c=>({...c,email_admin:e.target.value}))}/>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Separe por vírgula. Recebem TODAS as notificações.</small>
                         </div>
                         <div className="form-field full">
                           <label>Mensagem personalizada no rodapé</label>
@@ -629,21 +532,21 @@ export default function Page(){
                       </div>
 
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"28px 0 6px"}}>📋 Contatos por Recurso</h4>
-                      <p className="block-sub" style={{marginBottom:14}}>Adicione responsáveis que só recebem aviso quando um recurso específico for solicitado.</p>
+                      <p className="block-sub" style={{marginBottom:14}}>Responsáveis que recebem aviso apenas quando um recurso específico for solicitado.</p>
                       {erroContato&&<div className="form-error" style={{display:"block",marginBottom:10}}>{erroContato}</div>}
                       <div className="form-grid">
                         <div className="form-field"><label>Nome</label><input type="text" placeholder="Ex: Responsável de Som" value={formContato.nome} onChange={e=>setFormContato(f=>({...f,nome:e.target.value}))}/></div>
                         <div className="form-field"><label>E-mail</label><input type="email" placeholder="som@igreja.com" value={formContato.email} onChange={e=>setFormContato(f=>({...f,email:e.target.value}))}/></div>
+                        {/* ✅ MUDANÇA 3: campo WhatsApp */}
+                        <div className="form-field">
+                          <label>WhatsApp (opcional)</label>
+                          <input type="tel" placeholder="(11) 99999-9999" value={formContato.celular||""} onChange={e=>setFormContato(f=>({...f,celular:e.target.value}))}/>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>Receberá um botão "Abrir no WhatsApp" no e-mail.</small>
+                        </div>
                         <div className="form-field full">
                           <label>Notificar quando solicitado:</label>
                           <div style={{display:"flex",flexWrap:"wrap",gap:12,marginTop:6}}>
-                            {[
-                              ["recebe_todas","Todas as reservas"],
-                              ["recebe_som","🎤 Som"],
-                              ["recebe_projecao","📽️ Projeção"],
-                              ["recebe_fotografia","📷 Fotografia"],
-                              ["recebe_mesa_cadeira","🪑 Mesa / Cadeira"],
-                            ].map(([key,label])=>(
+                            {[["recebe_todas","Todas as reservas"],["recebe_som","🎤 Som"],["recebe_projecao","📽️ Projeção"],["recebe_fotografia","📷 Fotografia"],["recebe_mesa_cadeira","🪑 Mesa / Cadeira"]].map(([key,label])=>(
                               <label key={key} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600,cursor:"pointer"}}>
                                 <input type="checkbox" checked={Boolean(formContato[key])} onChange={e=>setFormContato(f=>({...f,[key]:e.target.checked}))} style={{width:16,height:16,accentColor:"var(--primary)"}}/>
                                 {label}
@@ -654,13 +557,14 @@ export default function Page(){
                         <button type="button" className="btn-primary" onClick={cadastrarContato}>+ Adicionar Contato</button>
                       </div>
 
-                      {/* Lista de contatos */}
                       <div style={{marginTop:16}}>
                         {contatos.length===0?<div className="empty-state">Nenhum contato cadastrado.</div>:(
                           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
                             <thead><tr style={{background:"var(--surface-soft)"}}>
                               <th style={{padding:"8px 10px",textAlign:"left"}}>Nome</th>
                               <th style={{padding:"8px 10px",textAlign:"left"}}>E-mail</th>
+                              {/* ✅ MUDANÇA 4: coluna WhatsApp na tabela */}
+                              <th style={{padding:"8px 10px",textAlign:"left"}}>WhatsApp</th>
                               <th style={{padding:"8px 10px",textAlign:"left"}}>Notifica quando</th>
                               <th style={{padding:"8px 4px"}}></th>
                             </tr></thead>
@@ -671,6 +575,11 @@ export default function Page(){
                                   <tr key={c.id} style={{borderTop:"1px solid var(--border)"}}>
                                     <td style={{padding:"8px 10px",fontWeight:600}}>{c.nome}</td>
                                     <td style={{padding:"8px 10px",color:"var(--ink-soft)"}}>{c.email}</td>
+                                    <td style={{padding:"8px 10px"}}>
+                                      {c.celular
+                                        ?<a href={`https://wa.me/55${c.celular.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" style={{color:"#25D366",fontWeight:700,textDecoration:"none"}}>📱 {c.celular}</a>
+                                        :<span style={{color:"var(--ink-soft)"}}>—</span>}
+                                    </td>
                                     <td style={{padding:"8px 10px"}}>{quando||"—"}</td>
                                     <td style={{padding:"8px 4px"}}><Lixeira onClick={()=>excluirContato(c.id)}/></td>
                                   </tr>
@@ -683,7 +592,6 @@ export default function Page(){
                     </div>
                   )}
 
-                  {/* ── AMBIENTES ── */}
                   {secaoConfig==="ambientes"&&(
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 12px"}}>🏛️ Salas e Nave</h4>
@@ -708,7 +616,6 @@ export default function Page(){
                     </div>
                   )}
 
-                  {/* ── BLOQUEIOS ── */}
                   {secaoConfig==="bloqueios"&&(
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 6px"}}>🚫 Horários Bloqueados Fixos</h4>
@@ -743,11 +650,10 @@ export default function Page(){
                     </div>
                   )}
 
-                  {/* ── IMPORTAR CALENDÁRIO ── */}
                   {secaoConfig==="calendario"&&(
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 6px"}}>📅 Importar Calendário da Igreja</h4>
-                      <p className="block-sub" style={{marginBottom:14}}>Faça upload do PDF do calendário anual — a IA extrai e classifica os eventos automaticamente. 🔴 Sede bloqueia reservas · 🟡 Congregação é informativo.</p>
+                      <p className="block-sub" style={{marginBottom:14}}>🔴 Sede bloqueia reservas · 🟡 Congregação é informativo.</p>
                       {pdfErro&&<div className="form-error" style={{display:"block",marginBottom:12}}>{pdfErro}</div>}
                       <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:16,flexWrap:"wrap"}}>
                         <label style={{display:"inline-flex",alignItems:"center",gap:8,padding:"10px 16px",background:"var(--primary)",color:"#fff",borderRadius:11,fontWeight:700,fontSize:13.5,cursor:"pointer"}}>
@@ -827,36 +733,21 @@ export default function Page(){
             <>
               <div className="modal-head"><h3>Nova Solicitação</h3><button onClick={fecharModal}>✕</button></div>
               {diaSelecionado&&<span className="date-badge">{pad(diaSelecionado)}/{pad(mesAtual+1)}/{anoAtual}</span>}
-
-              {/* ── Bloco de ocupação do dia ── */}
               {diaSelecionado&&(()=>{
-                const salaCor = salas.find(s=>s.nome===form.sala)?.cor || "var(--primary)";
-                const dataD = new Date(anoAtual, mesAtual, diaSelecionado);
-                const diaSem = dataD.getDay();
-
-                const reservasDia = reservas
-                  .filter(r=>r.sala_nome===form.sala&&r.dia===diaSelecionado&&r.mes===mesAtual&&r.ano===anoAtual)
-                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-
-                const bloqDia = bloqueios
-                  .filter(b=>b.sala_nome===form.sala&&b.dia_semana===diaSem)
-                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-
-                const evSede = eventosIgreja
-                  .filter(e=>e.tipo==="sede"&&e.dia===diaSelecionado&&e.mes===mesAtual&&e.ano===anoAtual)
-                  .sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-
-                const total = reservasDia.length + bloqDia.length + evSede.length;
-
+                const salaCor=salas.find(s=>s.nome===form.sala)?.cor||"var(--primary)";
+                const dataD=new Date(anoAtual,mesAtual,diaSelecionado);
+                const diaSem=dataD.getDay();
+                const reservasDia=reservas.filter(r=>r.sala_nome===form.sala&&r.dia===diaSelecionado&&r.mes===mesAtual&&r.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                const bloqDia=bloqueios.filter(b=>b.sala_nome===form.sala&&b.dia_semana===diaSem).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                const evSede=eventosIgreja.filter(e=>e.tipo==="sede"&&e.dia===diaSelecionado&&e.mes===mesAtual&&e.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                const total=reservasDia.length+bloqDia.length+evSede.length;
                 return(
                   <div style={{background:"var(--surface-soft)",borderRadius:12,padding:"12px 14px",margin:"10px 0 4px",fontSize:13}}>
                     <div style={{fontWeight:700,color:"var(--ink)",marginBottom:total>0?8:0,display:"flex",alignItems:"center",gap:6}}>
                       📋 {form.sala||"Sala"} — {pad(diaSelecionado)}/{pad(mesAtual+1)}/{anoAtual}
                     </div>
                     {total===0?(
-                      <div style={{color:"#27856A",fontWeight:600,fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>
-                        ✅ Nenhum horário ocupado — dia totalmente livre!
-                      </div>
+                      <div style={{color:"#27856A",fontWeight:600,fontSize:12.5,display:"flex",alignItems:"center",gap:5}}>✅ Nenhum horário ocupado — dia totalmente livre!</div>
                     ):(
                       <div style={{display:"flex",flexDirection:"column",gap:5}}>
                         {evSede.map(e=>(
@@ -901,8 +792,6 @@ export default function Page(){
                 <div className="form-field"><label>Início *</label><input type="time" required value={form.horaInicio} onChange={e=>setForm(f=>({...f,horaInicio:e.target.value}))}/></div>
                 <div className="form-field"><label>Término *</label><input type="time" required value={form.horaFim} onChange={e=>setForm(f=>({...f,horaFim:e.target.value}))}/></div>
                 <div className="form-field full"><label>Observação (opcional)</label><input type="text" placeholder="Detalhes adicionais" value={form.observacao} onChange={e=>setForm(f=>({...f,observacao:e.target.value}))}/></div>
-
-                {/* Recursos da Nave */}
                 {salaTipo==="Nave"&&(
                   <div className="form-field full" style={{background:"var(--surface-soft)",borderRadius:12,padding:"12px 14px"}}>
                     <label style={{marginBottom:8,display:"block"}}>🏛️ Recursos da Nave — Irei precisar de:</label>
@@ -916,8 +805,6 @@ export default function Page(){
                     </div>
                   </div>
                 )}
-
-                {/* Recursos de Evento Externo — só aparece quando a sala se chama "Evento Externo" */}
                 {isEventoExterno&&(
                   <div className="form-field full" style={{background:"#FFF8F0",borderRadius:12,padding:"12px 14px",border:"1.5px solid #E0A23B"}}>
                     <label style={{marginBottom:8,display:"block"}}>🏢 Recursos do Evento Externo — Irei precisar de:</label>
@@ -948,7 +835,6 @@ export default function Page(){
                     )}
                   </div>
                 )}
-
                 <div className="form-field"><label>Recorrência</label>
                   <select value={form.recorrencia} onChange={e=>setForm(f=>({...f,recorrencia:e.target.value}))}>
                     <option value="nenhuma">Sem recorrência</option>
