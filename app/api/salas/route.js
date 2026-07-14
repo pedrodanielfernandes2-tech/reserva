@@ -4,11 +4,7 @@ import { ensureSchema } from "@/lib/db";
 import { isAdminRequest } from "@/lib/auth";
 import crypto from "crypto";
 
-// Paleta fixa para as Salas — cada sala nova recebe a próxima cor da lista,
-// na ordem em que é cadastrada, formando um ciclo. A Nave fica sempre com a
-// cor dourada, já que é o ambiente principal e mantém identidade própria.
-const COR_NAVE = "#E08C2B";
-const PALETA_SALAS = ["#3F7FEA", "#46A35C", "#8C63D6", "#C85A86", "#2FA8A0", "#C97A3D"];
+const CORES = ["#0E8E89","#E08C2B","#7C5CBF","#2B8FE0","#D6483A","#27856A","#C45AB3","#E0762B"];
 
 export async function GET() {
   await ensureSchema();
@@ -18,37 +14,16 @@ export async function GET() {
 
 export async function POST(request) {
   await ensureSchema();
-
-  if (!isAdminRequest()) {
-    return NextResponse.json(
-      { erro: "Apenas administradores podem cadastrar salas." },
-      { status: 401 }
-    );
-  }
-
-  const body = await request.json();
-  const nome = (body.nome || "").trim();
-  const tipo = body.tipo === "Nave" ? "Nave" : "Sala";
-
-  if (!nome) {
-    return NextResponse.json({ erro: "Informe um nome para a sala." }, { status: 400 });
-  }
-
-  let cor;
-  if (tipo === "Nave") {
-    cor = COR_NAVE;
-  } else {
-    const contagem = await sql`SELECT COUNT(*)::int AS total FROM salas WHERE tipo = 'Sala';`;
-    cor = PALETA_SALAS[contagem[0].total % PALETA_SALAS.length];
-  }
-
+  if (!isAdminRequest()) return NextResponse.json({ erro: "Apenas administradores." }, { status: 401 });
+  const { nome, tipo, capacidade } = await request.json();
+  if (!nome?.trim()) return NextResponse.json({ erro: "Nome obrigatório." }, { status: 400 });
+  const existing = await sql`SELECT COUNT(*) as n FROM salas;`;
+  const cor = CORES[parseInt(existing[0].n) % CORES.length];
   const id = crypto.randomUUID();
-
   const rows = await sql`
-    INSERT INTO salas (id, nome, tipo, cor)
-    VALUES (${id}, ${nome}, ${tipo}, ${cor})
+    INSERT INTO salas (id, nome, tipo, cor, capacidade)
+    VALUES (${id}, ${nome.trim()}, ${tipo||"Sala"}, ${cor}, ${parseInt(capacidade)||0})
     RETURNING *;
   `;
-
   return NextResponse.json(rows[0], { status: 201 });
 }
