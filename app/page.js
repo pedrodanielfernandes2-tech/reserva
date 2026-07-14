@@ -361,12 +361,14 @@ export default function Page(){
                           <tr key={dia} style={{borderBottom:"1px solid var(--border)",opacity:passado?0.4:1}}>
                             <td style={{padding:"6px 4px",fontWeight:ehHoje?800:500,color:ehHoje?"var(--primary)":"var(--ink)",fontSize:13}}>
                               {pad(dia)}<br/><span style={{fontSize:10,color:"var(--ink-soft)"}}>{DIAS_SEMANA[dataD.getDay()]}</span>
-                              {evsDia.filter(e=>e.tipo==="congregacao").map(e=><div key={e.id} style={{background:"#E0A23B",color:"#fff",borderRadius:4,padding:"1px 4px",fontSize:9,marginTop:2}}>🟡 {e.congregacao||e.nome}</div>)}
+                              {salas.some(s=>s.tipo==="Nave")&&evsDia.filter(e=>e.tipo==="congregacao").map(e=><div key={e.id} style={{background:"#E0A23B",color:"#fff",borderRadius:4,padding:"1px 4px",fontSize:9,marginTop:2}}>🟡 {e.congregacao||e.nome}</div>)}
                             </td>
                             {salas.map(s=>{
                               const resv=reservas.filter(r=>r.sala_nome===s.nome&&r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
                               const bloqDia=bloqueios.filter(b=>b.sala_nome===s.nome&&b.dia_semana===dataD.getDay());
-                              const evsSede=evsDia.filter(e=>e.tipo==="sede");
+                              // Eventos da sede só bloqueiam/aparecem na Nave
+                              const ehNave=s.tipo==="Nave";
+                              const evsSede=ehNave?evsDia.filter(e=>e.tipo==="sede"):[];
                               return(
                                 <td key={s.id} style={{padding:"4px",textAlign:"center",verticalAlign:"top"}} onClick={()=>!passado&&!acima&&(setSalaAtiva(s.nome),abrirModal(dia))}>
                                   {evsSede.map(e=><div key={e.id} style={{background:"#D6483A",color:"#fff",borderRadius:4,padding:"2px 4px",fontSize:9,fontWeight:700,marginBottom:2}}>🔴 {e.hora_inicio}-{e.hora_fim}</div>)}
@@ -398,8 +400,10 @@ export default function Page(){
                     const resv=reservas.filter(r=>r.dia===dia&&r.mes===mesAtual&&r.ano===anoAtual&&r.sala_nome===salaAtiva).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
                     const bloqDia=bloqueios.filter(b=>b.sala_nome===salaAtiva&&b.dia_semana===dataD.getDay());
                     const evsDia=getEvDia(dia,mesAtual,anoAtual);
-                    const evsSede=evsDia.filter(e=>e.tipo==="sede");
-                    const evsCong=evsDia.filter(e=>e.tipo==="congregacao");
+                    // Eventos da sede/congregação só aparecem na Nave
+                    const isNaveAtiva=corAtiva?.tipo==="Nave";
+                    const evsSede=isNaveAtiva?evsDia.filter(e=>e.tipo==="sede"):[];
+                    const evsCong=isNaveAtiva?evsDia.filter(e=>e.tipo==="congregacao"):[];
                     return(
                       <div key={dia} className={"day"+(ehHoje?" today":"")+(acima?" fora-limite":"")} onClick={()=>!acima&&abrirModal(dia)} title={acima?`Reservas só até ${LIMITE} dias no futuro`:""}>
                         <div className="day-number">{dia}</div>
@@ -739,7 +743,9 @@ export default function Page(){
                 const diaSem=dataD.getDay();
                 const reservasDia=reservas.filter(r=>r.sala_nome===form.sala&&r.dia===diaSelecionado&&r.mes===mesAtual&&r.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
                 const bloqDia=bloqueios.filter(b=>b.sala_nome===form.sala&&b.dia_semana===diaSem).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-                const evSede=eventosIgreja.filter(e=>e.tipo==="sede"&&e.dia===diaSelecionado&&e.mes===mesAtual&&e.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+                // Eventos de sede só aparecem se a sala selecionada for Nave
+                const salaEhNave=salas.find(s=>s.nome===form.sala)?.tipo==="Nave";
+                const evSede=salaEhNave?eventosIgreja.filter(e=>e.tipo==="sede"&&e.dia===diaSelecionado&&e.mes===mesAtual&&e.ano===anoAtual).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio)):[];
                 const total=reservasDia.length+bloqDia.length+evSede.length;
                 return(
                   <div style={{background:"var(--surface-soft)",borderRadius:12,padding:"12px 14px",margin:"10px 0 4px",fontSize:13}}>
