@@ -48,7 +48,7 @@ export default function Page(){
   const [senhaAdmin,setSenhaAdmin]=useState("");
   const [erroAdmin,setErroAdmin]=useState("");
 
-  const [formSala,setFormSala]=useState({nome:"",tipo:"Sala"});
+  const [formSala,setFormSala]=useState({nome:"",tipo:"Sala",capacidade:0});
   const [erroSala,setErroSala]=useState("");
 
   const [formBloqueio,setFormBloqueio]=useState({sala_nome:"",dia_semana:"0",hora_inicio:"",hora_fim:"",descricao:""});
@@ -165,7 +165,7 @@ export default function Page(){
   async function cadastrarSala(){setErroSala("");if(!formSala.nome.trim()){setErroSala("Informe um nome.");return;}
     const res=await fetch("/api/salas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formSala)});
     const d=await res.json();if(!res.ok){setErroSala(d.erro||"Erro.");return;}
-    setFormSala({nome:"",tipo:"Sala"});await carregarSalas();
+    setFormSala({nome:"",tipo:"Sala",capacidade:0});await carregarSalas();
   }
   async function excluirSala(s){if(!confirm("Excluir esta sala?"))return;await fetch(`/api/salas/${s.id}`,{method:"DELETE"});if(s.nome===salaAtiva)setSalaAtiva(salas.filter(x=>x.id!==s.id)[0]?.nome||null);await carregarSalas();}
 
@@ -335,6 +335,7 @@ export default function Page(){
                   {salas.map(s=>(
                     <button key={s.id} className={"room-tab"+(s.nome===salaAtiva?" active":"")} style={{"--tab-color":s.cor}} onClick={()=>setSalaAtiva(s.nome)}>
                       <span className="dot" style={{background:s.cor}}/> {s.nome}
+                      {s.capacidade>0&&<span style={{fontSize:10,opacity:.75,fontWeight:600}}>· {s.capacidade} pessoas</span>}
                     </button>
                   ))}
                 </div>
@@ -607,12 +608,21 @@ export default function Page(){
                             <option value="Sala">Sala</option><option value="Nave">Nave</option>
                           </select>
                         </div>
-                        <button type="button" className="btn-primary" onClick={cadastrarSala}>+ Cadastrar Ambiente</button>
+                        <div className="form-field">
+                          <label>Capacidade (pessoas)</label>
+                          <input type="number" min="0" placeholder="Ex: 50" value={formSala.capacidade||0} onChange={e=>setFormSala(f=>({...f,capacidade:parseInt(e.target.value)||0}))}/>
+                          <small style={{color:"var(--ink-soft)",fontSize:11}}>0 = sem limite definido</small>
+                        </div>
+                        <button type="button" className="btn-primary" style={{alignSelf:"flex-end"}} onClick={cadastrarSala}>+ Cadastrar Ambiente</button>
                       </div>
                       <div className="sala-chip-list" style={{marginTop:14}}>
                         {salas.map(s=>(
                           <div className="sala-chip" key={s.id}>
-                            <span className="swatch" style={{background:s.cor}}/><div className="info"><b>{s.nome}</b><span>{s.tipo}</span></div>
+                            <span className="swatch" style={{background:s.cor}}/>
+                            <div className="info">
+                              <b>{s.nome}</b>
+                              <span>{s.tipo}{s.capacidade>0?` · 👥 ${s.capacidade} pessoas`:""}</span>
+                            </div>
                             <button type="button" className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
                           </div>
                         ))}
