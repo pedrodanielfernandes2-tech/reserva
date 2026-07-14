@@ -47,6 +47,7 @@ export default function Page(){
   const [modalAdmin,setModalAdmin]=useState(false);
   const [senhaAdmin,setSenhaAdmin]=useState("");
   const [erroAdmin,setErroAdmin]=useState("");
+  const [modalExcluir,setModalExcluir]=useState(null); // reserva a excluir
 
   const [formSala,setFormSala]=useState({nome:"",tipo:"Sala",capacidade:0});
   const [erroSala,setErroSala]=useState("");
@@ -144,6 +145,8 @@ export default function Page(){
     }finally{setEnviando(false);}
   }
 
+  function pedirExclusao(r){ if(adminMode){ setModalExcluir(r); } else { excluirReserva(r,false); } }
+
   async function excluirReserva(r,semConfirmar=false){
     let nomeConf=null;
     if(!semConfirmar&&!adminMode){
@@ -152,6 +155,7 @@ export default function Page(){
     }
     const res=await fetch(`/api/reservas/${r.id}`,{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({nome:nomeConf||""})});
     if(!res.ok){const d=await res.json().catch(()=>({}));alert(d.erro||"Não foi possível excluir.");return;}
+    setModalExcluir(null);
     await carregarReservas();
   }
 
@@ -377,7 +381,7 @@ export default function Page(){
                                   {resv.map(r=>(
                                     <div key={r.id} style={{background:s.cor,color:"#fff",borderRadius:6,padding:"3px 5px",fontSize:10,fontWeight:700,marginBottom:2,display:"flex",alignItems:"center",justifyContent:"space-between",gap:2}}>
                                       <span>{r.hora_inicio}-{r.hora_fim}</span>
-                                      {adminMode&&<Lixeira onClick={e=>{e.stopPropagation();excluirReserva(r,true);}}/>}
+                                      {adminMode&&<Lixeira onClick={e=>{e.stopPropagation();pedirExclusao(r);}}/>}
                                     </div>
                                   ))}
                                   {!passado&&!acima&&resv.length===0&&evsSede.length===0&&<div style={{color:"var(--ink-soft)",fontSize:10,cursor:"pointer"}}>+ reservar</div>}
@@ -414,7 +418,7 @@ export default function Page(){
                         {resv.map(r=>(
                           <div key={r.id} className="reserva-item" style={{background:corAtiva?corAtiva.cor:"var(--primary)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:2}}>
                             <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{r.hora_inicio}-{r.hora_fim} · {r.evento}</span>
-                            {adminMode&&<Lixeira onClick={e=>{e.stopPropagation();excluirReserva(r,true);}}/>}
+                            {adminMode&&<Lixeira onClick={e=>{e.stopPropagation();pedirExclusao(r);}}/>}
                           </div>
                         ))}
                       </div>
@@ -437,7 +441,7 @@ export default function Page(){
                         {recursos&&<span style={{color:"var(--primary-dark)",fontSize:12,fontWeight:600}}>{recursos}</span>}
                       </div>
                       <div className="res-actions" style={{display:"flex",gap:6,alignItems:"center"}}>
-                        {adminMode&&<button type="button" onClick={()=>excluirReserva(r,true)} style={{background:"#FCE9E6",border:"none",cursor:"pointer",borderRadius:8,padding:"6px 10px",fontSize:16}} title="Excluir (admin)">🗑️</button>}
+                        {adminMode&&<button type="button" onClick={()=>pedirExclusao(r)} style={{background:"#FCE9E6",border:"none",cursor:"pointer",borderRadius:8,padding:"6px 10px",fontSize:16}} title="Excluir (admin)">🗑️</button>}
                       </div>
                     </li>
                   );
@@ -931,6 +935,38 @@ export default function Page(){
           )}
         </div>
       </div>
+
+      {/* MODAL CONFIRMAR EXCLUSÃO */}
+      {modalExcluir&&(
+        <div className="overlay show">
+          <div className="modal" style={{maxWidth:420}}>
+            <div className="modal-head">
+              <h3 style={{color:"#D6483A"}}>🗑️ Excluir Reserva</h3>
+              <button onClick={()=>setModalExcluir(null)}>✕</button>
+            </div>
+            <p style={{margin:"14px 0 18px",fontSize:14,color:"var(--ink)",lineHeight:1.7}}>
+              Deseja realmente excluir esta reserva?
+            </p>
+            <div style={{background:"#FFF5F5",border:"1.5px solid #F5C6C6",borderRadius:12,padding:"14px 16px",fontSize:13.5,lineHeight:1.9,marginBottom:20}}>
+              <div><b>Sala:</b> {modalExcluir.sala_nome}</div>
+              <div><b>Data:</b> {pad(modalExcluir.dia)}/{pad(modalExcluir.mes+1)}/{modalExcluir.ano}</div>
+              <div><b>Horário:</b> {modalExcluir.hora_inicio} – {modalExcluir.hora_fim}</div>
+              <div><b>Evento:</b> {modalExcluir.evento}</div>
+              <div><b>Solicitante:</b> {modalExcluir.nome}</div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setModalExcluir(null)}
+                style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--surface-soft)",fontWeight:700,fontSize:14,cursor:"pointer"}}>
+                Cancelar
+              </button>
+              <button onClick={()=>excluirReserva(modalExcluir,true)}
+                style={{padding:"10px 24px",borderRadius:10,border:"none",background:"#D6483A",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer"}}>
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL ADMIN */}
       <div className={"overlay"+(modalAdmin?" show":"")}>
