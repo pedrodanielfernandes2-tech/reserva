@@ -4,6 +4,15 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1.0" name="viewport"/>
 <title>Solicitação de Artes — Assembleia de Deus Louveira</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#14b8a6"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AD Louveira"/>
+<link rel="apple-touch-icon" href="icon-512.svg"/>
+<link rel="icon" type="image/svg+xml" href="icon-512.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -471,74 +480,40 @@ select.st-sel{min-width:128px}
 }
 </style>
 
-<script>
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  var tab = params.get('tab');
-  if(tab){
-    window.addEventListener('DOMContentLoaded', function(){
-      if(tab === 'historico' && typeof switchTab === 'function') switchTab('historico');
-      if(tab === 'gestao' && typeof switchTab === 'function'){
-        // Dispara login da equipe se não logado, senão abre gestão
-        if(typeof abrirLoginEquipe === 'function') abrirLoginEquipe();
-      }
-    });
-  }
-})();
-</script>
-
-
-<style id="iframe-hide">
-/* Quando carregado dentro de iframe: esconde banner/header próprio */
-</style>
+<style id="iframe-hide"></style>
 <script>
 if(window.self !== window.top){
-  // Está dentro de iframe — esconde elementos redundantes
   document.addEventListener('DOMContentLoaded', function(){
     var style = document.getElementById('iframe-hide');
     style.textContent = `
       .banner { display: none !important; }
       .adl-back { display: none !important; }
-      body { padding-top: 16px !important; padding-bottom: 20px !important; }
+      body { padding-top: 0 !important; padding-bottom: 20px !important; }
     `;
+    document.body.style.padding = '0';
+    var wrap = document.querySelector('.wrap');
+    if(wrap){ wrap.style.maxWidth='none'; wrap.style.margin='0'; wrap.style.padding='16px 24px 24px'; }
+    var tabNav = document.getElementById('tab-nav');
+    if(tabNav) tabNav.style.display='none';
   });
 }
 </script>
 
-
-<style id="iframe-fullwidth">
-/* Ativado via JS quando detectado iframe */
-</style>
-
 <script>
-if(window.self !== window.top){
-  document.addEventListener('DOMContentLoaded', function(){
-    // Esconde banner e botão voltar
-    var banner = document.querySelector('.banner');
-    if(banner) banner.style.display = 'none';
-    var back = document.querySelector('.adl-back');
-    if(back) back.style.display = 'none';
-    
-    // Fullwidth: remove max-width e padding do body/wrap
-    document.body.style.padding = '0';
-    document.body.style.background = 'var(--sur2)';
-    var wrap = document.querySelector('.wrap');
-    if(wrap){
-      wrap.style.maxWidth = 'none';
-      wrap.style.margin = '0';
-      wrap.style.padding = '16px 24px 24px';
-    }
-    // Remove tab-nav que ficou redundante (a navegação é feita pelo sidebar do React)
-    var tabNav = document.getElementById('tab-nav');
-    if(tabNav) tabNav.style.display = 'none';
-  });
-}
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var tab=params.get('tab');
+  if(tab){
+    window.addEventListener('DOMContentLoaded',function(){
+      if(tab==='historico'&&typeof switchTab==='function') switchTab('historico');
+      if(tab==='gestao'&&typeof switchTab==='function') abrirLoginEquipe&&abrirLoginEquipe();
+    });
+  }
+})();
 </script>
 
 </head>
 <body>
-
-
 <div class="wrap" id="main-wrap">
 
 <!-- popup -->
@@ -1497,6 +1472,21 @@ async function uploadParaStorage(id, nome, cong, solit, dsol, localF, tema, ref,
     } catch(e){ console.warn('Erro upload foto referencia:', e.message); }
   }
 
+  // Salva URLs das fotos no banco para o trigger incluir no e-mail
+  if(id && id !== 'novo' && resultado.fotos.length > 0){
+    try {
+      await fetch(SUPA_URL + '/rest/v1/solicitacoes?id=eq.' + id, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY
+        },
+        body: JSON.stringify({ fotos_urls_json: JSON.stringify(resultado.fotos) })
+      });
+    } catch(e){ console.warn('Erro salvar URLs fotos:', e.message); }
+  }
+
   return resultado;
 }
 
@@ -1671,18 +1661,22 @@ function gerarPDF(){
 }
 
 // ── Limpar ──
-function limpar(){
-  if(!confirm('Deseja realmente limpar todos os campos?')) return;
+function resetFormulario(){
   ['congregacao','local','nome-trab','tema','ref','mais-info','solicitante']
     .forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-  document.getElementById('outros-sec').style.display='none';
-  document.getElementById('outros-inp').value='';
-  document.getElementById('datas-cont').innerHTML='';
+  var os=document.getElementById('outros-sec'); if(os)os.style.display='none';
+  var oi=document.getElementById('outros-inp'); if(oi)oi.value='';
+  var dc=document.getElementById('datas-cont'); if(dc)dc.innerHTML='';
   numDatas=0; fMap={}; paletaFiles=[];
   renderPvPaleta();
-  document.getElementById('pv-paleta').innerHTML='';
-  document.getElementById('f-paleta-texto').value='';
+  var pp=document.getElementById('pv-paleta'); if(pp)pp.innerHTML='';
+  var fp=document.getElementById('f-paleta-texto'); if(fp)fp.value='';
   addData();
+}
+
+function limpar(){
+  if(!confirm('Deseja realmente limpar todos os campos?')) return;
+  resetFormulario();
   toast('Formulário limpo ✓');
 }
 
@@ -1912,6 +1906,7 @@ function renderHistorico(rows){
   rows.forEach(function(r){
     var acoes =
       '<button title="Visualizar" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirVerHistorico('+r.id+')">👁️</button>';
+    acoes += '<button title="Duplicar solicitação" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="duplicarSolicitacao('+r.id+')">📋</button>';
     if(_permSolic.editar)
       acoes += '<button title="Editar" style="background:none;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;transition:transform .15s;opacity:.75" onclick="abrirEditarHistorico('+r.id+')">✏️</button>';
     if(_permSolic.excluir)
@@ -2036,7 +2031,6 @@ function iniciarGestao(){
   document.getElementById('tab-btn-gestao').style.display='inline-flex';
   document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
   document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
-  // Notifica o React parent sobre o login
   var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
   try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
   document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
@@ -2065,7 +2059,6 @@ SB.auth.getSession().then(function(r){
       document.getElementById('tab-btn-gestao').style.display='inline-flex';
       document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
       document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
-  // Notifica o React parent sobre o login
   var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
   try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
       document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
@@ -2629,6 +2622,71 @@ async function confirmarExcluir(){
 }
 
 // ── Editar via Histórico (busca dados completos do Supabase) ──
+async function duplicarSolicitacao(id){
+  var idNum = parseInt(id, 10);
+  toast('Carregando dados...');
+  var r = await SB.from('solicitacoes').select('*').eq('id', idNum).single();
+  if(r.error){ toast('Erro ao carregar: ' + r.error.message, true); return; }
+  var s = r.data;
+
+  // Navega para a aba Nova Solicitação e limpa
+  switchTab('formulario');
+  resetFormulario();
+
+  setTimeout(function(){
+    // Campos simples
+    var set = function(id, val){ var e=document.getElementById(id); if(e && val) e.value=val; };
+    set('congregacao', s.congregacao);
+    set('solicitante', s.solicitante);
+    set('nome-trab',   s.nome_trabalho);
+    set('tema',        s.tema);
+    set('ref',         s.referencia);
+    set('mais-info',   s.mais_info);
+    set('f-paleta-texto', (s.paleta_cores||'').split(' | Imagens:')[0].trim());
+
+    // Local
+    if(s.local){
+      var sel = document.getElementById('local');
+      if(sel){
+        var existe = Array.from(sel.options).some(function(o){ return o.value === s.local; });
+        if(existe){
+          sel.value = s.local;
+        } else {
+          sel.value = 'OUTROS';
+          set('outros-inp', s.local);
+          var os = document.getElementById('outros-sec');
+          if(os) os.style.display = 'block';
+        }
+      }
+    }
+
+    // Datas — adiciona uma por pregador (deixa em branco para preencher)
+    var pregsArr = s.pregadores ? s.pregadores.split(' || ') : [''];
+    // Garante pelo menos tantas datas quantos pregadores
+    var datasExist = document.querySelectorAll('.date-row').length;
+    for(var i = datasExist; i < pregsArr.length; i++){
+      addData();
+    }
+
+    // Aguarda renderPreg criar os blocos de pregador
+    setTimeout(function(){
+      pregsArr.forEach(function(p, i){
+        var nome = p.replace(/Pregador \d+:\s*/i, '').replace(/\s*\|\s*Foto:\s*(Sim|Não|Nao)/i, '').trim();
+        var temFoto = /Foto:\s*Sim/i.test(p);
+        var bloco = document.querySelector('.pb[data-i="'+i+'"]');
+        if(!bloco) return;
+        var cm = bloco.querySelector('.cm');
+        if(cm) cm.value = nome;
+        // Marca a opção de foto
+        var radio = bloco.querySelector('input[name="fp'+i+'"][value="'+(temFoto?'sim':'nao')+'"]');
+        if(radio){ radio.checked = true; tgFoto(i); }
+      });
+      toast('Solicitação duplicada! Atualize as datas e envie.');
+    }, 300);
+
+  }, 250);
+}
+
 async function abrirVerHistorico(id){
   var idNum = parseInt(id, 10);
   var r = await SB.from('solicitacoes').select('*').eq('id', idNum).single();
@@ -2760,7 +2818,7 @@ async function salvarEdicao(){
 }
 
 </script>
-<!-- ← Botão voltar para Reservas -->
+
 <style>
 .adl-back{
   position:fixed;bottom:20px;right:20px;z-index:9999;
@@ -2776,29 +2834,26 @@ async function salvarEdicao(){
 </style>
 <a href="/" class="adl-back">📅 Reserva de Salas</a>
 
-
 <script>
-// Recebe comandos de navegação do React parent
 window.addEventListener('message', function(e){
-  if(!e.data || !e.data.type) return;
-
-  if(e.data.type === 'adl_open_login'){
-    if(typeof abrirLoginEquipe === 'function') abrirLoginEquipe();
+  if(!e.data||!e.data.type) return;
+  if(e.data.type==='adl_open_login'){
+    if(typeof abrirLoginEquipe==='function') abrirLoginEquipe();
     return;
   }
-  if(e.data.type === 'adl_goto_logout' || (e.data.type === 'adl_goto' && e.data.tab === 'logout')){
+  if(e.data.type==='adl_goto_logout'||(e.data.type==='adl_goto'&&e.data.tab==='logout')){
     if(typeof doLogoutEquipe==='function') doLogoutEquipe();
     return;
   }
-  if(e.data.type === 'adl_goto'){
-    var tab = e.data.tab;
-    if(tab === 'formulario') { if(typeof switchTab==='function') switchTab('formulario'); }
-    else if(tab === 'historico') { if(typeof switchTab==='function') switchTab('historico'); if(typeof carregarHistorico==='function') setTimeout(carregarHistorico,300); }
-    else if(tab === 'gestao') { if(typeof switchTab==='function') switchTab('gestao'); }
-    else if(tab === 'g-solic') { if(typeof switchTab==='function') switchTab('gestao'); if(typeof showGestaoPage==='function') setTimeout(function(){ var b=document.querySelector('[onclick*="g-solic"]'); if(b)b.click(); },400); }
-    else if(tab === 'g-audit') { if(typeof switchTab==='function') switchTab('gestao'); if(typeof showGestaoPage==='function') setTimeout(function(){ var b=document.querySelector('[onclick*="g-audit"]'); if(b)b.click(); },400); }
-    else if(tab === 'g-users') { if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-users'); if(b)b.click(); },400); }
-    else if(tab === 'g-email') { if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-email'); if(b)b.click(); },400); }
+  if(e.data.type==='adl_goto'){
+    var tab=e.data.tab;
+    if(tab==='formulario'&&typeof switchTab==='function') switchTab('formulario');
+    else if(tab==='historico'&&typeof switchTab==='function'){ switchTab('historico'); if(typeof carregarHistorico==='function') setTimeout(carregarHistorico,300); }
+    else if(tab==='gestao'&&typeof switchTab==='function') switchTab('gestao');
+    else if(tab==='g-solic'){ if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.querySelector('[onclick*="g-solic"]'); if(b)b.click(); },400); }
+    else if(tab==='g-audit'){ if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.querySelector('[onclick*="g-audit"]'); if(b)b.click(); },400); }
+    else if(tab==='g-users'){ if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-users'); if(b)b.click(); },400); }
+    else if(tab==='g-email'){ if(typeof switchTab==='function') switchTab('gestao'); setTimeout(function(){ var b=document.getElementById('g-nav-email'); if(b)b.click(); },400); }
   }
 });
 </script>
