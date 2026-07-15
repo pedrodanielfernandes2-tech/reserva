@@ -42,24 +42,24 @@ export async function POST(request) {
   await ensureSchema();
   const body = await request.json();
 
-  const sala          = (body.sala || "").trim();
-  const nome          = (body.nome || "").trim();
-  const evento        = (body.evento || "").trim();
-  const observacao    = (body.observacao || "").trim();
-  const dia           = parseInt(body.dia, 10);
-  const mes           = parseInt(body.mes, 10);
-  const ano           = parseInt(body.ano, 10);
-  const horaInicio    = body.horaInicio;
-  const horaFim       = body.horaFim;
-  const recorrencia   = body.recorrencia || "nenhuma";
-  const recorrenciaFim = body.recorrenciaFim || "";
-  const precisaSom    = Boolean(body.precisaSom);
+  const sala            = (body.sala || "").trim();
+  const nome            = (body.nome || "").trim();
+  const evento          = (body.evento || "").trim();
+  const observacao      = (body.observacao || "").trim();
+  const dia             = parseInt(body.dia, 10);
+  const mes             = parseInt(body.mes, 10);
+  const ano             = parseInt(body.ano, 10);
+  const horaInicio      = body.horaInicio;
+  const horaFim         = body.horaFim;
+  const recorrencia     = body.recorrencia || "nenhuma";
+  const recorrenciaFim  = body.recorrenciaFim || "";
+  const precisaSom      = Boolean(body.precisaSom);
   const precisaProjecao = Boolean(body.precisaProjecao);
   const precisaFotografia = Boolean(body.precisaFotografia);
   const precisaTransmissao = Boolean(body.precisaTransmissao);
-  const tipoEvento    = body.tipoEvento || "regular";
-  const qtdMesas      = parseInt(body.qtdMesas || 0, 10);
-  const qtdCadeiras   = parseInt(body.qtdCadeiras || 0, 10);
+  const tipoEvento      = body.tipoEvento || "regular";
+  const qtdMesas        = parseInt(body.qtdMesas || 0, 10);
+  const qtdCadeiras     = parseInt(body.qtdCadeiras || 0, 10);
 
   if (!sala || !nome || !evento || !horaInicio || !horaFim || isNaN(dia)) {
     return NextResponse.json({ erro: "Preencha todos os campos obrigatórios." }, { status: 400 });
@@ -87,7 +87,7 @@ export async function POST(request) {
     return NextResponse.json({ erro: `Reservas podem ser feitas com no máximo ${limiteAtual} dias de antecedência.` }, { status: 400 });
   }
 
-  // Validação de antecedência mínima em horas
+  // Antecedência mínima em horas
   if (antecedenciaHoras > 0) {
     const agora = new Date();
     const dataHoraEvento = new Date(ano, mes, dia, parseInt(horaInicio.split(":")[0]), parseInt(horaInicio.split(":")[1]));
@@ -109,15 +109,18 @@ export async function POST(request) {
     }
   }
 
-  // Eventos da Sede
-  const eventosSede = await sql`SELECT * FROM eventos_igreja WHERE tipo='sede' AND dia=${dia} AND mes=${mes} AND ano=${ano};`;
-  for (const ev of eventosSede) {
-    if (conflita(horaInicio, horaFim, ev.hora_inicio, ev.hora_fim)) {
-      return NextResponse.json({ erro: `Conflita com evento da igreja: "${ev.nome}" (${ev.hora_inicio}–${ev.hora_fim}).` }, { status: 409 });
+  // ✅ Eventos da Sede — só bloqueia reservas na Nave
+  const salaInfo = await sql`SELECT tipo FROM salas WHERE nome = ${sala} LIMIT 1;`;
+  if (salaInfo[0]?.tipo === 'Nave') {
+    const eventosSede = await sql`SELECT * FROM eventos_igreja WHERE tipo='sede' AND dia=${dia} AND mes=${mes} AND ano=${ano};`;
+    for (const ev of eventosSede) {
+      if (conflita(horaInicio, horaFim, ev.hora_inicio, ev.hora_fim)) {
+        return NextResponse.json({ erro: `Conflita com evento da igreja: "${ev.nome}" (${ev.hora_inicio}–${ev.hora_fim}).` }, { status: 409 });
+      }
     }
   }
 
-  // Gerar datas
+  // Gerar datas (recorrência)
   const datas = recorrencia === "nenhuma"
     ? [{ dia, mes, ano }]
     : gerarDatas(dia, mes, ano, recorrencia, recorrenciaFim);
@@ -140,7 +143,7 @@ export async function POST(request) {
     return NextResponse.json({ erro: `Conflito nas datas: ${conflitos.slice(0,5).join(", ")}${conflitos.length>5?" e outras.":"."}` }, { status: 409 });
   }
 
-  // Inserir
+  // Inserir reservas
   const ids = [];
   for (const d of datas) {
     const id = crypto.randomUUID(); ids.push(id);
