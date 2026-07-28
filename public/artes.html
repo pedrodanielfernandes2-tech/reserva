@@ -486,6 +486,42 @@ select.st-sel{min-width:128px}
   input[type=date],input[type=time]{font-size:13px;padding:10px 10px}
 }
 </style>
+
+<style id="iframe-hide"></style>
+<script>
+(function(){
+  if(window.self === window.top) return; // não é iframe, não faz nada
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var style = document.getElementById('iframe-hide');
+    style.textContent = [
+      // Esconde a barra de abas — navegação é feita pelo sidebar do React
+      '#tab-nav { display: none !important; }',
+      // Esconde o botão voltar (se houver)
+      '.adl-back { display: none !important; }',
+      // Remove padding excessivo do body
+      'body { padding-top: 0 !important; padding-bottom: 20px !important; }',
+      // Fullwidth: remove max-width do container principal
+      '.wrap { max-width: none !important; margin: 0 !important; padding: 16px 24px 24px !important; }',
+      // Mantém o banner/logo da igreja (não esconde)
+    ].join('\n');
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var tab = params.get('tab');
+  if(tab){
+    window.addEventListener('DOMContentLoaded', function(){
+      if(tab === 'historico' && typeof switchTab === 'function') switchTab('historico');
+      if(tab === 'gestao' && typeof switchTab === 'function') { if(typeof abrirLoginEquipe==='function') abrirLoginEquipe(); }
+    });
+  }
+})();
+</script>
+
 </head>
 <body>
 <div class="wrap" id="main-wrap">
@@ -1955,6 +1991,8 @@ function iniciarGestao(){
   document.getElementById('tab-btn-gestao').style.display='inline-flex';
   document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
   document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+  try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
   document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
   if(_gPerfil && _gPerfil.perfil==='admin'){
     document.getElementById('g-nav-users').style.display='inline-block';
@@ -1968,6 +2006,7 @@ function iniciarGestao(){
 async function doLogoutEquipe(){
   await SB.auth.signOut();
   _gUser=null; _gPerfil=null;
+  try{ window.parent.postMessage({type:'adl_logout'}, '*'); }catch(e){}
   document.getElementById('tab-btn-gestao').style.display='none';
   document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
   switchTab('formulario');
@@ -1980,6 +2019,8 @@ SB.auth.getSession().then(function(r){
       document.getElementById('tab-btn-gestao').style.display='inline-flex';
       document.getElementById('tab-btn-login').textContent = '👤 ' + (_gPerfil ? _gPerfil.nome.split(' ')[0] : _gUser.email);
       document.getElementById('g-user-name').textContent = _gPerfil ? _gPerfil.nome : _gUser.email;
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+  try{ window.parent.postMessage({type:'adl_login',nome:(_gPerfil?_gPerfil.nome:_gUser.email),isAdmin:!!isAdmin}, '*'); }catch(e){}
       document.getElementById('g-user-role').textContent = _gPerfil ? (_gPerfil.perfil==='admin'?'Administrador':'Designer') : 'Designer';
       if(_gPerfil && _gPerfil.perfil==='admin'){
         document.getElementById('g-nav-users').style.display='inline-block';
@@ -2739,5 +2780,70 @@ async function salvarEdicao(){
 }
 
 </script>
+
+<style>
+.adl-back{
+  position:fixed;bottom:20px;right:20px;z-index:9999;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 16px;border-radius:999px;
+  background:linear-gradient(135deg,#075F5C,#0E8E89);
+  color:#fff;font-family:'Manrope','Inter',sans-serif;
+  font-size:13px;font-weight:700;text-decoration:none;
+  box-shadow:0 4px 16px rgba(7,95,92,.4);
+  transition:transform .15s,box-shadow .15s;
+}
+.adl-back:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(7,95,92,.5);}
+</style>
+<a href="/" class="adl-back" id="adl-back-btn">📅 Reserva de Salas</a>
+<script>
+// Esconde botão voltar quando em iframe
+if(window.self !== window.top){
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.getElementById('adl-back-btn');
+    if(b) b.style.display='none';
+  });
+}
+</script>
+
+<script>
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+
+  if(e.data.type === 'adl_open_login'){
+    if(typeof abrirLoginEquipe === 'function') abrirLoginEquipe();
+    return;
+  }
+  if(e.data.type === 'adl_goto_logout' || (e.data.type === 'adl_goto' && e.data.tab === 'logout')){
+    if(typeof doLogoutEquipe === 'function') doLogoutEquipe();
+    return;
+  }
+  if(e.data.type === 'adl_goto'){
+    var tab = e.data.tab;
+    if(tab === 'formulario' && typeof switchTab === 'function') switchTab('formulario');
+    else if(tab === 'historico' && typeof switchTab === 'function'){
+      switchTab('historico');
+      if(typeof carregarHistorico === 'function') setTimeout(carregarHistorico, 300);
+    }
+    else if(tab === 'gestao' && typeof switchTab === 'function') switchTab('gestao');
+    else if(tab === 'g-solic'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      setTimeout(function(){ var b=document.querySelector('[onclick*="g-solic"]'); if(b)b.click(); }, 400);
+    }
+    else if(tab === 'g-audit'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      setTimeout(function(){ var b=document.querySelector('[onclick*="g-audit"]'); if(b)b.click(); }, 400);
+    }
+    else if(tab === 'g-users'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      setTimeout(function(){ var b=document.getElementById('g-nav-users'); if(b)b.click(); }, 400);
+    }
+    else if(tab === 'g-email'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      setTimeout(function(){ var b=document.getElementById('g-nav-email'); if(b)b.click(); }, 400);
+    }
+  }
+});
+</script>
+
 </body>
 </html>
