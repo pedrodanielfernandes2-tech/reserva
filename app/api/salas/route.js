@@ -8,7 +8,7 @@ const CORES = ["#0E8E89","#E08C2B","#7C5CBF","#2B8FE0","#D6483A","#27856A","#C45
 
 export async function GET() {
   await ensureSchema();
-  const rows = await sql`SELECT * FROM salas ORDER BY criado_em ASC;`;
+  const rows = await sql`SELECT * FROM salas ORDER BY ordem ASC, criado_em ASC;`;
   return NextResponse.json(rows);
 }
 
@@ -17,12 +17,15 @@ export async function POST(request) {
   if (!isAdminRequest()) return NextResponse.json({ erro: "Apenas administradores." }, { status: 401 });
   const { nome, tipo, capacidade } = await request.json();
   if (!nome?.trim()) return NextResponse.json({ erro: "Nome obrigatório." }, { status: 400 });
+  // Pega a maior ordem atual para colocar a nova sala no final
+  const maxOrdem = await sql`SELECT COALESCE(MAX(ordem),0) as m FROM salas;`;
+  const ordemNova = (parseInt(maxOrdem[0].m) || 0) + 1;
   const existing = await sql`SELECT COUNT(*) as n FROM salas;`;
   const cor = CORES[parseInt(existing[0].n) % CORES.length];
   const id = crypto.randomUUID();
   const rows = await sql`
-    INSERT INTO salas (id, nome, tipo, cor, capacidade)
-    VALUES (${id}, ${nome.trim()}, ${tipo||"Sala"}, ${cor}, ${parseInt(capacidade)||0})
+    INSERT INTO salas (id, nome, tipo, cor, capacidade, ordem)
+    VALUES (${id}, ${nome.trim()}, ${tipo||"Sala"}, ${cor}, ${parseInt(capacidade)||0}, ${ordemNova})
     RETURNING *;
   `;
   return NextResponse.json(rows[0], { status: 201 });
