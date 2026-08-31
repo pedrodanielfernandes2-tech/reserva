@@ -173,6 +173,15 @@ export default function Page(){
   }
   async function excluirSala(s){if(!confirm("Excluir esta sala?"))return;await fetch(`/api/salas/${s.id}`,{method:"DELETE"});if(s.nome===salaAtiva)setSalaAtiva(salas.filter(x=>x.id!==s.id)[0]?.nome||null);await carregarSalas();}
 
+  async function reordenarSala(idx, direcao){
+    const novas=[...salas];
+    const troca=idx+direcao;
+    if(troca<0||troca>=novas.length)return;
+    [novas[idx],novas[troca]]=[novas[troca],novas[idx]];
+    setSalas(novas); // atualiza imediatamente na UI
+    await fetch("/api/salas/reorder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:novas.map(s=>s.id)})});
+  }
+
   async function cadastrarBloqueio(){setErroBloqueio("");if(!formBloqueio.sala_nome||!formBloqueio.hora_inicio||!formBloqueio.hora_fim){setErroBloqueio("Preencha todos os campos.");return;}
     const res=await fetch("/api/bloqueios",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formBloqueio)});
     const d=await res.json();if(!res.ok){setErroBloqueio(d.erro||"Erro.");return;}
@@ -777,12 +786,25 @@ export default function Page(){
                         <button type="button" className="btn-primary" style={{alignSelf:"flex-end"}} onClick={cadastrarSala}>+ Cadastrar Ambiente</button>
                       </div>
                       <div className="sala-chip-list" style={{marginTop:14}}>
-                        {salas.map(s=>(
+                        {salas.map((s,idx)=>(
                           <div className="sala-chip" key={s.id}>
                             <span className="swatch" style={{background:s.cor}}/>
                             <div className="info">
                               <b>{s.nome}</b>
                               <span>{s.tipo}{s.capacidade>0?` · 👥 ${s.capacidade} pessoas`:""}</span>
+                            </div>
+                            {/* Botões de reordenação */}
+                            <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4}}>
+                              <button type="button" onClick={()=>reordenarSala(idx,-1)} disabled={idx===0}
+                                title="Mover para cima"
+                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===0?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===0?0.3:1,lineHeight:1}}>
+                                ▲
+                              </button>
+                              <button type="button" onClick={()=>reordenarSala(idx,1)} disabled={idx===salas.length-1}
+                                title="Mover para baixo"
+                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===salas.length-1?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===salas.length-1?0.3:1,lineHeight:1}}>
+                                ▼
+                              </button>
                             </div>
                             <button type="button" className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
                           </div>
