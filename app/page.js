@@ -305,6 +305,7 @@ export default function Page(){
       </header>
 
       <div className="layout">
+        {(secao!=="home"||artesAberto)&&(
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="sidebar-eyebrow">Menu</div>
@@ -391,44 +392,49 @@ export default function Page(){
           </div>
           <div className="versiculo-box"><strong>Versículo do Dia</strong><span>{versiculo}</span></div>
         </aside>
+        )}
 
-        <main className="content" style={artesAberto?{padding:0,overflow:"hidden"}:{}}>
+        <main className="content" style={artesAberto?{padding:0,overflow:"hidden"}:secao==="home"?{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"calc(100vh - 80px)"}:{}}>
 
           {/* ── BOTÃO VOLTAR ── */}
           {secao!=="home"&&(
             <button onClick={()=>{ setSecao("home"); setArtesAberto(false); setSecaoArtes(null); setReservasAberto(false); }}
-              style={{display:"inline-flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--ink-soft)",fontSize:13,fontWeight:600,padding:"0 0 10px",marginBottom:4}}>
+              style={{display:"inline-flex",alignItems:"center",gap:8,background:"var(--surface-soft)",border:"1.5px solid var(--border)",borderRadius:10,cursor:"pointer",color:"var(--ink)",fontSize:14,fontWeight:700,padding:"8px 16px",marginBottom:16,transition:"background .15s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="var(--border)"}
+              onMouseLeave={e=>e.currentTarget.style.background="var(--surface-soft)"}>
               ← Início
             </button>
           )}
 
           {/* ── TELA DE BOAS-VINDAS ── */}
           {secao==="home"&&!artesAberto&&(
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"70vh",gap:32,padding:"20px 0"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:32,padding:"20px",width:"100%"}}>
               <div style={{textAlign:"center"}}>
-                <div style={{width:72,height:72,borderRadius:18,overflow:"hidden",margin:"0 auto 14px"}}>
+                <div style={{width:80,height:80,borderRadius:20,overflow:"hidden",margin:"0 auto 16px",boxShadow:"0 4px 20px rgba(14,142,137,.2)"}}>
                   <img src="/logo.jpg" alt="AD Louveira" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 </div>
-                <h2 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:22,margin:"0 0 6px"}}>Assembleia de Deus Louveira</h2>
+                <h2 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:24,margin:"0 0 6px"}}>Assembleia de Deus Louveira</h2>
                 <p style={{color:"var(--ink-soft)",fontSize:14,margin:0}}>O que você deseja fazer?</p>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:18,width:"100%",maxWidth:480}}>
-                {/* Card Artes */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:20,width:"100%",maxWidth:520}}>
                 <button onClick={()=>{ setArtesAberto(true); setReservasAberto(false); irParaArtes("formulario"); }}
-                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:18,padding:"28px 20px",cursor:"pointer",textAlign:"center",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
-                  <div style={{fontSize:44}}>🎨</div>
+                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:20,padding:"32px 24px",cursor:"pointer",textAlign:"center",transition:"box-shadow .15s,transform .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}
+                  onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 24px rgba(14,142,137,.18)";e.currentTarget.style.transform="translateY(-3px)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.boxShadow="none";e.currentTarget.style.transform="none";}}>
+                  <div style={{fontSize:52}}>🎨</div>
                   <div>
-                    <div style={{fontFamily:"Fraunces,serif",fontSize:17,fontWeight:700,color:"var(--ink)",marginBottom:4}}>Solicitação de Artes</div>
-                    <div style={{fontSize:12,color:"var(--ink-soft)"}}>Posts, banners e materiais gráficos</div>
+                    <div style={{fontFamily:"Fraunces,serif",fontSize:18,fontWeight:700,color:"var(--ink)",marginBottom:6}}>Solicitação de Artes</div>
+                    <div style={{fontSize:13,color:"var(--ink-soft)",lineHeight:1.5}}>Posts, banners e materiais gráficos</div>
                   </div>
                 </button>
-                {/* Card Reservas */}
                 <button onClick={()=>{ setReservasAberto(true); setArtesAberto(false); setSecaoArtes(null); setSecao("calendario"); }}
-                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:18,padding:"28px 20px",cursor:"pointer",textAlign:"center",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
-                  <div style={{fontSize:44}}>📅</div>
+                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:20,padding:"32px 24px",cursor:"pointer",textAlign:"center",transition:"box-shadow .15s,transform .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}
+                  onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 24px rgba(14,142,137,.18)";e.currentTarget.style.transform="translateY(-3px)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.boxShadow="none";e.currentTarget.style.transform="none";}}>
+                  <div style={{fontSize:52}}>📅</div>
                   <div>
-                    <div style={{fontFamily:"Fraunces,serif",fontSize:17,fontWeight:700,color:"var(--ink)",marginBottom:4}}>Reserva de Salas</div>
-                    <div style={{fontSize:12,color:"var(--ink-soft)"}}>Calendário, agendamentos e recursos</div>
+                    <div style={{fontFamily:"Fraunces,serif",fontSize:18,fontWeight:700,color:"var(--ink)",marginBottom:6}}>Reserva de Salas</div>
+                    <div style={{fontSize:13,color:"var(--ink-soft)",lineHeight:1.5}}>Calendário, agendamentos e recursos</div>
                   </div>
                 </button>
               </div>
