@@ -298,10 +298,7 @@ export default function Page(){
           <div className="logo-frame"><img src="/logo.jpg" alt="Logo"/></div>
           <div className="logo-text">Assembleia de Deus Louveira<small>Comunicação &amp; Mídia</small></div>
         </div>
-        <div className="header-title">
-          <h1>Reserva de Salas &amp; Nave</h1>
-          <p>Escolha o dia, informe o evento e garanta seu horário</p>
-        </div>
+        
       </header>
 
       <div className="layout">
