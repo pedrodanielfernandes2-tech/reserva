@@ -15,7 +15,8 @@ const FORM_VAZIO={ nome:"",sala:"",evento:"",observacao:"",horaInicio:"",horaFim
 export default function Page(){
   const agora=new Date();
 
-  const [secao,setSecao]=useState("calendario");
+  const [secao,setSecao]=useState("home");
+  const [reservasAberto,setReservasAberto]=useState(false);
   const [secaoConfig,setSecaoConfig]=useState("email");
   const [artesAberto,setArtesAberto]=useState(false);
   const [secaoArtes,setSecaoArtes]=useState(null);
@@ -92,6 +93,7 @@ export default function Page(){
     setArtesAberto(true);
     setSecaoArtes(tab);
     setSecao(null);
+    setReservasAberto(false);
     setTimeout(()=>{
       if(iframeRef.current?.contentWindow){
         iframeRef.current.contentWindow.postMessage({type:"adl_goto",tab},"/");
@@ -179,7 +181,7 @@ export default function Page(){
     if(troca<0||troca>=novas.length)return;
     [novas[idx],novas[troca]]=[novas[troca],novas[idx]];
     setSalas(novas); // atualiza imediatamente na UI
-    await fetch("/api/salas/reorder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:novas.map(s=>s.id)})});
+    await fetch("/api/salas-reorder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:novas.map(s=>s.id)})});
   }
 
   async function cadastrarBloqueio(){setErroBloqueio("");if(!formBloqueio.sala_nome||!formBloqueio.hora_inicio||!formBloqueio.hora_fim){setErroBloqueio("Preencha todos os campos.");return;}
@@ -340,24 +342,47 @@ export default function Page(){
                 )}
               </div>
             )}
+
             <div style={{borderTop:"1px dashed var(--border)",margin:"6px 0 4px"}}/>
-            {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"],["dashboard","📊","Dashboard"]].map(([id,ico,label])=>(
-              <button key={id} className={"nav-btn"+(secao===id&&!artesAberto?" active":"")} onClick={()=>{ setSecao(id); setArtesAberto(false); setSecaoArtes(null); }}>
-                <span className="ico">{ico}</span> {label}
-              </button>
-            ))}
-            <button className={"nav-btn"+(secao==="config"&&!artesAberto?" active":"")} onClick={()=>{ setSecao("config"); setArtesAberto(false); setSecaoArtes(null); }}>
-              <span className="ico">⚙️</span> Configurações
+
+            {/* ── RESERVA DE SALAS ── */}
+            <button
+              className={"nav-btn"+(reservasAberto?" active":"")}
+              onClick={()=>{ setReservasAberto(a=>!a); if(!reservasAberto){ setSecao("calendario"); setArtesAberto(false); setSecaoArtes(null); } }}
+            >
+              <span className="ico">📅</span> Reserva de Salas
+              <span style={{marginLeft:"auto",fontSize:10,opacity:.65}}>{reservasAberto?"▲":"▼"}</span>
             </button>
-            {secao==="config"&&!artesAberto&&(
+            {reservasAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
-                {[["email","📧","E-mail"],["reservas","⏱️","Reservas"],["ambientes","🏛️","Ambientes"],["bloqueios","🚫","Bloqueios"],["calendario","📅","Importar Calendário"],["historico","🕓","Histórico"]].map(([id,ico,label])=>(
-                  <button key={id} style={{background:secaoConfig===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoConfig===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>setSecaoConfig(id)}>
+                {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"],["dashboard","📊","Dashboard"]].map(([id,ico,label])=>(
+                  <button key={id}
+                    style={{background:secao===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
+                      padding:"8px 10px",borderRadius:8,fontWeight:secao===id?700:500,fontSize:13,
+                      cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                    onClick={()=>{ setSecao(id); setArtesAberto(false); setSecaoArtes(null); }}>
                     <span>{ico}</span> {label}
                   </button>
                 ))}
+                <button
+                  style={{background:secao==="config"?"var(--surface-soft)":"none",border:"none",textAlign:"left",
+                    padding:"8px 10px",borderRadius:8,fontWeight:secao==="config"?700:500,fontSize:13,
+                    cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}}
+                  onClick={()=>{ setSecao("config"); setArtesAberto(false); setSecaoArtes(null); }}>
+                  <span>⚙️</span> Configurações
+                </button>
+                {secao==="config"&&(
+                  <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
+                    {[["email","📧","E-mail"],["reservas","⏱️","Reservas"],["ambientes","🏛️","Ambientes"],["bloqueios","🚫","Bloqueios"],["calendario","📅","Importar Calendário"],["historico","🕓","Histórico"]].map(([id,ico,label])=>(
+                      <button key={id} style={{background:secaoConfig===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",padding:"8px 10px",borderRadius:8,fontWeight:secaoConfig===id?700:500,fontSize:13,cursor:"pointer",color:"var(--ink)",display:"flex",alignItems:"center",gap:7}} onClick={()=>setSecaoConfig(id)}>
+                        <span>{ico}</span> {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
+
             <div className="admin-box">
               {adminMode
                 ?<div className="admin-pill">🔑 Modo Admin ativo <button onClick={sairAdmin}>Sair</button></div>
@@ -368,6 +393,47 @@ export default function Page(){
         </aside>
 
         <main className="content" style={artesAberto?{padding:0,overflow:"hidden"}:{}}>
+
+          {/* ── BOTÃO VOLTAR ── */}
+          {secao!=="home"&&(
+            <button onClick={()=>{ setSecao("home"); setArtesAberto(false); setSecaoArtes(null); setReservasAberto(false); }}
+              style={{display:"inline-flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--ink-soft)",fontSize:13,fontWeight:600,padding:"0 0 10px",marginBottom:4}}>
+              ← Início
+            </button>
+          )}
+
+          {/* ── TELA DE BOAS-VINDAS ── */}
+          {secao==="home"&&!artesAberto&&(
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"70vh",gap:32,padding:"20px 0"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{width:72,height:72,borderRadius:18,overflow:"hidden",margin:"0 auto 14px"}}>
+                  <img src="/logo.jpg" alt="AD Louveira" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                </div>
+                <h2 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:22,margin:"0 0 6px"}}>Assembleia de Deus Louveira</h2>
+                <p style={{color:"var(--ink-soft)",fontSize:14,margin:0}}>O que você deseja fazer?</p>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:18,width:"100%",maxWidth:480}}>
+                {/* Card Artes */}
+                <button onClick={()=>{ setArtesAberto(true); setReservasAberto(false); irParaArtes("formulario"); }}
+                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:18,padding:"28px 20px",cursor:"pointer",textAlign:"center",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+                  <div style={{fontSize:44}}>🎨</div>
+                  <div>
+                    <div style={{fontFamily:"Fraunces,serif",fontSize:17,fontWeight:700,color:"var(--ink)",marginBottom:4}}>Solicitação de Artes</div>
+                    <div style={{fontSize:12,color:"var(--ink-soft)"}}>Posts, banners e materiais gráficos</div>
+                  </div>
+                </button>
+                {/* Card Reservas */}
+                <button onClick={()=>{ setReservasAberto(true); setArtesAberto(false); setSecaoArtes(null); setSecao("calendario"); }}
+                  style={{background:"var(--surface-soft)",border:"2px solid var(--border)",borderRadius:18,padding:"28px 20px",cursor:"pointer",textAlign:"center",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+                  <div style={{fontSize:44}}>📅</div>
+                  <div>
+                    <div style={{fontFamily:"Fraunces,serif",fontSize:17,fontWeight:700,color:"var(--ink)",marginBottom:4}}>Reserva de Salas</div>
+                    <div style={{fontSize:12,color:"var(--ink-soft)"}}>Calendário, agendamentos e recursos</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
           {artesAberto&&secaoArtes&&(
             <div style={{width:"100%",height:"calc(100vh - 86px)",display:"flex",flexDirection:"column"}}>
               <iframe ref={iframeRef} src={`/artes.html${secaoArtes==="formulario"||secaoArtes.startsWith("g-")||secaoArtes==="equipe"?"":secaoArtes==="historico"?"?tab=historico":""}`} key="artes-frame" style={{width:"100%",flex:1,border:"none",display:"block"}} title="Solicitação de Artes"/>
@@ -375,7 +441,7 @@ export default function Page(){
           )}
 
           {/* CALENDÁRIO */}
-          {secao==="calendario"&&!artesAberto&&(
+          {secao==="calendario"&&reservasAberto&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                 <div><h3>Calendário de Reservas</h3><p className="block-sub">Clique em um dia para solicitar.</p></div>
@@ -503,7 +569,7 @@ export default function Page(){
           )}
 
           {/* DASHBOARD */}
-          {secao==="dashboard"&&!artesAberto&&(()=>{
+          {secao==="dashboard"&&reservasAberto&&!artesAberto&&(()=>{
             const agora2=new Date();
             const mesAtualNum=agora2.getMonth();
             const anoAtualNum=agora2.getFullYear();
@@ -617,7 +683,7 @@ export default function Page(){
           })()}
 
           {/* RESERVAS DO DIA */}
-          {secao==="reservaInfo"&&!artesAberto&&(
+          {secao==="reservaInfo"&&reservasAberto&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <div className="reservas-dia-head">
                 <div><h3>Reservas do Dia</h3><p className="block-sub">Todas as salas juntas.</p></div>
@@ -651,7 +717,7 @@ export default function Page(){
           )}
 
           {/* CONFIGURAÇÕES */}
-          {secao==="config"&&!artesAberto&&(
+          {secao==="config"&&reservasAberto&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
               <h3>⚙️ Configurações</h3>
               {!adminMode?(
