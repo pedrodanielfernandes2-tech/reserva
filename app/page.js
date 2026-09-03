@@ -498,7 +498,7 @@ export default function Page(){
                           {resultados.map(r=>{
                             const passada=new Date(r.ano,r.mes,r.dia)<hoje();
                             return(
-                              <tr key={r.id} style={{borderTop:"1px solid var(--border)",opacity:passada?.6:1}}>
+                              <tr key={r.id} style={{borderTop:"1px solid var(--border)",opacity:passada?0.6:1}}>
                                 <td style={{padding:"8px 10px"}}>
                                   <span style={{background:salas.find(s=>s.nome===r.sala_nome)?.cor||"#999",color:"#fff",padding:"2px 8px",borderRadius:6,fontSize:12,fontWeight:700}}>{r.sala_nome}</span>
                                 </td>
