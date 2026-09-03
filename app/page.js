@@ -95,6 +95,9 @@ export default function Page(){
       iframeRef.current.contentWindow.postMessage({type:"adl_tema",escuro:temaEscuro},"*");
     }
   },[temaEscuro]);
+
+  useEffect(()=>{
+    function onMsg(e){
       if(!e.data||!e.data.type) return;
       if(e.data.type==="adl_login") setArtesUser({nome:e.data.nome,isAdmin:Boolean(e.data.isAdmin)});
       if(e.data.type==="adl_logout") setArtesUser(null);
