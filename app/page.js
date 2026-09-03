@@ -254,6 +254,7 @@ export default function Page(){
     catch(e){ console.error(e); }
     finally{ setAuditCarregando(false); }
   }
+  const corAtiva=salas.find(s=>s.nome===salaAtiva);
   const isEventoExterno=form.sala.toLowerCase().includes("evento externo");
   const proximas=reservas.filter(r=>r.sala_nome===salaAtiva&&new Date(r.ano,r.mes,r.dia)>=hoje())
     .sort((a,b)=>new Date(a.ano,a.mes,a.dia)-new Date(b.ano,b.mes,b.dia)||a.hora_inicio.localeCompare(b.hora_inicio));
