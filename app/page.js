@@ -17,8 +17,6 @@ export default function Page(){
 
   const [secao,setSecao]=useState("home");
   const [reservasAberto,setReservasAberto]=useState(false);
-  const [temaEscuro,setTemaEscuro]=useState(false);
-  const [buscaGeral,setBuscaGeral]=useState("");
   const [secaoConfig,setSecaoConfig]=useState("email");
   const [artesAberto,setArtesAberto]=useState(false);
   const [secaoArtes,setSecaoArtes]=useState(null);
@@ -50,9 +48,9 @@ export default function Page(){
   const [modalAdmin,setModalAdmin]=useState(false);
   const [senhaAdmin,setSenhaAdmin]=useState("");
   const [erroAdmin,setErroAdmin]=useState("");
-  const [modalFotoSala,setModalFotoSala]=useState(null); // {nome, foto_url}
+  const [modalExcluir,setModalExcluir]=useState(null); // reserva a excluir
 
-  const [formSala,setFormSala]=useState({nome:"",tipo:"Sala",capacidade:0,cor:"#0E8E89"});
+  const [formSala,setFormSala]=useState({nome:"",tipo:"Sala",capacidade:0});
   const [erroSala,setErroSala]=useState("");
 
   const [formBloqueio,setFormBloqueio]=useState({sala_nome:"",dia_semana:"0",hora_inicio:"",hora_fim:"",descricao:""});
@@ -80,21 +78,6 @@ export default function Page(){
   const carregarEventos=useCallback(async()=>{try{const r=await fetch("/api/eventos-igreja");const d=await r.json();setEventosIgreja(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarContatos=useCallback(async()=>{try{const r=await fetch("/api/contatos");const d=await r.json();setContatos(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarConfig=useCallback(async()=>{try{const r=await fetch("/api/config");const d=await r.json();if(d&&typeof d==="object")setConfig(prev=>({...prev,...d}));}catch(e){}});
-
-  // Tema escuro
-  useEffect(()=>{
-    const salvo = localStorage.getItem("adl_tema");
-    if(salvo==="escuro") setTemaEscuro(true);
-  },[]);
-
-  useEffect(()=>{
-    document.documentElement.setAttribute("data-theme", temaEscuro ? "dark" : "light");
-    localStorage.setItem("adl_tema", temaEscuro ? "escuro" : "claro");
-    // Sincroniza com o iframe de Artes
-    if(iframeRef.current?.contentWindow){
-      iframeRef.current.contentWindow.postMessage({type:"adl_tema",escuro:temaEscuro},"*");
-    }
-  },[temaEscuro]);
 
   useEffect(()=>{
     function onMsg(e){
@@ -188,7 +171,7 @@ export default function Page(){
   async function cadastrarSala(){setErroSala("");if(!formSala.nome.trim()){setErroSala("Informe um nome.");return;}
     const res=await fetch("/api/salas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(formSala)});
     const d=await res.json();if(!res.ok){setErroSala(d.erro||"Erro.");return;}
-    setFormSala({nome:"",tipo:"Sala",capacidade:0,cor:"#0E8E89"});await carregarSalas();
+    setFormSala({nome:"",tipo:"Sala",capacidade:0});await carregarSalas();
   }
   async function excluirSala(s){if(!confirm("Excluir esta sala?"))return;await fetch(`/api/salas/${s.id}`,{method:"DELETE"});if(s.nome===salaAtiva)setSalaAtiva(salas.filter(x=>x.id!==s.id)[0]?.nome||null);await carregarSalas();}
 
@@ -242,18 +225,6 @@ export default function Page(){
     finally{setSalvandoConfig(false);}
   }
 
-  // Histórico de alterações
-  const [auditLogs,setAuditLogs]=useState([]);
-  const [auditCarregando,setAuditCarregando]=useState(false);
-  const [auditCarregado,setAuditCarregado]=useState(false);
-
-  async function carregarAudit(){
-    if(auditCarregado) return;
-    setAuditCarregando(true);
-    try{ const r=await fetch("/api/audit-log"); const d=await r.json(); setAuditLogs(Array.isArray(d)?d:[]); setAuditCarregado(true); }
-    catch(e){ console.error(e); }
-    finally{ setAuditCarregando(false); }
-  }
   const corAtiva=salas.find(s=>s.nome===salaAtiva);
   const isEventoExterno=form.sala.toLowerCase().includes("evento externo");
   const proximas=reservas.filter(r=>r.sala_nome===salaAtiva&&new Date(r.ano,r.mes,r.dia)>=hoje())
@@ -272,25 +243,51 @@ export default function Page(){
   const salaTipo=salas.find(s=>s.nome===form.sala)?.tipo;
   function getEvDia(dia,mes,ano){return eventosIgreja.filter(e=>e.dia===dia&&e.mes===mes&&e.ano===ano);}
 
-  // Variáveis do Dashboard (calculadas aqui fora do JSX)
-  const dashAgora=new Date();
-  const dashMes=dashAgora.getMonth();
-  const dashAno=dashAgora.getFullYear();
-  const dashResMes=reservas.filter(r=>r.mes===dashMes&&r.ano===dashAno);
-  const dashResAno=reservas.filter(r=>r.ano===dashAno);
-  const dashProx7=reservas.filter(r=>{const d=new Date(r.ano,r.mes,r.dia);const diff=(d-hoje())/86400000;return diff>=0&&diff<=7;});
-  const dashPorSala={};dashResAno.forEach(r=>{dashPorSala[r.sala_nome]=(dashPorSala[r.sala_nome]||0)+1;});
-  const dashTopSala=Object.entries(dashPorSala).sort((a,b)=>b[1]-a[1])[0];
-  const dashPorDia=[0,0,0,0,0,0,0];dashResAno.forEach(r=>{const d=new Date(r.ano,r.mes,r.dia);dashPorDia[d.getDay()]++;});
-  const dashTopDiaIdx=dashPorDia.indexOf(Math.max(...dashPorDia));
-  const DIAS_FULL_D=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-  const dashRecursos={som:0,projecao:0,fotografia:0,transmissao:0};
-  dashResAno.forEach(r=>{if(r.precisa_som)dashRecursos.som++;if(r.precisa_projecao)dashRecursos.projecao++;if(r.precisa_fotografia)dashRecursos.fotografia++;if(r.precisa_transmissao)dashRecursos.transmissao++;});
-  const dashMeses6=Array.from({length:6},(_,i)=>{const d=new Date(dashAno,dashMes-5+i,1);return{mes:d.getMonth(),ano:d.getFullYear(),label:["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()]};});
-  const dashMaxMes=Math.max(...dashMeses6.map(m=>reservas.filter(r=>r.mes===m.mes&&r.ano===m.ano).length),1);
-
   function Lixeira({onClick}){return<button type="button" onClick={onClick} title="Excluir" style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:"#D6483A",fontSize:14,lineHeight:1,flexShrink:0}}>🗑️</button>;}
   function Badge({c,label}){return c?<span style={{fontSize:11,background:"#E8F6F5",color:"#075F5C",padding:"2px 6px",borderRadius:6,fontWeight:700}}>{label}</span>:null;}
+
+  function HistoricoLista(){
+    const [logs,setLogs]=useState([]);
+    const [carregando,setCarregando]=useState(true);
+    useEffect(()=>{
+      fetch("/api/audit-log").then(r=>r.json()).then(d=>{setLogs(Array.isArray(d)?d:[]);setCarregando(false);}).catch(()=>setCarregando(false));
+    },[]);
+    if(carregando)return<div style={{padding:20,color:"var(--ink-soft)"}}>Carregando histórico…</div>;
+    if(!logs.length)return<div className="empty-state">Nenhuma alteração registrada ainda.</div>;
+    return(
+      <div style={{maxHeight:400,overflowY:"auto",border:"1px solid var(--border)",borderRadius:12}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+          <thead style={{position:"sticky",top:0,background:"var(--surface-soft)"}}>
+            <tr>
+              <th style={{padding:"8px 10px",textAlign:"left"}}>Ação</th>
+              <th style={{padding:"8px 10px",textAlign:"left"}}>Reserva</th>
+              <th style={{padding:"8px 10px",textAlign:"left"}}>Data/Hora</th>
+              <th style={{padding:"8px 10px",textAlign:"left"}}>Executado por</th>
+              <th style={{padding:"8px 10px",textAlign:"left"}}>Quando</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map(l=>{
+              const dataRes=`${pad(l.dia)}/${pad(l.mes+1)}/${l.ano}`;
+              const quando=new Date(l.executado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+              return(
+                <tr key={l.id} style={{borderTop:"1px solid var(--border)"}}>
+                  <td style={{padding:"8px 10px"}}><span style={{background:"#FCE9E6",color:"#D6483A",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>🗑️ Excluída</span></td>
+                  <td style={{padding:"8px 10px"}}>
+                    <div style={{fontWeight:700}}>{l.evento}</div>
+                    <div style={{fontSize:11,color:"var(--ink-soft)"}}>{l.sala_nome} · {l.hora_inicio}–{l.hora_fim} · {l.nome_solicitante}</div>
+                  </td>
+                  <td style={{padding:"8px 10px",fontSize:12}}>{dataRes}</td>
+                  <td style={{padding:"8px 10px",fontSize:12}}>{l.executado_por}</td>
+                  <td style={{padding:"8px 10px",fontSize:11,color:"var(--ink-soft)"}}>{quando}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   if(carregando)return<div style={{padding:40,fontFamily:"Manrope,sans-serif"}}>Carregando…</div>;
 
@@ -301,13 +298,7 @@ export default function Page(){
           <div className="logo-frame"><img src="/logo.jpg" alt="Logo"/></div>
           <div className="logo-text">Assembleia de Deus Louveira<small>Comunicação &amp; Mídia</small></div>
         </div>
-        <button onClick={()=>setTemaEscuro(t=>!t)}
-          title={temaEscuro?"Modo claro":"Modo escuro"}
-          style={{marginLeft:"auto",background:"none",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:10,cursor:"pointer",color:"#fff",fontSize:20,padding:"6px 12px",lineHeight:1,transition:"background .15s"}}
-          onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.15)"}
-          onMouseLeave={e=>e.currentTarget.style.background="none"}>
-          {temaEscuro?"☀️":"🌙"}
-        </button>
+        
       </header>
 
       <div className="layout">
@@ -362,7 +353,7 @@ export default function Page(){
             </button>
             {reservasAberto&&(
               <div style={{paddingLeft:14,display:"flex",flexDirection:"column",gap:2,marginTop:2}}>
-                {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"],["busca","🔍","Buscar Reservas"],["dashboard","📊","Dashboard"]].map(([id,ico,label])=>(
+                {[["calendario","📅","Calendário"],["reservaInfo","🗒️","Reservas do Dia"],["dashboard","📊","Dashboard"]].map(([id,ico,label])=>(
                   <button key={id}
                     style={{background:secao===id?"var(--surface-soft)":"none",border:"none",textAlign:"left",
                       padding:"8px 10px",borderRadius:8,fontWeight:secao===id?700:500,fontSize:13,
@@ -452,63 +443,6 @@ export default function Page(){
             </div>
           )}
 
-          {/* BUSCA DE RESERVAS */}
-          {secao==="busca"&&reservasAberto&&!artesAberto&&(
-            <div className="block" style={{marginTop:0}}>
-              <h3>🔍 Buscar Reservas</h3>
-              <p className="block-sub">Pesquise em todas as reservas do sistema.</p>
-              <div className="form-field" style={{margin:"16px 0"}}>
-                <input type="text" placeholder="Buscar por nome, evento ou sala…" value={buscaGeral}
-                  onChange={e=>setBuscaGeral(e.target.value)}
-                  style={{fontSize:15,padding:"12px 16px"}} autoFocus/>
-              </div>
-              {buscaGeral.trim().length>=2?(()=>{
-                const termo=buscaGeral.toLowerCase();
-                const resultados=reservas.filter(r=>
-                  r.nome.toLowerCase().includes(termo)||
-                  r.evento.toLowerCase().includes(termo)||
-                  r.sala_nome.toLowerCase().includes(termo)
-                ).sort((a,b)=>new Date(b.ano,b.mes,b.dia)-new Date(a.ano,a.mes,a.dia));
-                return(
-                  <div>
-                    <p style={{fontSize:13,color:"var(--ink-soft)",marginBottom:12}}>{resultados.length} resultado(s) encontrado(s)</p>
-                    {resultados.length===0?(
-                      <div className="empty-state">Nenhuma reserva encontrada para "{buscaGeral}".</div>
-                    ):(
-                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                        <thead><tr style={{background:"var(--surface-soft)"}}>
-                          <th style={{padding:"8px 10px",textAlign:"left"}}>Sala</th>
-                          <th style={{padding:"8px 10px",textAlign:"left"}}>Data</th>
-                          <th style={{padding:"8px 10px",textAlign:"left"}}>Horário</th>
-                          <th style={{padding:"8px 10px",textAlign:"left"}}>Evento</th>
-                          <th style={{padding:"8px 10px",textAlign:"left"}}>Solicitante</th>
-                        </tr></thead>
-                        <tbody>
-                          {resultados.map(r=>{
-                            const passada=new Date(r.ano,r.mes,r.dia)<hoje();
-                            return(
-                              <tr key={r.id} style={{borderTop:"1px solid var(--border)",opacity:passada?0.6:1}}>
-                                <td style={{padding:"8px 10px"}}>
-                                  <span style={{background:salas.find(s=>s.nome===r.sala_nome)?.cor||"#999",color:"#fff",padding:"2px 8px",borderRadius:6,fontSize:12,fontWeight:700}}>{r.sala_nome}</span>
-                                </td>
-                                <td style={{padding:"8px 10px",fontSize:12}}>{pad(r.dia)}/{pad(r.mes+1)}/{r.ano}</td>
-                                <td style={{padding:"8px 10px",fontSize:12}}>{r.hora_inicio}–{r.hora_fim}</td>
-                                <td style={{padding:"8px 10px",fontWeight:600}}>{r.evento}{r.recorrente?" 🔁":""}</td>
-                                <td style={{padding:"8px 10px",color:"var(--ink-soft)"}}>{r.nome}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                );
-              })():(
-                <div className="empty-state" style={{marginTop:8}}>Digite pelo menos 2 caracteres para buscar.</div>
-              )}
-            </div>
-          )}
-
           {/* CALENDÁRIO */}
           {secao==="calendario"&&reservasAberto&&!artesAberto&&(
             <div className="block" style={{marginTop:0}}>
@@ -527,14 +461,6 @@ export default function Page(){
                     <button key={s.id} className={"room-tab"+(s.nome===salaAtiva?" active":"")} style={{"--tab-color":s.cor}} onClick={()=>setSalaAtiva(s.nome)}>
                       <span className="dot" style={{background:s.cor}}/> {s.nome}
                       {s.capacidade>0&&<span style={{fontSize:10,opacity:.75,fontWeight:600}}>· {s.capacidade} pessoas</span>}
-                      {s.foto_url&&(
-                        <button type="button"
-                          onClick={e=>{e.stopPropagation();setModalFotoSala({nome:s.nome,foto_url:s.foto_url});}}
-                          title={`Ver foto de ${s.nome}`}
-                          style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",fontSize:13,lineHeight:1,opacity:.8}}>
-                          📷
-                        </button>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -646,73 +572,118 @@ export default function Page(){
           )}
 
           {/* DASHBOARD */}
-          {secao==="dashboard"&&reservasAberto&&!artesAberto&&(
-            <div className="block" style={{marginTop:0}}>
-              <h3>📊 Dashboard</h3>
-              <p className="block-sub">Visão geral do sistema de reservas — {dashAno}</p>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,margin:"18px 0 24px"}}>
-                {[
-                  ["📅",dashResMes.length,`Reservas em ${["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][dashMes]}`, "var(--primary)"],
-                  ["📆",dashResAno.length,`Total em ${dashAno}`,"#7C5CBF"],
-                  ["⏳",dashProx7.length,"Próximos 7 dias","#E0A23B"],
-                  ["🏛️",salas.length,"Ambientes cadastrados","#27856A"],
-                  ...(dashTopSala?[["🏆",dashTopSala[0],`Mais reservada (${dashTopSala[1]}x)`,"#D6483A"]]:[] ),
-                  ["📅",DIAS_FULL_D[dashTopDiaIdx],"Dia mais movimentado","#2B8FE0"],
-                ].map(([ico,valor,label,cor],i)=>(
-                  <div key={i} style={{background:"var(--surface-soft)",borderRadius:14,padding:"16px 18px",display:"flex",flexDirection:"column",gap:4,borderLeft:`4px solid ${cor}`}}>
-                    <div style={{fontSize:22}}>{ico}</div>
-                    <div style={{fontSize:28,fontWeight:800,color:"var(--ink)",fontFamily:"Fraunces,serif"}}>{valor}</div>
-                    <div style={{fontSize:12,color:"var(--ink-soft)",fontWeight:600}}>{label}</div>
-                  </div>
-                ))}
+          {secao==="dashboard"&&reservasAberto&&!artesAberto&&(()=>{
+            const agora2=new Date();
+            const mesAtualNum=agora2.getMonth();
+            const anoAtualNum=agora2.getFullYear();
+
+            // Stats gerais
+            const resMes=reservas.filter(r=>r.mes===mesAtualNum&&r.ano===anoAtualNum);
+            const resAno=reservas.filter(r=>r.ano===anoAtualNum);
+            const proximas7=reservas.filter(r=>{const d=new Date(r.ano,r.mes,r.dia);const diff=(d-hoje())/86400000;return diff>=0&&diff<=7;});
+
+            // Sala mais reservada (este ano)
+            const porSala={};resAno.forEach(r=>{porSala[r.sala_nome]=(porSala[r.sala_nome]||0)+1;});
+            const topSala=Object.entries(porSala).sort((a,b)=>b[1]-a[1])[0];
+
+            // Dia da semana mais ocupado
+            const porDia=[0,0,0,0,0,0,0];
+            resAno.forEach(r=>{const d=new Date(r.ano,r.mes,r.dia);porDia[d.getDay()]++;});
+            const topDiaIdx=porDia.indexOf(Math.max(...porDia));
+            const DIAS_FULL=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+
+            // Recursos mais solicitados
+            const recursos={som:0,projecao:0,fotografia:0,transmissao:0};
+            resAno.forEach(r=>{
+              if(r.precisa_som)recursos.som++;
+              if(r.precisa_projecao)recursos.projecao++;
+              if(r.precisa_fotografia)recursos.fotografia++;
+              if(r.precisa_transmissao)recursos.transmissao++;
+            });
+
+            // Últimos 6 meses
+            const meses6=Array.from({length:6},(_,i)=>{
+              const d=new Date(anoAtualNum,mesAtualNum-5+i,1);
+              return {mes:d.getMonth(),ano:d.getFullYear(),label:["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()]};
+            });
+            const maxMes=Math.max(...meses6.map(m=>reservas.filter(r=>r.mes===m.mes&&r.ano===m.ano).length),1);
+
+            const Card=({ico,valor,label,cor})=>(
+              <div style={{background:"var(--surface-soft)",borderRadius:14,padding:"16px 18px",display:"flex",flexDirection:"column",gap:4,borderLeft:`4px solid ${cor||"var(--primary)"}`}}>
+                <div style={{fontSize:22}}>{ico}</div>
+                <div style={{fontSize:28,fontWeight:800,color:"var(--ink)",fontFamily:"Fraunces,serif"}}>{valor}</div>
+                <div style={{fontSize:12,color:"var(--ink-soft)",fontWeight:600}}>{label}</div>
               </div>
-              <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Reservas nos últimos 6 meses</h4>
-              <div style={{display:"flex",alignItems:"flex-end",gap:10,height:120,marginBottom:24,padding:"0 4px"}}>
-                {dashMeses6.map((m,i)=>{
-                  const qt=reservas.filter(r=>r.mes===m.mes&&r.ano===m.ano).length;
-                  const h=Math.max((qt/dashMaxMes)*100,4);
-                  return(
-                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                      <span style={{fontSize:11,fontWeight:700,color:"var(--ink)"}}>{qt}</span>
-                      <div style={{width:"100%",height:`${h}px`,background:"var(--primary)",borderRadius:"6px 6px 0 0",opacity:.85}}/>
-                      <span style={{fontSize:10,color:"var(--ink-soft)",fontWeight:600}}>{m.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Recursos mais solicitados (este ano)</h4>
-              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
-                {[["🎤 Som",dashRecursos.som,"#0E8E89"],["📽️ Projeção",dashRecursos.projecao,"#7C5CBF"],["📷 Fotografia",dashRecursos.fotografia,"#E0A23B"],["📡 Transmissão",dashRecursos.transmissao,"#2B8FE0"]].map(([label,val,cor])=>{
-                  const pct=dashResAno.length>0?Math.round((val/dashResAno.length)*100):0;
-                  return(
-                    <div key={label} style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{fontSize:13,fontWeight:700,minWidth:120}}>{label}</span>
-                      <div style={{flex:1,background:"var(--surface-soft)",borderRadius:99,height:10,overflow:"hidden"}}>
-                        <div style={{width:`${pct}%`,height:"100%",background:cor,borderRadius:99}}/>
+            );
+
+            return(
+              <div className="block" style={{marginTop:0}}>
+                <h3>📊 Dashboard</h3>
+                <p className="block-sub">Visão geral do sistema de reservas — {anoAtualNum}</p>
+
+                {/* Cards */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,margin:"18px 0 24px"}}>
+                  <Card ico="📅" valor={resMes.length} label={`Reservas em ${["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][mesAtualNum]}`} cor="var(--primary)"/>
+                  <Card ico="📆" valor={resAno.length} label={`Total em ${anoAtualNum}`} cor="#7C5CBF"/>
+                  <Card ico="⏳" valor={proximas7.length} label="Próximos 7 dias" cor="#E0A23B"/>
+                  <Card ico="🏛️" valor={salas.length} label="Ambientes cadastrados" cor="#27856A"/>
+                  {topSala&&<Card ico="🏆" valor={topSala[0]} label={`Mais reservada (${topSala[1]}x)`} cor="#D6483A"/>}
+                  <Card ico="📅" valor={DIAS_FULL[topDiaIdx]} label="Dia mais movimentado" cor="#2B8FE0"/>
+                </div>
+
+                {/* Gráfico de barras — últimos 6 meses */}
+                <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Reservas nos últimos 6 meses</h4>
+                <div style={{display:"flex",alignItems:"flex-end",gap:10,height:120,marginBottom:24,padding:"0 4px"}}>
+                  {meses6.map((m,i)=>{
+                    const qt=reservas.filter(r=>r.mes===m.mes&&r.ano===m.ano).length;
+                    const h=Math.max((qt/maxMes)*100,4);
+                    return(
+                      <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                        <span style={{fontSize:11,fontWeight:700,color:"var(--ink)"}}>{qt}</span>
+                        <div style={{width:"100%",height:`${h}px`,background:"var(--primary)",borderRadius:"6px 6px 0 0",opacity:.85,transition:"height .3s"}}/>
+                        <span style={{fontSize:10,color:"var(--ink-soft)",fontWeight:600}}>{m.label}</span>
                       </div>
-                      <span style={{fontSize:12,color:"var(--ink-soft)",minWidth:50,textAlign:"right"}}>{val}x ({pct}%)</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Reservas por sala (este ano)</h4>
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                {salas.map(s=>{
-                  const qt=dashResAno.filter(r=>r.sala_nome===s.nome).length;
-                  const pct=dashResAno.length>0?Math.round((qt/dashResAno.length)*100):0;
-                  return(
-                    <div key={s.id} style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{fontSize:13,fontWeight:600,minWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.nome}</span>
-                      <div style={{flex:1,background:"var(--surface-soft)",borderRadius:99,height:10,overflow:"hidden"}}>
-                        <div style={{width:`${pct}%`,height:"100%",background:s.cor,borderRadius:99}}/>
+                    );
+                  })}
+                </div>
+
+                {/* Recursos mais solicitados */}
+                <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Recursos mais solicitados (este ano)</h4>
+                <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
+                  {[["🎤 Som",recursos.som,"#0E8E89"],["📽️ Projeção",recursos.projecao,"#7C5CBF"],["📷 Fotografia",recursos.fotografia,"#E0A23B"],["📡 Transmissão",recursos.transmissao,"#2B8FE0"]].map(([label,val,cor])=>{
+                    const pct=resAno.length>0?Math.round((val/resAno.length)*100):0;
+                    return(
+                      <div key={label} style={{display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:13,fontWeight:700,minWidth:120}}>{label}</span>
+                        <div style={{flex:1,background:"var(--surface-soft)",borderRadius:99,height:10,overflow:"hidden"}}>
+                          <div style={{width:`${pct}%`,height:"100%",background:cor,borderRadius:99,transition:"width .4s"}}/>
+                        </div>
+                        <span style={{fontSize:12,color:"var(--ink-soft)",minWidth:50,textAlign:"right"}}>{val}x ({pct}%)</span>
                       </div>
-                      <span style={{fontSize:12,color:"var(--ink-soft)",minWidth:50,textAlign:"right"}}>{qt}x ({pct}%)</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {/* Distribuição por sala */}
+                <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:15,margin:"0 0 12px"}}>Reservas por sala (este ano)</h4>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {salas.map(s=>{
+                    const qt=resAno.filter(r=>r.sala_nome===s.nome).length;
+                    const pct=resAno.length>0?Math.round((qt/resAno.length)*100):0;
+                    return(
+                      <div key={s.id} style={{display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:13,fontWeight:600,minWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.nome}</span>
+                        <div style={{flex:1,background:"var(--surface-soft)",borderRadius:99,height:10,overflow:"hidden"}}>
+                          <div style={{width:`${pct}%`,height:"100%",background:s.cor,borderRadius:99,transition:"width .4s"}}/>
+                        </div>
+                        <span style={{fontSize:12,color:"var(--ink-soft)",minWidth:50,textAlign:"right"}}>{qt}x ({pct}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* RESERVAS DO DIA */}
           {secao==="reservaInfo"&&reservasAberto&&!artesAberto&&(
@@ -877,14 +848,6 @@ export default function Page(){
                           </select>
                         </div>
                         <div className="form-field">
-                          <label>Cor</label>
-                          <div style={{display:"flex",alignItems:"center",gap:10}}>
-                            <input type="color" value={formSala.cor||"#0E8E89"} onChange={e=>setFormSala(f=>({...f,cor:e.target.value}))}
-                              style={{width:44,height:40,borderRadius:8,border:"1.5px solid var(--border)",cursor:"pointer",padding:2}}/>
-                            <span style={{fontSize:12,color:"var(--ink-soft)"}}>Cor exibida no calendário</span>
-                          </div>
-                        </div>
-                        <div className="form-field">
                           <label>Capacidade (pessoas)</label>
                           <input type="number" min="0" placeholder="Ex: 50" value={formSala.capacidade||0} onChange={e=>setFormSala(f=>({...f,capacidade:parseInt(e.target.value)||0}))}/>
                           <small style={{color:"var(--ink-soft)",fontSize:11}}>0 = sem limite definido</small>
@@ -894,35 +857,23 @@ export default function Page(){
                       <div className="sala-chip-list" style={{marginTop:14}}>
                         {salas.map((s,idx)=>(
                           <div className="sala-chip" key={s.id}>
-                            {/* Color picker inline para editar cor da sala existente */}
-                            <input type="color" value={s.cor} title="Clique para mudar a cor"
-                              onChange={async e=>{
-                                const nova=e.target.value;
-                                setSalas(prev=>prev.map(x=>x.id===s.id?{...x,cor:nova}:x));
-                                await fetch(`/api/salas/${s.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({cor:nova})});
-                              }}
-                              style={{width:28,height:28,borderRadius:6,border:"none",cursor:"pointer",padding:0,flexShrink:0}}/>
+                            <span className="swatch" style={{background:s.cor}}/>
                             <div className="info">
                               <b>{s.nome}</b>
                               <span>{s.tipo}{s.capacidade>0?` · 👥 ${s.capacidade} pessoas`:""}</span>
-                              {/* Campo URL da foto */}
-                              <input type="url" placeholder="URL da foto (opcional)"
-                                defaultValue={s.foto_url||""}
-                                onBlur={async e=>{
-                                  const url=e.target.value.trim();
-                                  if(url===s.foto_url) return;
-                                  setSalas(prev=>prev.map(x=>x.id===s.id?{...x,foto_url:url}:x));
-                                  await fetch(`/api/salas/${s.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({foto_url:url})});
-                                }}
-                                style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--ink-soft)",marginTop:4,width:"100%"}}/>
                             </div>
+                            {/* Botões de reordenação */}
                             <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4}}>
                               <button type="button" onClick={()=>reordenarSala(idx,-1)} disabled={idx===0}
                                 title="Mover para cima"
-                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===0?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===0?0.3:1,lineHeight:1}}>▲</button>
+                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===0?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===0?0.3:1,lineHeight:1}}>
+                                ▲
+                              </button>
                               <button type="button" onClick={()=>reordenarSala(idx,1)} disabled={idx===salas.length-1}
                                 title="Mover para baixo"
-                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===salas.length-1?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===salas.length-1?0.3:1,lineHeight:1}}>▼</button>
+                                style={{background:"none",border:"1px solid var(--border)",borderRadius:6,cursor:idx===salas.length-1?"not-allowed":"pointer",padding:"2px 6px",fontSize:12,opacity:idx===salas.length-1?0.3:1,lineHeight:1}}>
+                                ▼
+                              </button>
                             </div>
                             <button type="button" className="btn-danger" style={{padding:"8px 12px",fontSize:12}} onClick={()=>excluirSala(s)}>Excluir</button>
                           </div>
@@ -969,37 +920,7 @@ export default function Page(){
                     <div>
                       <h4 style={{fontFamily:"Fraunces,serif",color:"var(--primary-dark)",fontSize:16,margin:"0 0 6px"}}>🕓 Histórico de Alterações</h4>
                       <p className="block-sub" style={{marginBottom:14}}>Registro de todas as reservas que foram excluídas do sistema.</p>
-                      {!auditCarregado&&<button className="btn-primary" style={{maxWidth:200}} onClick={carregarAudit} disabled={auditCarregando}>{auditCarregando?"Carregando…":"Carregar Histórico"}</button>}
-                      {auditCarregado&&(auditLogs.length===0?<div className="empty-state">Nenhuma alteração registrada ainda.</div>:(
-                        <div style={{maxHeight:400,overflowY:"auto",border:"1px solid var(--border)",borderRadius:12}}>
-                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                            <thead style={{position:"sticky",top:0,background:"var(--surface-soft)"}}>
-                              <tr>
-                                <th style={{padding:"8px 10px",textAlign:"left"}}>Ação</th>
-                                <th style={{padding:"8px 10px",textAlign:"left"}}>Reserva</th>
-                                <th style={{padding:"8px 10px",textAlign:"left"}}>Data</th>
-                                <th style={{padding:"8px 10px",textAlign:"left"}}>Executado por</th>
-                                <th style={{padding:"8px 10px",textAlign:"left"}}>Quando</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {auditLogs.map(l=>{
-                                const dataRes=`${pad(l.dia)}/${pad(l.mes+1)}/${l.ano}`;
-                                const quando=new Date(l.executado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-                                return(
-                                  <tr key={l.id} style={{borderTop:"1px solid var(--border)"}}>
-                                    <td style={{padding:"8px 10px"}}><span style={{background:"#FCE9E6",color:"#D6483A",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>🗑️ Excluída</span></td>
-                                    <td style={{padding:"8px 10px"}}><div style={{fontWeight:700}}>{l.evento}</div><div style={{fontSize:11,color:"var(--ink-soft)"}}>{l.sala_nome} · {l.hora_inicio}–{l.hora_fim} · {l.nome_solicitante}</div></td>
-                                    <td style={{padding:"8px 10px",fontSize:12}}>{dataRes}</td>
-                                    <td style={{padding:"8px 10px",fontSize:12}}>{l.executado_por}</td>
-                                    <td style={{padding:"8px 10px",fontSize:11,color:"var(--ink-soft)"}}>{quando}</td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ))}
+                      <HistoricoLista/>
                     </div>
                   )}
 
@@ -1270,31 +1191,6 @@ export default function Page(){
           )}
         </div>
       </div>
-
-      {/* MODAL FOTO DA SALA */}
-      {modalFotoSala&&(
-        <div className="overlay show" onClick={()=>setModalFotoSala(null)}>
-          <div className="modal" style={{maxWidth:560,padding:0,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
-            <div className="modal-head" style={{padding:"14px 18px"}}>
-              <h3>📷 {modalFotoSala.nome}</h3>
-              <button onClick={()=>setModalFotoSala(null)}>✕</button>
-            </div>
-            <div style={{width:"100%",maxHeight:420,overflow:"hidden",background:"#000"}}>
-              <img src={modalFotoSala.foto_url} alt={modalFotoSala.nome}
-                style={{width:"100%",maxHeight:420,objectFit:"contain",display:"block"}}
-                onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="flex";}}
-              />
-              <div style={{display:"none",height:200,alignItems:"center",justifyContent:"center",color:"#888",fontSize:14,flexDirection:"column",gap:8}}>
-                <span style={{fontSize:36}}>🖼️</span>
-                Não foi possível carregar a imagem
-              </div>
-            </div>
-            <div style={{padding:"12px 18px",display:"flex",justifyContent:"flex-end"}}>
-              <button className="btn-primary" style={{padding:"8px 20px"}} onClick={()=>setModalFotoSala(null)}>Fechar</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL CONFIRMAR EXCLUSÃO */}
       {modalExcluir&&(
