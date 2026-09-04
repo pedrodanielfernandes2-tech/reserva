@@ -1829,6 +1829,15 @@ function toggleTheme(){
   }
 }
 
+// Sincroniza tema com o sistema de reservas (parent)
+window.addEventListener('message', function(e){
+  if(!e.data || e.data.type !== 'adl_tema') return;
+  var escuro = Boolean(e.data.escuro);
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if(escuro === isDark) return; // já está no tema certo
+  toggleTheme();
+});
+
 // ── Tabs ──
 function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
