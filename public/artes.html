@@ -1351,8 +1351,6 @@ function enviar(){
       });
     }
     if(btn){btn.disabled=false;btn.textContent='📨 Enviar Formulário';}
-    document.getElementById('pop').classList.add('on');
-    mostrarPopSucesso();
 
     // Gera PDF igual ao exportado ANTES de limpar o formulário
     var pdfBase64 = null;
@@ -1401,6 +1399,9 @@ function enviar(){
       link_pdf: linksStorage.pdf,
       links_fotos: linksStorage.fotos
     });
+
+    // Exibe o aviso de prazo somente após concluir todo o processamento.
+    await mostrarPopSucesso();
   })
   .catch(function(err){
     console.error('Supabase error:', err);
@@ -1694,8 +1695,8 @@ function resetFormulario(){
   addData();
 }
 
-function limpar(){
-  if(!confirm('Deseja realmente limpar todos os campos?')) return;
+function limpar(silencioso){
+  if(!silencioso && !confirm('Deseja realmente limpar todos os campos?')) return;
   resetFormulario();
   toast('Formulário limpo ✓');
 }
@@ -1979,6 +1980,8 @@ function gerarContadorPrazo(r){
 
 async function fecharPopSucesso(){
   document.getElementById('pop').classList.remove('on');
+  // Limpa a tela sem pedir uma segunda confirmação.
+  limpar(true);
 }
 
 async function mostrarPopSucesso(){
