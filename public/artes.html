@@ -686,6 +686,11 @@ select.st-sel{min-width:128px}
           <option value="Entregue">Entregue</option>
           <option value="Concluido">Concluído</option>
         </select>
+        <label style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--tm);cursor:pointer;white-space:nowrap;padding:8px 13px;background:var(--sur2);border:1.5px solid var(--bor);border-radius:20px;box-shadow:var(--shadow-inset);transition:border-color .2s,box-shadow .2s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--bor)'">
+          <input type="checkbox" id="hist-show-concluidas" onchange="filtrarHistorico();this.closest('label').querySelector('.tog-track').style.background=this.checked?'var(--teal2)':'#cbd5e1';this.closest('label').querySelector('.tog-thumb').style.transform=this.checked?'translateX(16px)':'translateX(0)';this.closest('label').style.color=this.checked?'var(--teal2)':'var(--tm)'" style="display:none"/>
+          <span class="tog-track" style="display:inline-flex;align-items:center;width:34px;height:19px;background:#cbd5e1;border-radius:99px;padding:2px;flex-shrink:0;transition:background .2s"><span class="tog-thumb" style="display:block;width:15px;height:15px;background:#fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.18);transition:transform .2s"></span></span>
+          Exibir Concluídas
+        </label>
       </div>
 
       <div id="hist-corpo">
@@ -1802,6 +1807,47 @@ function toggleTheme(){
   }
 }
 
+// ── Integração com sistema de Reservas (postMessage) ──
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+
+  // Sincroniza tema escuro
+  if(e.data.type === 'adl_tema'){
+    var escuro = Boolean(e.data.escuro);
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if(escuro !== isDark) toggleTheme();
+    return;
+  }
+
+  // Navega para uma aba
+  if(e.data.type === 'adl_goto'){
+    var tab = e.data.tab;
+    if(tab === 'formulario' || tab === 'historico'){
+      if(typeof switchTab === 'function') switchTab(tab);
+    } else if(tab === 'g-solic' || tab === 'g-audit' || tab === 'g-users' || tab === 'g-email'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      // tenta abrir subaba de gestão
+      setTimeout(function(){
+        var btn = document.getElementById(tab+'-btn') || document.querySelector('[data-gtab="'+tab+'"]');
+        if(btn) btn.click();
+      }, 300);
+    } else if(tab === 'logout'){
+      if(typeof logoutUser === 'function') logoutUser();
+    }
+    return;
+  }
+
+  // Abre modal de login da equipe
+  if(e.data.type === 'adl_open_login'){
+    if(typeof switchTab === 'function') switchTab('gestao');
+    setTimeout(function(){
+      var btn = document.getElementById('btn-abrir-login') || document.querySelector('.btn-login-equipe');
+      if(btn) btn.click();
+    }, 400);
+    return;
+  }
+});
+
 // ── Tabs ──
 function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
@@ -1852,7 +1898,7 @@ function carregarHistorico(){
       };
     });
     atualizarStats(_histDados);
-    renderHistorico(_histDados);
+    filtrarHistorico();
   })
   .catch(function(err){
     console.error('Historico error:', err);
@@ -2054,13 +2100,16 @@ function renderHistorico(rows){
 function filtrarHistorico(){
   var busca = document.getElementById('hist-busca').value.toLowerCase();
   var statusF = document.getElementById('hist-status-filter').value;
+  var showConcluidas = document.getElementById('hist-show-concluidas').checked;
   var filtrado = _histDados.filter(function(r){
     var matchBusca = !busca ||
       (r.nome_trabalho||'').toLowerCase().indexOf(busca)>=0 ||
       (r.solicitante||'').toLowerCase().indexOf(busca)>=0 ||
       (r.data_solicitacao||'').toLowerCase().indexOf(busca)>=0;
     var matchStatus = !statusF || (r.status||'Aguardando')===statusF;
-    return matchBusca && matchStatus;
+    var isConcluida = (r.status||'')==='Concluido' || (r.status||'')==='Concluído';
+    var matchConcluida = showConcluidas || !isConcluida;
+    return matchBusca && matchStatus && matchConcluida;
   });
   renderHistorico(filtrado);
 }
@@ -2133,6 +2182,9 @@ function iniciarGestao(){
   switchTab('gestao');
   carregarGSolic();
   iniciarPollingNotificacoes();
+  // Notifica o sistema de Reservas que o login foi realizado
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+  try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
 }
 
 async function doLogoutEquipe(){
@@ -2141,6 +2193,8 @@ async function doLogoutEquipe(){
   document.getElementById('tab-btn-gestao').style.display='none';
   document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
   switchTab('formulario');
+  // Notifica o sistema de Reservas que o logout foi realizado
+  try{ window.parent.postMessage({type:'adl_logout'}, '*'); }catch(e){}
 }
 
 SB.auth.getSession().then(function(r){
@@ -2156,6 +2210,9 @@ SB.auth.getSession().then(function(r){
     document.getElementById('g-nav-email').style.display='inline-block';
       }
       iniciarPollingNotificacoes();
+      // Notifica o sistema de Reservas da sessão ativa
+      var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+      try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
       SB.from('solicitacoes').select('status').eq('status','Aguardando').then(function(r){
         if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
       });
@@ -2322,12 +2379,35 @@ async function dispararWhatsApp(tipo, dados){
   });
 }
 
-async function carregarGSolic(){
-  document.getElementById('g-tb-solic').innerHTML='<tr><td colspan="7" class="g-loading">⏳ Carregando…</td></tr>';
-  var r = await SB.from('solicitacoes').select('*').order('id',{ascending:false});
+var _gPage = 0;
+var _gPageSize = 20;
+var _gHasMore = false;
+var _gLoading = false;
+
+async function carregarGSolic(reset){
+  if(_gLoading) return;
+  if(reset !== false){ _gPage = 0; _gSolic = []; }
+  _gLoading = true;
+  var from = _gPage * _gPageSize;
+  var to   = from + _gPageSize - 1;
+  if(_gPage === 0){
+    document.getElementById('g-tb-solic').innerHTML='<tr><td colspan="7" class="g-loading">⏳ Carregando…</td></tr>';
+  }
+  // Exclui colunas com base64 (fotos) da listagem — só carrega no detalhe individual
+  var cols = 'id,num,data_solic,congregacao,solicitante,nome_trabalho,local,tema,referencia,datas,pregadores,paleta_cores,mais_info,observacoes,status,created_at,pdf_url,fotos_urls_json,prazo_revisao';
+  var r = await SB.from('solicitacoes').select(cols).order('id',{ascending:false}).range(from, to);
+  _gLoading = false;
   if(r.error){ toast('Erro: '+r.error.message, true); return; }
-  _gSolic = r.data || [];
-  atualizarGStats(_gSolic);
+  var rows = r.data || [];
+  _gSolic = _gSolic.concat(rows);
+  _gHasMore = rows.length === _gPageSize;
+  if(_gHasMore) _gPage++;
+  // Stats: busca count total separado apenas na primeira carga
+  if(from === 0){
+    var rc = await SB.from('solicitacoes').select('status');
+    if(!rc.error) atualizarGStats(rc.data || []);
+    else atualizarGStats(_gSolic);
+  }
   filtrarGSolic();
 }
 
@@ -2380,11 +2460,15 @@ function filtrarGSolic(){
 }
 
 function renderGSolic(rows){
+  var tbody = document.getElementById('g-tb-solic');
+  // Remove botão anterior se existir
+  var oldBtn = document.getElementById('g-load-more-row');
+  if(oldBtn) oldBtn.remove();
   if(!rows.length){
-    document.getElementById('g-tb-solic').innerHTML='<tr><td colspan="7" class="g-empty"><div class="g-empty-icon">📭</div><p>Nenhuma solicitação encontrada.</p></td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" class="g-empty"><div class="g-empty-icon">📭</div><p>Nenhuma solicitação encontrada.</p></td></tr>';
     return;
   }
-  document.getElementById('g-tb-solic').innerHTML = rows.map(function(r){
+  tbody.innerHTML = rows.map(function(r){
     var st=r.status||'Aguardando';
     var cls=gStMap[st]||'aguardando';
     var opts=gStOpts.map(function(o){ return '<option value="'+o+'"'+(o===st?' selected':'')+'>'+o+'</option>'; }).join('');
@@ -2402,6 +2486,17 @@ function renderGSolic(rows){
       '</td>'+
       '</tr>';
   }).join('');
+  // Botão "Carregar mais" — só aparece se não há filtro ativo e há mais registros
+  var busca = document.getElementById('g-busca').value;
+  var sf    = document.getElementById('g-f-status').value;
+  if(_gHasMore && !busca && !sf){
+    var tr = document.createElement('tr');
+    tr.id = 'g-load-more-row';
+    tr.innerHTML = '<td colspan="7" style="text-align:center;padding:14px 0">' +
+      '<button onclick="carregarGSolic(false)" style="background:var(--sur2);border:1.5px solid var(--bor);border-radius:20px;padding:8px 22px;font-size:12px;font-weight:600;color:var(--teal2);cursor:pointer;transition:background .2s" onmouseover="this.style.background=\'var(--bor)\'" onmouseout="this.style.background=\'var(--sur2)\'">Carregar mais 20 ↓</button>' +
+    '</td>';
+    tbody.appendChild(tr);
+  }
 }
 
 async function updateGStatus(id, sel){
@@ -2508,8 +2603,9 @@ async function enviarComentario(){
   var input = document.getElementById('m-gdet-novo-comentario');
   var msg = input.value.trim();
   if(!msg) return;
-  var solicId = document.getElementById('m-gdet').dataset.solicId;
-  var userName = _gPerfil ? _gPerfil.nome : (_gUser ? _gUser.email : 'Desconhecido');
+  var solicId = parseInt(document.getElementById('m-gdet').dataset.solicId, 10);
+  if(!solicId){ toast('Erro: solicitação não identificada.', true); return; }
+  var userName = (_gPerfil && _gPerfil.nome) ? _gPerfil.nome : (_gUser ? _gUser.email : 'Usuário');
 
   var r = await SB.from('comentarios').insert({
     solicitacao_id: solicId,
@@ -2935,5 +3031,62 @@ async function salvarEdicao(){
 }
 
 </script>
+
+<!-- ── Integração iframe: oculta nav quando embutido, botão de volta quando standalone ── -->
+<style id="iframe-hide"></style>
+<script>
+(function(){
+  if(window.self === window.top) return; // não está em iframe, sai
+  document.addEventListener('DOMContentLoaded', function(){
+    var style = document.getElementById('iframe-hide');
+    style.textContent = [
+      '#tab-nav { display: none !important; }',
+      '.adl-back { display: none !important; }',
+      'body { padding-top: 0 !important; padding-bottom: 20px !important; }',
+      '.wrap { max-width: none !important; margin: 0 !important; padding: 16px 24px 24px !important; }',
+    ].join('\n');
+  });
+})();
+</script>
+
+<script>
+// Abre na aba correta via parâmetro ?tab=
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var tab = params.get('tab');
+  if(tab){
+    window.addEventListener('DOMContentLoaded', function(){
+      if(tab === 'historico' && typeof switchTab === 'function') switchTab('historico');
+      if(tab === 'gestao'   && typeof switchTab === 'function') switchTab('gestao');
+    });
+  }
+})();
+</script>
+
+<!-- Botão flutuante — só aparece fora do iframe -->
+<style>
+.adl-back{
+  position:fixed;bottom:20px;right:20px;z-index:9999;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 16px;border-radius:999px;
+  background:linear-gradient(135deg,#075F5C,#0E8E89);
+  color:#fff;font-family:'Manrope','Inter',sans-serif;
+  font-size:13px;font-weight:700;text-decoration:none;
+  box-shadow:0 4px 16px rgba(7,95,92,.4);
+  transition:transform .15s,box-shadow .15s;
+}
+.adl-back:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(7,95,92,.5);}
+</style>
+<a href="/" class="adl-back" id="adl-back-btn">📅 Reserva de Salas</a>
+<script>
+// Oculta o botão quando estiver dentro de um iframe
+if(window.self !== window.top){
+  document.addEventListener('DOMContentLoaded',function(){
+    var btn = document.getElementById('adl-back-btn');
+    if(btn) btn.style.display = 'none';
+  });
+}
+</script>
+
 </body>
 </html>
