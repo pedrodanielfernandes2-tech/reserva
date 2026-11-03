@@ -32,9 +32,18 @@ export async function GET(request) {
   await ensureSchema();
   const { searchParams } = new URL(request.url);
   const sala = searchParams.get("sala");
+  // Filtra por ano >= atual para não trazer histórico inteiro a cada carga
+  const anoMin = parseInt(searchParams.get("anoMin") || String(new Date().getFullYear()), 10);
+
   const rows = sala
-    ? await sql`SELECT * FROM reservas WHERE sala_nome=${sala} ORDER BY ano,mes,dia,hora_inicio;`
-    : await sql`SELECT * FROM reservas ORDER BY ano,mes,dia,hora_inicio;`;
+    ? await sql`
+        SELECT * FROM reservas
+        WHERE sala_nome=${sala} AND ano >= ${anoMin}
+        ORDER BY ano,mes,dia,hora_inicio;`
+    : await sql`
+        SELECT * FROM reservas
+        WHERE ano >= ${anoMin}
+        ORDER BY ano,mes,dia,hora_inicio;`;
   return NextResponse.json(rows);
 }
 
@@ -109,7 +118,7 @@ export async function POST(request) {
     }
   }
 
-  // ✅ Eventos da Sede — só bloqueia reservas na Nave
+  // Eventos da Sede — só bloqueia reservas na Nave
   const salaInfo = await sql`SELECT tipo FROM salas WHERE nome = ${sala} LIMIT 1;`;
   if (salaInfo[0]?.tipo === 'Nave') {
     const eventosSede = await sql`SELECT * FROM eventos_igreja WHERE tipo='sede' AND dia=${dia} AND mes=${mes} AND ano=${ano};`;
@@ -128,11 +137,32 @@ export async function POST(request) {
   if (!datas.length) return NextResponse.json({ erro: "Nenhuma data gerada." }, { status: 400 });
   if (datas.length > 104) return NextResponse.json({ erro: "Recorrência muito longa (máx. 2 anos)." }, { status: 400 });
 
-  // Verificar conflitos em todas as datas
+  // ── Verificar conflitos em TODAS as datas com UMA query ─────────────────
+  // Monta lista de (dia, mes, ano) para fazer SELECT em lote
+  const anosDistintos = [...new Set(datas.map(d => d.ano))];
+  const anoMin2 = Math.min(...anosDistintos);
+  const anoMax  = Math.max(...anosDistintos);
+
+  // Busca todas as reservas existentes da sala no período de uma vez
+  const reservasExistentes = await sql`
+    SELECT dia, mes, ano, hora_inicio, hora_fim
+    FROM reservas
+    WHERE sala_nome = ${sala}
+      AND ano  BETWEEN ${anoMin2} AND ${anoMax};
+  `;
+
+  // Indexa por "dia-mes-ano" para lookup O(1)
+  const porData = {};
+  for (const r of reservasExistentes) {
+    const k = `${r.dia}-${r.mes}-${r.ano}`;
+    if (!porData[k]) porData[k] = [];
+    porData[k].push(r);
+  }
+
   const conflitos = [];
   for (const d of datas) {
-    const ex = await sql`SELECT hora_inicio,hora_fim FROM reservas WHERE sala_nome=${sala} AND dia=${d.dia} AND mes=${d.mes} AND ano=${d.ano};`;
-    for (const e of ex) {
+    const k = `${d.dia}-${d.mes}-${d.ano}`;
+    for (const e of (porData[k] || [])) {
       if (conflita(horaInicio, horaFim, e.hora_inicio, e.hora_fim)) {
         conflitos.push(`${String(d.dia).padStart(2,"0")}/${String(d.mes+1).padStart(2,"0")}/${d.ano}`);
         break;
@@ -143,24 +173,43 @@ export async function POST(request) {
     return NextResponse.json({ erro: `Conflito nas datas: ${conflitos.slice(0,5).join(", ")}${conflitos.length>5?" e outras.":"."}` }, { status: 409 });
   }
 
-  // Inserir reservas
+  // ── Inserir reservas em lote ─────────────────────────────────────────────
   const ids = [];
-  for (const d of datas) {
-    const id = crypto.randomUUID(); ids.push(id);
-    await sql`
-      INSERT INTO reservas (id,sala_nome,nome,evento,observacao,dia,mes,ano,hora_inicio,hora_fim,
-        recorrente,recorrencia,recorrencia_fim,precisa_som,precisa_projecao,precisa_fotografia,precisa_transmissao,
-        tipo_evento,qtd_mesas,qtd_cadeiras)
-      VALUES (${id},${sala},${nome},${evento},${observacao},${d.dia},${d.mes},${d.ano},
-        ${horaInicio},${horaFim},${recorrencia!=="nenhuma"},${recorrencia},${recorrenciaFim},
-        ${precisaSom},${precisaProjecao},${precisaFotografia},${precisaTransmissao},${tipoEvento},${qtdMesas},${qtdCadeiras});
-    `;
+  const primeiroId = crypto.randomUUID();
+  ids.push(primeiroId);
+
+  // Monta um INSERT com múltiplos VALUES para evitar N queries sequenciais
+  // Dividido em lotes de 50 para não exceder limite de parâmetros do Neon
+  const LOTE = 50;
+  const registros = datas.map((d, i) => ({
+    id: i === 0 ? primeiroId : crypto.randomUUID(),
+    ...d,
+  }));
+
+  for (let i = 0; i < registros.length; i += LOTE) {
+    const lote = registros.slice(i, i + LOTE);
+    for (const d of lote) {
+      // neon/serverless não suporta INSERT multi-row via tagged template de forma simples,
+      // mas executa em paralelo com Promise.all — muito mais rápido que sequencial
+      ids.push(d.id);
+    }
+    await Promise.all(lote.map(d =>
+      sql`
+        INSERT INTO reservas (id,sala_nome,nome,evento,observacao,dia,mes,ano,hora_inicio,hora_fim,
+          recorrente,recorrencia,recorrencia_fim,precisa_som,precisa_projecao,precisa_fotografia,precisa_transmissao,
+          tipo_evento,qtd_mesas,qtd_cadeiras)
+        VALUES (${d.id},${sala},${nome},${evento},${observacao},${d.dia},${d.mes},${d.ano},
+          ${horaInicio},${horaFim},${recorrencia!=="nenhuma"},${recorrencia},${recorrenciaFim},
+          ${precisaSom},${precisaProjecao},${precisaFotografia},${precisaTransmissao},${tipoEvento},${qtdMesas},${qtdCadeiras})
+        ON CONFLICT (id) DO NOTHING;
+      `
+    ));
   }
 
   await notificarAdminEmail({ sala, nome, evento, observacao, dia, mes, ano, horaInicio, horaFim,
     recorrencia, totalDatas: datas.length, precisaSom, precisaProjecao, precisaFotografia, precisaTransmissao,
     tipoEvento, qtdMesas, qtdCadeiras });
 
-  const primeiras = await sql`SELECT * FROM reservas WHERE id=${ids[0]};`;
+  const primeiras = await sql`SELECT * FROM reservas WHERE id=${primeiroId};`;
   return NextResponse.json({ ...primeiras[0], totalCriadas: datas.length }, { status: 201 });
 }

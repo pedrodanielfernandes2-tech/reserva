@@ -76,7 +76,8 @@ export default function Page(){
   const [salvandoEventos,setSalvandoEventos]=useState(false);
 
   const carregarSalas=useCallback(async()=>{try{const r=await fetch("/api/salas");const d=await r.json();setSalas(Array.isArray(d)?d:[]);setSalaAtiva(p=>p||(Array.isArray(d)&&d[0]?d[0].nome:null));}catch(e){}});
-  const carregarReservas=useCallback(async()=>{try{const r=await fetch("/api/reservas");const d=await r.json();setReservas(Array.isArray(d)?d:[]);}catch(e){}});
+  // Passa anoMin para evitar baixar reservas passadas desnecessariamente
+  const carregarReservas=useCallback(async()=>{try{const anoMin=new Date().getFullYear();const r=await fetch(`/api/reservas?anoMin=${anoMin}`);const d=await r.json();setReservas(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarBloqueios=useCallback(async()=>{try{const r=await fetch("/api/bloqueios");const d=await r.json();setBloqueios(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarEventos=useCallback(async()=>{try{const r=await fetch("/api/eventos-igreja");const d=await r.json();setEventosIgreja(Array.isArray(d)?d:[]);}catch(e){}});
   const carregarContatos=useCallback(async()=>{try{const r=await fetch("/api/contatos");const d=await r.json();setContatos(Array.isArray(d)?d:[]);}catch(e){}});
@@ -124,7 +125,8 @@ export default function Page(){
       }catch(e){}finally{setCarregando(false);}
     })();
   },[]); // eslint-disable-line
-  useEffect(()=>{const t=setInterval(carregarReservas,15000);return()=>clearInterval(t);},[]);
+  // Polling reduzido de 15s para 60s — diminui carga no banco
+  useEffect(()=>{const t=setInterval(carregarReservas,60000);return()=>clearInterval(t);},[]);
 
   const LIMITE=parseInt(config.limite_dias||"60",10);
   const ANTECEDENCIA_H=parseInt(config.antecedencia_horas||"0",10);
