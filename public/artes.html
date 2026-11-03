@@ -95,7 +95,7 @@ body{
   padding:40px 20px 90px;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:800px;margin:0 auto;position:relative}
+.wrap{max-width:960px;margin:0 auto;position:relative}
 
 /* ══ Banner — hero 3D ══ */
 .banner{
@@ -487,9 +487,30 @@ select.st-sel{min-width:128px}
   input[type=date],input[type=time]{font-size:13px;padding:10px 10px}
 }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="wrap" id="main-wrap">
+
+<!-- ══ BANNER DATAS COMEMORATIVAS ══ -->
+<div id="banner-datas" style="display:none;align-items:center;gap:10px;padding:11px 16px;background:linear-gradient(135deg,#0d9488,#14b8a6);cursor:pointer;border-radius:var(--r-sm);margin:0 0 10px 0;position:relative" onclick="abrirPopupDatas()">
+  <span style="font-size:20px;flex-shrink:0">📅</span>
+  <div style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#fff;line-height:1.4" id="banner-datas-txt"></div>
+  <span style="font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:5px 13px;white-space:nowrap;flex-shrink:0">Ver datas</span>
+  <button onclick="event.stopPropagation();fecharBannerDatas()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>
+</div>
+
+<!-- modal datas -->
+<div id="modal-datas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:var(--r);width:100%;max-width:420px;overflow:hidden;box-shadow:0 8px 40px -8px rgba(0,0,0,.3)">
+    <div style="background:linear-gradient(135deg,#0d9488,#14b8a6);padding:20px 20px 16px;position:relative">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:5px">📅 Lembrete de Arte</div>
+      <div style="font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;color:#fff" id="modal-datas-titulo">Datas Próximas</div>
+      <button onclick="fecharModalDatas()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#fff">×</button>
+    </div>
+    <div style="padding:16px 20px 20px" id="modal-datas-corpo"></div>
+  </div>
+</div>
 
 <!-- popup -->
 <div class="pop" id="pop">
@@ -718,6 +739,7 @@ select.st-sel{min-width:128px}
 
       <div class="gestao-sub">
         <button class="gestao-sub-btn active" onclick="showGestaoPage(this,'g-solic')">📋 Solicitações</button>
+        <button class="gestao-sub-btn" onclick="showGestaoPage(this,'g-dash')">📊 Dashboard</button>
         <button class="gestao-sub-btn" onclick="showGestaoPage(this,'g-audit')">🕓 Auditoria</button>
         <button class="gestao-sub-btn" id="g-nav-users" style="display:none" onclick="showGestaoPage(this,'g-users')">👥 Usuários</button>
         <button class="gestao-sub-btn" id="g-nav-email" style="display:none" onclick="showGestaoPage(this,'g-email')">⚙️ Configuração</button>
@@ -743,12 +765,24 @@ select.st-sel{min-width:128px}
           </select>
           <button class="btn btn-p" style="padding:8px 16px;font-size:11px" onclick="carregarGSolic()">🔄 Atualizar</button>
           <button class="btn btn-p" style="padding:8px 16px;font-size:11px;background:linear-gradient(135deg,#34d399,#059669)" onclick="exportarExcelSolic()">📊 Exportar Excel</button>
+          <label style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--tm);cursor:pointer;white-space:nowrap;padding:8px 13px;background:var(--sur2);border:1.5px solid var(--bor);border-radius:20px;box-shadow:var(--shadow-inset);transition:border-color .2s,box-shadow .2s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--bor)'">
+            <input type="checkbox" id="g-show-concluidas" onchange="filtrarGSolic();this.closest('label').querySelector('.tog-track').style.background=this.checked?'var(--teal2)':'#cbd5e1';this.closest('label').querySelector('.tog-thumb').style.transform=this.checked?'translateX(16px)':'translateX(0)';this.closest('label').style.color=this.checked?'var(--teal2)':'var(--tm)'" style="display:none"/>
+            <span class="tog-track" style="display:inline-flex;align-items:center;width:34px;height:19px;background:#cbd5e1;border-radius:99px;padding:2px;flex-shrink:0;transition:background .2s"><span class="tog-thumb" style="display:block;width:15px;height:15px;background:#fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.18);transition:transform .2s"></span></span>
+            Exibir Concluídas
+          </label>
         </div>
         <div class="g-table-wrap">
           <table class="g-table"><thead><tr>
             <th>#</th><th>Data</th><th>Congregação</th><th>Solicitante</th>
-            <th>Nome do Trabalho</th><th>Status</th><th></th>
+            <th>Nome do Trabalho</th><th>Status</th><th>Ações</th>
           </tr></thead><tbody id="g-tb-solic"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="gestao-page" id="g-dash">
+        <div id="g-dash-corpo" style="padding-top:4px">
+          <div style="text-align:center;color:var(--tm);padding:40px 0;font-size:13px">⏳ Carregando dashboard…</div>
         </div>
       </div>
 
@@ -1807,47 +1841,6 @@ function toggleTheme(){
   }
 }
 
-// ── Integração com sistema de Reservas (postMessage) ──
-window.addEventListener('message', function(e){
-  if(!e.data || !e.data.type) return;
-
-  // Sincroniza tema escuro
-  if(e.data.type === 'adl_tema'){
-    var escuro = Boolean(e.data.escuro);
-    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if(escuro !== isDark) toggleTheme();
-    return;
-  }
-
-  // Navega para uma aba
-  if(e.data.type === 'adl_goto'){
-    var tab = e.data.tab;
-    if(tab === 'formulario' || tab === 'historico'){
-      if(typeof switchTab === 'function') switchTab(tab);
-    } else if(tab === 'g-solic' || tab === 'g-audit' || tab === 'g-users' || tab === 'g-email'){
-      if(typeof switchTab === 'function') switchTab('gestao');
-      // tenta abrir subaba de gestão
-      setTimeout(function(){
-        var btn = document.getElementById(tab+'-btn') || document.querySelector('[data-gtab="'+tab+'"]');
-        if(btn) btn.click();
-      }, 300);
-    } else if(tab === 'logout'){
-      if(typeof logoutUser === 'function') logoutUser();
-    }
-    return;
-  }
-
-  // Abre modal de login da equipe
-  if(e.data.type === 'adl_open_login'){
-    if(typeof switchTab === 'function') switchTab('gestao');
-    setTimeout(function(){
-      var btn = document.getElementById('btn-abrir-login') || document.querySelector('.btn-login-equipe');
-      if(btn) btn.click();
-    }, 400);
-    return;
-  }
-});
-
 // ── Tabs ──
 function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
@@ -2071,7 +2064,7 @@ function renderHistorico(rows){
     '<th>Solicitante</th>'+
     '<th>Nome do Trabalho</th>'+
     (_permSolic.verStatus ? '<th>Status</th>' : '')+
-    '<th></th>'+
+    '<th>Ações</th>'+
     (_configPrazos && _configPrazos.ativo ? '<th>Prazo</th>' : '')+
     '</tr></thead><tbody>';
   rows.forEach(function(r){
@@ -2130,6 +2123,106 @@ var gStMap = {
   'Em Analise':'analise','Revisão':'revisao',
   'Entregue':'entregue','Concluido':'concluido','Concluído':'concluido'
 };
+
+// ══ DATAS COMEMORATIVAS ══
+var _DATAS_COMEM = [
+  { nome:'Aniversário do Pastor Gaetano', emoji:'🎂', mes:10, dia:14, diasAviso:30 },
+  { nome:'Natal',                          emoji:'🎄', mes:12, dia:25, diasAviso:30 },
+  { nome:'Reforma Protestante',            emoji:'✝️',  mes:10, dia:31, diasAviso:21 },
+  { nome:'Páscoa',                         emoji:'🐣', mes:4,  dia:20, diasAviso:21 },
+  { nome:'Ano Novo',                       emoji:'🎆', mes:1,  dia:1,  diasAviso:21 },
+  { nome:'Dia das Mães',                   emoji:'💐', mes:5,  dia:11, diasAviso:21 },
+  { nome:'Dia dos Pais',                   emoji:'👨', mes:8,  dia:10, diasAviso:21 },
+  { nome:'Finados',                        emoji:'🕯️', mes:11, dia:2,  diasAviso:15 },
+];
+
+function _diasAte(mes, dia){
+  var hoje = new Date();
+  var ano  = hoje.getFullYear();
+  var alvo = new Date(ano, mes-1, dia);
+  if(alvo < hoje) alvo = new Date(ano+1, mes-1, dia);
+  return Math.ceil((alvo - hoje) / 86400000);
+}
+
+function _chaveSuprimida(nome){
+  return 'banner_sup_' + nome.replace(/\s+/g,'_') + '_' + new Date().getFullYear();
+}
+
+function iniciarBannerDatas(){
+  var proximas = _DATAS_COMEM.map(function(d){
+    return Object.assign({}, d, { diasRestantes: _diasAte(d.mes, d.dia) });
+  }).filter(function(d){
+    return d.diasRestantes <= d.diasAviso && d.diasRestantes >= 0;
+  }).sort(function(a,b){ return a.diasRestantes - b.diasRestantes; });
+
+  // Remove as suprimidas (mas mantém se for < 3 dias — urgente)
+  proximas = proximas.filter(function(d){
+    if(d.diasRestantes <= 3) return true;
+    try{ return !localStorage.getItem(_chaveSuprimida(d.nome)); }catch(e){ return true; }
+  });
+
+  if(!proximas.length) return;
+  var principal = proximas[0];
+  var banner = document.getElementById('banner-datas');
+  var txt = document.getElementById('banner-datas-txt');
+  var diasStr = principal.diasRestantes === 0 ? 'é hoje' :
+                principal.diasRestantes === 1 ? 'amanhã' :
+                'em ' + principal.diasRestantes + ' dias';
+  txt.innerHTML = principal.emoji + ' <strong>' + principal.nome + '</strong> ' + diasStr + ' — já preparou a arte?';
+  banner.style.display = 'flex';
+  banner._proximas = proximas;
+}
+
+function fecharBannerDatas(){
+  var banner = document.getElementById('banner-datas');
+  var proximas = banner._proximas || [];
+  if(proximas.length){
+    try{ localStorage.setItem(_chaveSuprimida(proximas[0].nome), '1'); }catch(e){}
+  }
+  banner.style.display = 'none';
+}
+
+function abrirPopupDatas(){
+  var banner = document.getElementById('banner-datas');
+  var proximas = banner._proximas || [];
+  var modal = document.getElementById('modal-datas');
+  var titulo = document.getElementById('modal-datas-titulo');
+  var corpo = document.getElementById('modal-datas-corpo');
+  if(!proximas.length) return;
+  titulo.textContent = proximas.length === 1 ? proximas[0].nome : 'Datas Próximas';
+  var html = '<div style="display:flex;flex-direction:column;gap:8px">';
+  proximas.forEach(function(d){
+    var diasStr = d.diasRestantes === 0 ? 'Hoje!' :
+                  d.diasRestantes === 1 ? 'Amanhã' :
+                  'em ' + d.diasRestantes + ' dias';
+    var cor = d.diasRestantes <= 3 ? '#dc2626' : d.diasRestantes <= 7 ? '#ea580c' : '#0d9488';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r-sm)">' +
+      '<span style="font-size:20px;flex-shrink:0">' + d.emoji + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--tx)">' + d.nome + '</div>' +
+        '<div style="font-size:11.5px;color:var(--tm);margin-top:2px">' + d.dia + '/' + String(d.mes).padStart(2,'0') + '</div>' +
+      '</div>' +
+      '<span style="font-size:11px;font-weight:700;color:' + cor + ';background:' + (d.diasRestantes<=3?'#fee2e2':d.diasRestantes<=7?'#ffedd5':'var(--sur2)') + ';padding:4px 10px;border-radius:99px;white-space:nowrap;border:1px solid ' + (d.diasRestantes<=3?'#fca5a5':d.diasRestantes<=7?'#fdba74':'var(--bor)') + '">' + diasStr + '</span>' +
+    '</div>';
+  });
+  html += '</div>';
+  html += '<button onclick="switchTab(\'formulario\');fecharModalDatas()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,var(--teal2),var(--teal));color:#fff;border:none;border-radius:var(--r-sm);padding:12px;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:700;cursor:pointer">✏️ Fazer Solicitação</button>';
+  html += '<p style="text-align:center;font-size:11px;color:var(--tm);margin-top:12px;cursor:pointer" onclick="fecharBannerDatas();fecharModalDatas()">🔕 Não mostrar mais para esta data</p>';
+  corpo.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function fecharModalDatas(){
+  document.getElementById('modal-datas').style.display = 'none';
+}
+
+// Fechar modal clicando no fundo
+document.getElementById('modal-datas').addEventListener('click', function(e){
+  if(e.target === this) fecharModalDatas();
+});
+
+// Iniciar banner após carregar
+setTimeout(iniciarBannerDatas, 800);
 var gStOpts = ['Aguardando','Em Produção','Em Analise','Revisão','Entregue','Concluido'];
 
 function abrirLoginEquipe(){
@@ -2182,9 +2275,6 @@ function iniciarGestao(){
   switchTab('gestao');
   carregarGSolic();
   iniciarPollingNotificacoes();
-  // Notifica o sistema de Reservas que o login foi realizado
-  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
-  try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
 }
 
 async function doLogoutEquipe(){
@@ -2193,8 +2283,6 @@ async function doLogoutEquipe(){
   document.getElementById('tab-btn-gestao').style.display='none';
   document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
   switchTab('formulario');
-  // Notifica o sistema de Reservas que o logout foi realizado
-  try{ window.parent.postMessage({type:'adl_logout'}, '*'); }catch(e){}
 }
 
 SB.auth.getSession().then(function(r){
@@ -2210,9 +2298,6 @@ SB.auth.getSession().then(function(r){
     document.getElementById('g-nav-email').style.display='inline-block';
       }
       iniciarPollingNotificacoes();
-      // Notifica o sistema de Reservas da sessão ativa
-      var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
-      try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
       SB.from('solicitacoes').select('status').eq('status','Aguardando').then(function(r){
         if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
       });
@@ -2228,6 +2313,197 @@ function showGestaoPage(btnEl, id){
   if(id==='g-audit') carregarGAudit();
   if(id==='g-users') carregarGUsers();
   if(id==='g-email'){ carregarConfigEmail(); carregarUiPrazos(); }
+  if(id==='g-dash') carregarGDash();
+}
+
+// ══ DASHBOARD ══
+async function carregarGDash(){
+  var corpo = document.getElementById('g-dash-corpo');
+  corpo.innerHTML = '<div style="text-align:center;color:var(--tm);padding:40px 0;font-size:13px">⏳ Carregando dashboard…</div>';
+
+  // Busca dados em paralelo
+  var [rSolic, rAudit] = await Promise.all([
+    SB.from('solicitacoes').select('id,status,congregacao,created_at,nome_trabalho,solicitante').order('created_at',{ascending:false}),
+    SB.from('auditoria').select('created_at,usuario_nome,status_anterior,novo_status,solicitacoes(nome_trabalho)').order('created_at',{ascending:false}).limit(5)
+  ]);
+
+  if(rSolic.error){ corpo.innerHTML='<div style="color:var(--acc);padding:20px">Erro ao carregar dados.</div>'; return; }
+
+  var solic = rSolic.data || [];
+  var audit = rAudit.data || [];
+
+  // Contagens por status
+  var tot=solic.length, ag=0, pr=0, an=0, re=0, en=0, co=0;
+  var porCong={};
+  var porMes={};
+  solic.forEach(function(s){
+    var st=s.status||'Aguardando';
+    if(st==='Aguardando') ag++;
+    else if(st==='Em Produção') pr++;
+    else if(st==='Em Analise') an++;
+    else if(st==='Revisão') re++;
+    else if(st==='Entregue') en++;
+    else if(st==='Concluido'||st==='Concluído') co++;
+    // Congregação
+    var c=s.congregacao||'Outros';
+    porCong[c]=(porCong[c]||0)+1;
+    // Mês
+    if(s.created_at){
+      var d=new Date(s.created_at);
+      var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      porCong[c];
+      porMes[k]=(porMes[k]||0)+1;
+    }
+  });
+
+  // Top congregações
+  var topCong=Object.entries(porCong).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+  // Últimos 6 meses
+  var meses6=[];
+  for(var i=5;i>=0;i--){
+    var d=new Date(); d.setMonth(d.getMonth()-i);
+    var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var label=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][d.getMonth()];
+    meses6.push({k:k,label:label,val:porMes[k]||0});
+  }
+
+  // Últimas 5 solicitações
+  var ultimas=solic.slice(0,5);
+
+  var stBadge={
+    'Aguardando':'background:#fef3c7;color:#92400e',
+    'Em Produção':'background:#dbeafe;color:#1e40af',
+    'Em Analise':'background:#ede9fe;color:#5b21b6',
+    'Revisão':'background:#ede9fe;color:#5b21b6',
+    'Entregue':'background:#d1fae5;color:#065f46',
+    'Concluido':'background:#e0f2fe;color:#0c4a6e',
+    'Concluído':'background:#e0f2fe;color:#0c4a6e',
+  };
+
+  function fmtData(iso){
+    if(!iso) return '—';
+    var d=new Date(iso);
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  }
+
+  var ultiHtml=ultimas.map(function(s){
+    var st=s.status||'Aguardando';
+    var bg=stBadge[st]||'background:#f1f5f9;color:#475569';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bor)">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(s.nome_trabalho||'—')+'</div>' +
+        '<div style="font-size:11px;color:var(--ts);margin-top:2px">'+(s.congregacao||'—')+' · '+fmtData(s.created_at)+'</div>' +
+      '</div>' +
+      '<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;'+bg+'">'+st+'</span>' +
+    '</div>';
+  }).join('');
+
+  var congHtml=topCong.map(function(c,i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--sur2);border:1px solid var(--bor);border-radius:8px">' +
+      '<div style="font-family:Manrope,sans-serif;font-size:11px;font-weight:800;color:var(--teal2);width:16px;text-align:center;flex-shrink:0">'+(i+1)+'</div>' +
+      '<div style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c[0]+'</div>' +
+      '<div style="font-family:Manrope,sans-serif;font-size:13px;font-weight:800;color:var(--teal2)">'+c[1]+'</div>' +
+    '</div>';
+  }).join('');
+
+  var auditHtml=(audit||[]).map(function(a){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bor)">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--tx)">'+(a.usuario_nome||'—')+'</div>' +
+        '<div style="font-size:11px;color:var(--ts)">'+((a.solicitacoes&&a.solicitacoes.nome_trabalho)||'—')+'</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<div style="font-size:10px;color:var(--ts)">'+fmtData(a.created_at)+'</div>' +
+        '<div style="font-size:10px;font-weight:600;color:var(--teal2);margin-top:2px">'+(a.status_anterior||'—')+' → '+(a.novo_status||'—')+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Meses para canvas
+  var mesesLabels=meses6.map(function(m){return m.label;});
+  var mesesVals=meses6.map(function(m){return m.val;});
+
+  function kpi(cor, emoji, num, lbl){
+    return '<div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:12px;padding:14px 14px 12px;box-shadow:0 1px 3px rgba(15,42,44,.06),0 6px 18px -6px rgba(15,42,44,.09);position:relative;overflow:hidden;min-width:0">' +
+      '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+cor+'"></div>' +
+      '<div style="font-size:16px;margin-bottom:5px">'+emoji+'</div>' +
+      '<div style="font-family:Manrope,sans-serif;font-size:22px;font-weight:800;color:var(--tx);line-height:1;font-variant-numeric:tabular-nums">'+num+'</div>' +
+      '<div style="font-size:10.5px;font-weight:600;color:var(--tm);margin-top:3px;line-height:1.3">'+lbl+'</div>' +
+    '</div>';
+  }
+
+  corpo.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">' +
+      kpi('#14b8a6','📋',tot,'Total') +
+      kpi('#f59e0b','⏳',ag,'Aguardando') +
+      kpi('#5b9bd5','🎨',pr,'Em Produção') +
+      kpi('#34d399','✅',(en+co),'Entregues / Concluídas') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px">' +
+      '<div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,42,44,.06)">' +
+        '<div style="font-family:Manrope,sans-serif;font-size:13px;font-weight:800;color:var(--tx);margin-bottom:12px">Solicitações por Mês <span style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;color:var(--ts)">últimos 6 meses</span></div>' +
+        '<div style="position:relative;height:150px"><canvas id="g-dash-chart"></canvas></div>' +
+      '</div>' +
+      '<div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,42,44,.06)">' +
+        '<div style="font-family:Manrope,sans-serif;font-size:13px;font-weight:800;color:var(--tx);margin-bottom:12px">Top Congregações</div>' +
+        '<div style="display:flex;flex-direction:column;gap:7px">'+congHtml+'</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">' +
+      '<div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,42,44,.06)">' +
+        '<div style="font-family:Manrope,sans-serif;font-size:13px;font-weight:800;color:var(--tx);margin-bottom:4px">Últimas Solicitações</div>' +
+        ultiHtml +
+      '</div>' +
+      '<div style="background:var(--sur);border:1.5px solid var(--bor);border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,42,44,.06)">' +
+        '<div style="font-family:Manrope,sans-serif;font-size:13px;font-weight:800;color:var(--tx);margin-bottom:4px">Últimas Alterações</div>' +
+        auditHtml +
+      '</div>' +
+    '</div>';
+
+  // Chart.js
+  setTimeout(function(){
+    var canvas=document.getElementById('g-dash-chart');
+    if(!canvas) return;
+    var isDark=document.documentElement.dataset.theme==='dark'||
+      (!document.documentElement.dataset.theme&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+    var gc=isDark?'rgba(255,255,255,.07)':'rgba(15,42,44,.06)';
+    var lc=isDark?'#7db5ae':'#5b7a78';
+    new Chart(canvas.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:mesesLabels,
+        datasets:[{
+          label:'Solicitações',
+          data:mesesVals,
+          backgroundColor:'rgba(20,184,166,.7)',
+          borderColor:'#0d9488',
+          borderWidth:1.5,
+          borderRadius:5,
+          borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:isDark?'#0f2427':'#fff',
+            titleColor:isDark?'#e2f8f5':'#0f2a2c',
+            bodyColor:isDark?'#7db5ae':'#5b7a78',
+            borderColor:isDark?'#1e4449':'#cceee8',
+            borderWidth:1,cornerRadius:8,padding:9,
+            titleFont:{family:'Manrope',size:12,weight:'700'},
+            bodyFont:{family:'Inter',size:11}
+          }
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:lc,font:{family:'Inter',size:11,weight:'600'}},border:{display:false}},
+          y:{grid:{color:gc},ticks:{color:lc,font:{family:'Inter',size:11},stepSize:5},border:{display:false},beginAtZero:true}
+        }
+      }
+    });
+  },100);
 }
 
 async function carregarConfigEmail(){
@@ -2448,12 +2724,16 @@ function iniciarPollingNotificacoes(){
 function filtrarGSolic(){
   var b  = document.getElementById('g-busca').value.toLowerCase();
   var sf = document.getElementById('g-f-status').value;
+  var mostrarConc = document.getElementById('g-show-concluidas') && document.getElementById('g-show-concluidas').checked;
   var f = _gSolic.filter(function(r){
+    var status = r.status||'Aguardando';
+    // Oculta Concluído se toggle estiver desligado (a menos que o filtro de status esteja explicitamente em Concluido)
+    if(!mostrarConc && status==='Concluido' && sf!=='Concluido') return false;
     var mb = !b ||
       (r.nome_trabalho||'').toLowerCase().indexOf(b)>=0 ||
       (r.solicitante||'').toLowerCase().indexOf(b)>=0 ||
       (r.congregacao||'').toLowerCase().indexOf(b)>=0;
-    var ms = !sf || (r.status||'Aguardando')===sf;
+    var ms = !sf || status===sf;
     return mb && ms;
   });
   renderGSolic(f);
@@ -2631,7 +2911,7 @@ async function enviarComentario(){
 
 async function carregarGAudit(){
   document.getElementById('g-tb-audit').innerHTML='<tr><td colspan="5" class="g-loading">⏳ Carregando…</td></tr>';
-  var r = await SB.from('auditoria').select('*, solicitacoes(nome_trabalho)').order('created_at',{ascending:false}).limit(200);
+  var r = await SB.from('auditoria').select('*, solicitacoes(nome_trabalho)').order('created_at',{ascending:false}).limit(10);
   if(r.error){ toast('Erro: '+r.error.message, true); return; }
   _gAudit = r.data || [];
   filtrarGAudit();
@@ -3031,62 +3311,5 @@ async function salvarEdicao(){
 }
 
 </script>
-
-<!-- ── Integração iframe: oculta nav quando embutido, botão de volta quando standalone ── -->
-<style id="iframe-hide"></style>
-<script>
-(function(){
-  if(window.self === window.top) return; // não está em iframe, sai
-  document.addEventListener('DOMContentLoaded', function(){
-    var style = document.getElementById('iframe-hide');
-    style.textContent = [
-      '#tab-nav { display: none !important; }',
-      '.adl-back { display: none !important; }',
-      'body { padding-top: 0 !important; padding-bottom: 20px !important; }',
-      '.wrap { max-width: none !important; margin: 0 !important; padding: 16px 24px 24px !important; }',
-    ].join('\n');
-  });
-})();
-</script>
-
-<script>
-// Abre na aba correta via parâmetro ?tab=
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  var tab = params.get('tab');
-  if(tab){
-    window.addEventListener('DOMContentLoaded', function(){
-      if(tab === 'historico' && typeof switchTab === 'function') switchTab('historico');
-      if(tab === 'gestao'   && typeof switchTab === 'function') switchTab('gestao');
-    });
-  }
-})();
-</script>
-
-<!-- Botão flutuante — só aparece fora do iframe -->
-<style>
-.adl-back{
-  position:fixed;bottom:20px;right:20px;z-index:9999;
-  display:inline-flex;align-items:center;gap:7px;
-  padding:10px 16px;border-radius:999px;
-  background:linear-gradient(135deg,#075F5C,#0E8E89);
-  color:#fff;font-family:'Manrope','Inter',sans-serif;
-  font-size:13px;font-weight:700;text-decoration:none;
-  box-shadow:0 4px 16px rgba(7,95,92,.4);
-  transition:transform .15s,box-shadow .15s;
-}
-.adl-back:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(7,95,92,.5);}
-</style>
-<a href="/" class="adl-back" id="adl-back-btn">📅 Reserva de Salas</a>
-<script>
-// Oculta o botão quando estiver dentro de um iframe
-if(window.self !== window.top){
-  document.addEventListener('DOMContentLoaded',function(){
-    var btn = document.getElementById('adl-back-btn');
-    if(btn) btn.style.display = 'none';
-  });
-}
-</script>
-
 </body>
 </html>
