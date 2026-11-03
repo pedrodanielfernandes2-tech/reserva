@@ -1841,6 +1841,46 @@ function toggleTheme(){
   }
 }
 
+// ── Integração com sistema de Reservas (postMessage) ──
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+
+  // Sincroniza tema escuro
+  if(e.data.type === 'adl_tema'){
+    var escuro = Boolean(e.data.escuro);
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if(escuro !== isDark) toggleTheme();
+    return;
+  }
+
+  // Navega para uma aba
+  if(e.data.type === 'adl_goto'){
+    var tab = e.data.tab;
+    if(tab === 'formulario' || tab === 'historico'){
+      if(typeof switchTab === 'function') switchTab(tab);
+    } else if(tab === 'g-solic' || tab === 'g-audit' || tab === 'g-users' || tab === 'g-email'){
+      if(typeof switchTab === 'function') switchTab('gestao');
+      setTimeout(function(){
+        var btn = document.getElementById(tab+'-btn') || document.querySelector('[data-gtab="'+tab+'"]');
+        if(btn) btn.click();
+      }, 300);
+    } else if(tab === 'logout'){
+      if(typeof logoutUser === 'function') logoutUser();
+    }
+    return;
+  }
+
+  // Abre modal de login da equipe
+  if(e.data.type === 'adl_open_login'){
+    if(typeof switchTab === 'function') switchTab('gestao');
+    setTimeout(function(){
+      var btn = document.getElementById('btn-abrir-login') || document.querySelector('.btn-login-equipe');
+      if(btn) btn.click();
+    }, 400);
+    return;
+  }
+});
+
 // ── Tabs ──
 function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
@@ -2275,6 +2315,9 @@ function iniciarGestao(){
   switchTab('gestao');
   carregarGSolic();
   iniciarPollingNotificacoes();
+  // Notifica o sistema de Reservas que o login foi realizado
+  var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+  try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
 }
 
 async function doLogoutEquipe(){
@@ -2283,6 +2326,8 @@ async function doLogoutEquipe(){
   document.getElementById('tab-btn-gestao').style.display='none';
   document.getElementById('tab-btn-login').textContent='👤 Acesso da Equipe';
   switchTab('formulario');
+  // Notifica o sistema de Reservas que o logout foi realizado
+  try{ window.parent.postMessage({type:'adl_logout'}, '*'); }catch(e){}
 }
 
 SB.auth.getSession().then(function(r){
@@ -2298,6 +2343,9 @@ SB.auth.getSession().then(function(r){
     document.getElementById('g-nav-email').style.display='inline-block';
       }
       iniciarPollingNotificacoes();
+      // Notifica o sistema de Reservas da sessão ativa
+      var isAdmin = _gPerfil && _gPerfil.perfil === 'admin';
+      try{ window.parent.postMessage({type:'adl_login', nome: _gPerfil ? _gPerfil.nome : _gUser.email, isAdmin: !!isAdmin}, '*'); }catch(e){}
       SB.from('solicitacoes').select('status').eq('status','Aguardando').then(function(r){
         if(!r.error) atualizarBadgeAguardando((r.data||[]).length);
       });
@@ -3310,6 +3358,34 @@ async function salvarEdicao(){
   toast('Solicitação atualizada com sucesso!');
 }
 
+</script>
+
+<!-- ── Estilos e lógica quando embutido como iframe ── -->
+<style>
+  /* Oculta navegação de abas quando dentro do iframe do sistema de Reservas */
+  .adl-embedded #tab-nav { display: none !important; }
+  .adl-embedded .wrap { padding-top: 0 !important; }
+  /* Botão voltar (visível apenas fora do iframe) */
+  .adl-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: var(--teal2); background: none; border: none; cursor: pointer; padding: 0; }
+  .adl-back:hover { text-decoration: underline; }
+</style>
+<script>
+  // Detecta se está dentro de iframe do sistema de Reservas
+  (function(){
+    try {
+      if(window.self !== window.top){
+        document.documentElement.classList.add('adl-embedded');
+      }
+    } catch(e) {
+      document.documentElement.classList.add('adl-embedded');
+    }
+    // Lê parâmetro ?tab= na URL para abrir aba específica
+    var params = new URLSearchParams(window.location.search);
+    var tabParam = params.get('tab');
+    if(tabParam && typeof switchTab === 'function'){
+      setTimeout(function(){ switchTab(tabParam); }, 100);
+    }
+  })();
 </script>
 </body>
 </html>
